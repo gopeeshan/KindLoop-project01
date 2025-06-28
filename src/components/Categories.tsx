@@ -8,7 +8,6 @@ const Categories = () => {
     {
       icon: Shirt,
       title: "Clothing & Accessories",
-      count: "2,500+ items",
       description: "Clothes, shoes, bags, and accessories for all ages",
       filterValue: "Clothing",
       gradient: "from-pink-400 to-purple-500",
@@ -18,7 +17,6 @@ const Categories = () => {
     {
       icon: Laptop,
       title: "Electronics",
-      count: "800+ items",
       description: "Phones, laptops, tablets, and home appliances",
       filterValue: "Electronics",
       gradient: "from-blue-400 to-cyan-500",
@@ -28,7 +26,6 @@ const Categories = () => {
     {
       icon: Book,
       title: "Books & Education",
-      count: "1,200+ items",
       description: "Books, educational materials, and learning resources",
       filterValue: "Books",
       gradient: "from-green-400 to-emerald-500",
@@ -38,7 +35,6 @@ const Categories = () => {
     {
       icon: Gamepad2,
       title: "Toys & Games",
-      count: "900+ items",
       description: "Toys, board games, puzzles, and sports equipment",
       filterValue: "Electronics",
       gradient: "from-orange-400 to-red-500",
@@ -48,7 +44,6 @@ const Categories = () => {
     {
       icon: Sofa,
       title: "Furniture",
-      count: "400+ items",
       description: "Chairs, tables, storage solutions, and home decor",
       filterValue: "Furniture",
       gradient: "from-indigo-400 to-purple-600",
@@ -58,7 +53,6 @@ const Categories = () => {
     {
       icon: Utensils,
       title: "Kitchen & Dining",
-      count: "600+ items",
       description: "Cookware, appliances, dinnerware, and kitchen tools",
       filterValue: "Electronics",
       gradient: "from-yellow-400 to-orange-500",
@@ -68,7 +62,6 @@ const Categories = () => {
     {
       icon: Home,
       title: "Home & Garden",
-      count: "350+ items",
       description: "Decorations, plants, garden tools, and household items",
       filterValue: "Electronics",
       gradient: "from-teal-400 to-green-500",
@@ -78,7 +71,6 @@ const Categories = () => {
     {
       icon: Baby,
       title: "Baby & Kids",
-      count: "300+ items",
       description: "Baby gear, strollers, cribs, and children's items",
       filterValue: "Baby & Kids",
       gradient: "from-rose-400 to-pink-500",
@@ -115,7 +107,7 @@ const Categories = () => {
                     <category.icon className={`h-8 w-8 ${category.iconColor}`} />
                   </div>
                   <h3 className="text-lg font-semibold text-foreground mb-2">{category.title}</h3>
-                  <p className={`font-bold mb-2 ${category.iconColor}`}>{category.count}</p>
+                  <p className={`font-bold mb-2 ${category.iconColor}`}></p>
                   <p className="text-muted-foreground text-sm">{category.description}</p>
                 </div>
               </CardContent>
