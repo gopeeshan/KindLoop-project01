@@ -17,7 +17,7 @@ const Navigation = () => {
             <Recycle className="h-8 w-8 text-primary" />
             <div className="flex flex-col">
               <span className="text-xl font-bold text-foreground">KindLoop</span>
-              <span className="text-xs text-muted-foreground hidden sm:block">Give a Second Life to Your Goods</span>
+              <span className="text-xs text-muted-foreground hidden sm:block">A Reuse and Donation Space Platform</span>
             </div>
           </Link>
           
