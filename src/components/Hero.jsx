@@ -22,13 +22,14 @@ const Hero = () => {
   };
 
   return (
-    <section id="home" className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-400 via-fuchsia-500 to-blue-400 overflow-hidden">
-      
-      
+    <section id="home" className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-400 via-fuchsia-500 to-gray-600 overflow-hidden">
+         
       <div className="container mx-auto px-4 text-center relative z-10">
         <div className="max-w-4xl mx-auto">
+                    
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight drop-shadow-lg">
-            Give a Second Life to Your Goods
+            Give a Second Life to Your{" "}
+            <span className="bg-gradient-to-r from-yellow-300 to-orange-400 bg-clip-text text-transparent block animate-pulse">Goods</span>
           </h1>
           
           <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-2xl mx-auto drop-shadow-md">
