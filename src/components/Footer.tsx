@@ -48,7 +48,7 @@ const Footer = () => {
 
         <div className="border-t border-border mt-8 pt-8 text-center">
           <p className="text-muted-foreground text-sm">
-            © 2024 KindLoop. All rights reserved. Building sustainable communities together.
+            © 2025 KindLoop. All rights reserved. Building sustainable communities together.
           </p>
         </div>
       </div>
