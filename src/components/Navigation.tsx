@@ -7,7 +7,7 @@ const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Simple authentication check - in a real app this would be connected to your auth system
-  const isLoggedIn = true; // Change this to false to see login/signup buttons
+  const isLoggedIn = false; // Change this to false to see login/signup buttons
 
   return (
     <nav className="bg-background/95 backdrop-blur-sm border-b border-border sticky top-0 z-50">
