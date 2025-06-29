@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, Clock, User, CheckCircle, AlertCircle, Search, Filter } from "lucide-react";
+import { MapPin, Clock, User, CheckCircle, AlertCircle, Search, Filter,MessageCircle } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 
@@ -23,7 +23,16 @@ const Donations = () => {
     }
   }, [searchParams]);
 
+   const handleChat = (donationId: number) => {
+    console.log(`Opening chat for donation ${donationId}`);
+    // Chat functionality would be implemented here
+  };
 
+  const handleRequestItem = (donationId: number) => {
+    console.log(`Requesting item ${donationId}`);
+    // Request functionality would be implemented here
+  };
+  
   // Mock data - in a real app this would come from an API
   const allDonations = [
     {
@@ -85,13 +94,27 @@ const Donations = () => {
       description: "Wooden dining table with 4 chairs, perfect for small families.",
       category: "Furniture",
       isVerified: true
+
+    },
+    {
+      id: 7,
+      title: "Cricket Bat",
+      donor: "Gopeeshan.S",
+      location: "Jaffna",
+      timeAgo: "1 days ago",
+      description: "Wooden cricket bat, perfect for aspiring young cricketers.",
+      category: "Sports",
+      isVerified: true
+      
     }
   ];
 
   const filteredDonations = allDonations.filter(donation => {
     const matchesSearch = donation.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          donation.description.toLowerCase().includes(searchTerm.toLowerCase());
+
     const matchesCategory = selectedCategory === "all" || donation.category === selectedCategory;
+
     const matchesVerification = verificationFilter === "all" || 
                                (verificationFilter === "verified" && donation.isVerified) ||
                                (verificationFilter === "unverified" && !donation.isVerified);
@@ -206,7 +229,21 @@ const Donations = () => {
                     </div>
                   </div>
                   
-                  <Button className="w-full">Request Item</Button>
+                   <div className="flex gap-2">
+                    <Button 
+                      className="flex-1"
+                      onClick={() => handleRequestItem(donation.id)}
+                    >
+                      Request Item
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => handleChat(donation.id)}
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

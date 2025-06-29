@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Clock, User, CheckCircle, AlertCircle } from "lucide-react";
+import { MapPin, Clock, User, CheckCircle, AlertCircle,MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const FeaturedDonations = () => {
@@ -45,6 +45,16 @@ const FeaturedDonations = () => {
 
   const handleViewAllDonations = () => {
     navigate("/donations");
+  };
+
+   const handleChat = (donationId: number) => {
+    console.log(`Opening chat for donation ${donationId}`);
+    // Chat functionality would be implemented here
+  };
+
+  const handleRequestItem = (donationId: number) => {
+    console.log(`Requesting item ${donationId}`);
+    // Request functionality would be implemented here
   };
 
   return (
@@ -103,7 +113,21 @@ const FeaturedDonations = () => {
                     </div>
                   </div>
                   
-                  <Button className="w-full">Request Item</Button>
+                   <div className="flex gap-2">
+                    <Button 
+                      className="flex-1"
+                      onClick={() => handleRequestItem(donation.id)}
+                    >
+                      Request Item
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => handleChat(donation.id)}
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

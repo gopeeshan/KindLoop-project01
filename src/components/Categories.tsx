@@ -35,7 +35,7 @@ const Categories = () => {
     {
       icon: Gamepad2,
       title: "Toys & Games",
-      description: "Toys, board games, puzzles, and sports equipment",
+      description: "For Gameers of all ages, from toddlers to adults",
       filterValue: "Electronics",
       gradient: "from-orange-400 to-red-500",
       iconBg: "bg-orange-100",
