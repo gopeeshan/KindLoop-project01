@@ -3,17 +3,49 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Recycle, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Recycle, ArrowLeft ,AlertCircle } from "lucide-react";
+import { Link ,useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Admin credentials - in a real app, this would be handled by your backend
+  const ADMIN_EMAIL = "admin@kindloop.com";
+  const ADMIN_PASSWORD = "admin123";
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login attempt:", { email, password });
-    // Login logic will be implemented here
+    setIsLoading(true);
+    setError("");
+
+    // Check admin credentials
+    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      // Store admin session
+      localStorage.setItem('isAdminLoggedIn', 'true');
+      localStorage.setItem('adminEmail', email);
+      
+      toast({
+        title: "Login Successful",
+        description: "Welcome to the admin dashboard!",
+      });
+      
+      navigate('/admin');
+    } else {
+      setError("Invalid email or password. Please try again.");
+      toast({
+        title: "Login Failed",
+        description: "Invalid credentials provided.",
+        variant: "destructive",
+      });
+    }
+
+    setIsLoading(false);
   };
 
   return (
@@ -32,18 +64,25 @@ const Login = () => {
               <Recycle className="h-8 w-8 text-primary" />
               <span className="text-2xl font-bold text-foreground">KindLoop</span>
             </div>
-            <CardTitle className="text-2xl">Welcome Back</CardTitle>
-            <p className="text-muted-foreground">Sign in to your account</p>
+            <CardTitle className="text-2xl">Admin Login</CardTitle>
+            <p className="text-muted-foreground">Sign in to access the admin dashboard</p>
           </CardHeader>
           
           <CardContent>
+            {error && (
+              <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-md flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-destructive" />
+                <span className="text-sm text-destructive">{error}</span>
+              </div>
+            )}
+            
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Admin Email</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder="Enter Admin email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -55,15 +94,15 @@ const Login = () => {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Enter your password"
+                  placeholder="Enter Admin password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
               </div>
               
-              <Button type="submit" className="w-full">
-                Sign In
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Signing In..." : "Sign In as Admin"}
               </Button>
             </form>
             

@@ -8,10 +8,33 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { CheckCircle, XCircle, Clock, Search, User, Package, AlertTriangle,LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from 'react-router-dom'; 
 
 const Admin = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+   // Check admin authentication on component mount
+  useEffect(() => {
+    const adminLoggedIn = localStorage.getItem('isAdminLoggedIn');
+    if (adminLoggedIn === 'true') {
+      setIsAuthenticated(true);
+    } else {
+      navigate('/login');
+    }
+  }, [navigate]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('isAdminLoggedIn');
+    localStorage.removeItem('adminEmail');
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
+    navigate('/login');
+  };
 
   // Mock data - in a real app, this would come from your backend
   const [users] = useState([
@@ -104,12 +127,23 @@ const Admin = () => {
     new Date(a.submittedDate).getTime() - new Date(b.submittedDate).getTime()
   );
 
+   // Show loading or redirect if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Manage users, donations, and verification requests</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Admin Dashboard</h1>
+            <p className="text-muted-foreground">Manage users, donations, and verification requests</p>
+          </div>
+          <Button onClick={handleLogout} variant="outline" className="flex items-center gap-2">
+            <LogOut className="h-4 w-4" />
+            Logout
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
