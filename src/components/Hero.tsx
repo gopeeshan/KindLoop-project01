@@ -6,8 +6,13 @@ const Hero = () => {
   const navigate = useNavigate();
 
   // Simple authentication check - in a real app this would be connected to your auth system
+<<<<<<< HEAD
   const isLoggedIn = true; // This would come from your authentication context/state
 
+=======
+  const isLoggedIn = false; // This would come from your authentication context/state
+  
+>>>>>>> 52f4a831feb7e6bf82c69e17f1c2ea8d210c3145
   const handleStartDonating = () => {
     if (isLoggedIn) {
       navigate("/post-creation");
