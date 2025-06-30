@@ -15,7 +15,7 @@ const Profile = () => {
     email: "john.doe@example.com",
     phone: "+1 234 567 8900",
     occupation: "Software Engineer",
-    location: "San Francisco, CA",
+    address: "San Francisco, CA",
     avatar: "/placeholder.svg",
     totalCredits: 1250
   });
@@ -78,7 +78,7 @@ const Profile = () => {
                 
                 <div className="flex-1 text-center md:text-left">
                   <h1 className="text-3xl font-bold text-foreground mb-2">{user.name}</h1>
-                  <p className="text-muted-foreground mb-4">{user.occupation} • {user.location}</p>
+                  <p className="text-muted-foreground mb-4">{user.occupation} • {user.address}</p>
                   
                   <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start space-y-2 sm:space-y-0 sm:space-x-4">
                     <Badge variant="secondary" className="text-lg px-4 py-2">
@@ -199,10 +199,10 @@ const Profile = () => {
                       />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium mb-2">Location</label>
+                      <label className="block text-sm font-medium mb-2">Address</label>
                       <input 
                         type="text" 
-                        defaultValue={user.location}
+                        defaultValue={user.address}
                         className="w-full p-2 border rounded-md"
                       />
                     </div>

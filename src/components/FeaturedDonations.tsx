@@ -12,35 +12,38 @@ const FeaturedDonations = () => {
       id: 1,
       title: "Winter Coats for Families",
       donor: "Sarah M.",
-      location: "Downtown Community Center",
+      Address: "Downtown Community Center",
       timeAgo: "2 hours ago",
       image: "/placeholder.svg",
-      description: "Warm winter coats in various sizes, perfect for the upcoming cold season.",
+      description:
+        "Warm winter coats in various sizes, perfect for the upcoming cold season.",
       category: "Clothing",
-      isVerified: true
+      isVerified: true,
     },
     {
       id: 2,
       title: "Children's Books Collection",
       donor: "Mike R.",
-      location: "Public Library Branch",
+      Address: "Public Library Branch",
       timeAgo: "5 hours ago",
       image: "/placeholder.svg",
-      description: "Educational and fun books for children ages 5-12, all in great condition.",
+      description:
+        "Educational and fun books for children ages 5-12, all in great condition.",
       category: "Books",
-      isVerified: false
+      isVerified: false,
     },
     {
       id: 3,
       title: "Kitchen Appliances Set",
       donor: "Anna K.",
-      location: "Westside Community",
+      Address: "Westside Community",
       timeAgo: "1 day ago",
       image: "/placeholder.svg",
-      description: "Blender, toaster, and coffee maker - perfect for new families starting out.",
+      description:
+        "Blender, toaster, and coffee maker - perfect for new families starting out.",
       category: "Home",
-      isVerified: true
-    }
+      isVerified: true,
+    },
   ];
 
   const handleViewAllDonations = () => {
@@ -95,7 +98,7 @@ const FeaturedDonations = () => {
                     </div>
                     <div className="flex items-center text-sm text-muted-foreground">
                       <MapPin className="h-4 w-4 mr-2" />
-                      <span>{donation.location}</span>
+                      <span>{donation.Address}</span>
                     </div>
                     <div className="flex items-center text-sm text-muted-foreground">
                       <Clock className="h-4 w-4 mr-2" />

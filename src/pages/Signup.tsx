@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,53 +10,92 @@ const Signup = () => {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
+    nic:"",
     contactNumber: "",
     occupation: "",
-    location: "",
+    address: "",
+    district:"",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (formData.password !== formData.confirmPassword) {
       alert("Passwords don't match!");
       return;
     }
-    
-    console.log("Signup attempt:", formData);
-    // Account creation logic will be implemented here
+
+    // console.log("Signup attempt:", formData);
+    // // Account creation logic will be implemented here
+
+    try {
+      const response = await fetch("http://localhost/signin-api/register.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      alert(data.message);
+
+      if (data.status === "success") {
+        setFormData({
+          fullName: "",
+          email: "",
+          nic:"",
+          contactNumber: "",
+          occupation: "",
+          address: "",
+          district: "",
+          password: "",
+          confirmPassword: "",
+        });
+        localStorage.setItem("isLoggedIn", "true");
+      }
+    } catch (error) {
+      alert("An error occurred. Please try again.");
+      console.error("Signup error:", error);
+    }
   };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center mb-8">
-          <Link to="/" className="flex items-center space-x-2 text-primary hover:text-primary/80">
+          <Link
+            to="/"
+            className="flex items-center space-x-2 text-primary hover:text-primary/80"
+          >
             <ArrowLeft className="h-5 w-5" />
             <span>Back to Home</span>
           </Link>
         </div>
-        
+
         <Card>
           <CardHeader className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-4">
               <Recycle className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold text-foreground">KindLoop</span>
+              <span className="text-2xl font-bold text-foreground">
+                KindLoop
+              </span>
             </div>
             <CardTitle className="text-2xl">Create Account</CardTitle>
-            <p className="text-muted-foreground">Join our community of kind givers</p>
+            <p className="text-muted-foreground">
+              Join our community of kind givers
+            </p>
           </CardHeader>
-          
+
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
@@ -72,7 +110,7 @@ const Signup = () => {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <Input
@@ -85,7 +123,20 @@ const Signup = () => {
                   required
                 />
               </div>
-              
+
+              <div className="space-y-2">
+                <Label htmlFor="nic">NIC</Label>
+                <Input
+                  id="nic"
+                  name="nic"
+                  type="text"
+                  placeholder="Enter your NIC"
+                  value={formData.nic}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="contactNumber">Contact Number</Label>
                 <Input
@@ -98,7 +149,7 @@ const Signup = () => {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="occupation">Occupation</Label>
                 <Input
@@ -111,20 +162,33 @@ const Signup = () => {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
+                <Label htmlFor="address">Address</Label>
                 <Input
-                  id="location"
-                  name="location"
+                  id="address"
+                  name="address"
                   type="text"
-                  placeholder="Enter your location"
-                  value={formData.location}
+                  placeholder="Enter your address"
+                  value={formData.address}
                   onChange={handleInputChange}
                   required
                 />
               </div>
-              
+
+              <div className="space-y-2">
+                <Label htmlFor="district">District</Label>
+                <Input
+                  id="district"
+                  name="district"
+                  type="text"
+                  placeholder="Enter your district"
+                  value={formData.district}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
@@ -137,7 +201,7 @@ const Signup = () => {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
                 <Input
@@ -150,12 +214,12 @@ const Signup = () => {
                   required
                 />
               </div>
-              
+
               <Button type="submit" className="w-full">
                 Create Account
               </Button>
             </form>
-            
+
             <div className="mt-4 text-center text-sm text-muted-foreground">
               Already have an account?{" "}
               <Link to="/login" className="text-primary hover:underline">
