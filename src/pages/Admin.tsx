@@ -22,7 +22,7 @@ const Admin = () => {
     if (adminLoggedIn === 'true') {
       setIsAuthenticated(true);
     } else {
-      navigate('/login');
+      navigate('/Admin_login');
     }
   }, [navigate]);
 
@@ -33,7 +33,7 @@ const Admin = () => {
       title: "Logged Out",
       description: "You have been successfully logged out.",
     });
-    navigate('/login');
+    navigate('/Admin_login');
   };
 
   // Mock data - in a real app, this would come from your backend

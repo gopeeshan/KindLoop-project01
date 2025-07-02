@@ -5,10 +5,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Edit, Gift, Heart, Star } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ArrowLeft, Edit, Gift, Heart, Star,LogOut } from "lucide-react";
+import { Link, useNavigate} from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const Profile = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  const handleLogout = () => {
+    localStorage.removeItem('isAdminLoggedIn');
+    localStorage.removeItem('adminEmail');
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
+    navigate('/login');
+  };
+
   // Mock user data - in a real app this would come from your auth system
   const [user] = useState({
     name: "John Doe",
@@ -65,7 +79,7 @@ const Profile = () => {
             <span>Back to Home</span>
           </Link>
         </div>
-        
+          
         <div className="max-w-6xl mx-auto">
           {/* Profile Header */}
           <Card className="mb-8">
@@ -88,6 +102,9 @@ const Profile = () => {
                     <Button variant="outline" size="sm">
                       <Edit className="h-4 w-4 mr-2" />
                       Edit Profile
+                    </Button>
+                    <Button onClick={handleLogout} variant="outline" className="flex items-center gap-2">
+                        <LogOut className="h-4 w-4" />Logout
                     </Button>
                   </div>
                 </div>
