@@ -14,8 +14,8 @@ const Profile = () => {
   const { toast } = useToast();
   
   const handleLogout = () => {
-    localStorage.removeItem('isAdminLoggedIn');
-    localStorage.removeItem('adminEmail');
+    localStorage.removeItem('isUserLoggedIn');
+    localStorage.removeItem('userEmail');
     toast({
       title: "Logged Out",
       description: "You have been successfully logged out.",
