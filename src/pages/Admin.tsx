@@ -49,6 +49,8 @@ const Admin = () => {
     { id: 2, title: "Children's Books Collection", donor: "Mike R.", category: "Books", status: "verified", date: "2024-03-19" },
     { id: 3, title: "Kitchen Appliances Set", donor: "Anna K.", category: "Home", status: "verified", date: "2024-03-18" },
     { id: 4, title: "Sports Equipment", donor: "John D.", category: "Sports", status: "pending", date: "2024-03-21" },
+    { id: 5, title: "Bicycles for Kids", donor: "Emily R.", category: "Sports", status: "pending", date: "2024-03-22" },
+
   ]);
 
   const [pendingVerifications] = useState([
