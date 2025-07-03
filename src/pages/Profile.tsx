@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Edit, Gift, Heart, Star,LogOut } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { ArrowLeft, Edit, Gift, Heart, Star, CheckCircle, AlertTriangle ,LogOut} from "lucide-react";
 import { Link, useNavigate} from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
@@ -70,6 +71,52 @@ const Profile = () => {
     }
   ];
 
+  const [toBeReceivedItems, setToBeReceivedItems] = useState([
+    {
+      id: 1,
+      title: "Laptop for Studies",
+      donor: "Sarah Wilson",
+      category: "Electronics",
+      requestDate: "2024-01-20",
+      donorContact: "+1 555 0123"
+    },
+    {
+      id: 2,
+      title: "Winter Clothing Set",
+      donor: "David Brown",
+      category: "Clothing",
+      requestDate: "2024-01-18",
+      donorContact: "+1 555 0456"
+    },
+    {
+      id: 3,
+      title: "Children's Toys",
+      donor: "Emily Davis",
+      category: "Toys",
+      requestDate: "2024-01-16",
+      donorContact: "+1 555 0789"
+    }
+  ]);
+
+  const handleConfirmReceived = (itemId: number) => {
+    setToBeReceivedItems(items => 
+      items.filter(item => item.id !== itemId)
+    );
+    
+    toast({
+      title: "Item Confirmed",
+      description: "Thank you for confirming receipt of your item!",
+    });
+  };
+
+  const handleMakeComplaint = (itemId: number, itemTitle: string) => {
+    toast({
+      title: "Complaint Submitted",
+      description: `Your complaint about "${itemTitle}" has been submitted to our support team.`,
+      variant: "destructive",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
@@ -113,10 +160,11 @@ const Profile = () => {
           </Card>
 
           {/* Dashboard Tabs */}
-          <Tabs defaultValue="donations" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
+          <Tabs defaultValue="to-be-received" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="donations">Donation History</TabsTrigger>
               <TabsTrigger value="received">Received History</TabsTrigger>
+              <TabsTrigger value="to-be-received">To Be Received</TabsTrigger>
               <TabsTrigger value="details">Edit Details</TabsTrigger>
             </TabsList>
 
@@ -170,6 +218,98 @@ const Profile = () => {
                         <Badge variant="default">{item.status}</Badge>
                       </div>
                     ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            {/* To Be Received */}
+            <TabsContent value="to-be-received">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Gift className="h-5 w-5 mr-2" />
+                    Items To Be Received
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {toBeReceivedItems.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-muted-foreground">No items waiting to be received</p>
+                      </div>
+                    ) : (
+                      toBeReceivedItems.map((item) => (
+                        <div key={item.id} className="border rounded-lg p-4 space-y-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-lg">{item.title}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                {item.category} • From {item.donor}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                Requested: {item.requestDate}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                Contact: {item.donorContact}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button size="sm" className="flex-1">
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Confirm Received
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Confirm Receipt</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you have received "{item.title}" from {item.donor}? 
+                                    This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleConfirmReceived(item.id)}>
+                                    Confirm Receipt
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                            
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="outline" size="sm" className="flex-1">
+                                  <AlertTriangle className="h-4 w-4 mr-2" />
+                                  Make Complaint
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Submit Complaint</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you experiencing issues with "{item.title}"? 
+                                    This will notify our support team and the donor.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction 
+                                    onClick={() => handleMakeComplaint(item.id, item.title)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Submit Complaint
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </CardContent>
               </Card>
