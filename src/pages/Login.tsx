@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,22 +20,39 @@ const Login = () => {
     setIsLoading(true);
     setError("");
 
-    if (email && password) {
-      // Store user session
-      localStorage.setItem('isUserLoggedIn', 'true');
-      localStorage.setItem('userEmail', email);
-      
-      toast({
-        title: "Login Successful",
-        description: "Welcome back!",
+    try {
+      const response = await fetch("http://localhost/signin-api/login.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
-      
-      navigate('/');
-    } else {
-      setError("Please enter both email and password.");
+
+      const data = await response.json();
+
+      if (data.status === "success") {
+        localStorage.setItem("isUserLoggedIn", "true");
+        localStorage.setItem("userEmail", email);
+
+        toast({
+          title: "Login Successful .",
+          description: "Welcome back!",
+        });
+
+        navigate("/profile");
+      } else {
+        setError(data.message || "Invalid credentials.");
+        toast({
+          title: "Login Failed",
+          description: data.message || "Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("Server error. Please try again.");
       toast({
-        title: "Login Failed",
-        description: "Please check your credentials and try again.",
+        title: "Error",
+        description: "Unable to connect to the server.",
         variant: "destructive",
       });
     }
@@ -48,22 +64,27 @@ const Login = () => {
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-between mb-8">
-          <Link to="/" className="flex items-center space-x-2 text-primary hover:text-primary/80">
+          <Link
+            to="/"
+            className="flex items-center space-x-2 text-primary hover:text-primary/80"
+          >
             <ArrowLeft className="h-5 w-5" />
             <span>Back to Home</span>
           </Link>
         </div>
-        
+
         <Card>
           <CardHeader className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-4">
               <Recycle className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold text-foreground">KindLoop</span>
+              <span className="text-2xl font-bold text-foreground">
+                KindLoop
+              </span>
             </div>
             <CardTitle className="text-2xl">User Login</CardTitle>
             <p className="text-muted-foreground">Sign in to your account</p>
           </CardHeader>
-          
+
           <CardContent>
             {error && (
               <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-md flex items-center gap-2">
@@ -71,7 +92,7 @@ const Login = () => {
                 <span className="text-sm text-destructive">{error}</span>
               </div>
             )}
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -85,7 +106,7 @@ const Login = () => {
                   disabled={isLoading}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
@@ -98,12 +119,12 @@ const Login = () => {
                   disabled={isLoading}
                 />
               </div>
-              
+
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Signing In..." : "Sign In"}
               </Button>
             </form>
-            
+
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
                 Don't have an account?{" "}
