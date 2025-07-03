@@ -4,22 +4,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Recycle, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const Signup = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
-    nic:"",
+    nic: "",
     contactNumber: "",
     occupation: "",
     address: "",
-    district:"",
+    district: "",
     password: "",
     confirmPassword: "",
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -31,12 +38,15 @@ const Signup = () => {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords don't match!");
+      toast({
+        title: "Password Mismatch",
+        description: "Passwords do not match.",
+        variant: "destructive",
+      });
       return;
     }
 
-    // console.log("Signup attempt:", formData);
-    // // Account creation logic will be implemented here
+    setIsLoading(true);
 
     try {
       const response = await fetch("http://localhost/signin-api/register.php", {
@@ -47,13 +57,17 @@ const Signup = () => {
 
       const data = await response.json();
 
-      alert(data.message);
+      toast({
+        title: data.status === "success" ? "Account Created" : "Signup Failed",
+        description: data.message,
+        variant: data.status === "success" ? "default" : "destructive",
+      });
 
       if (data.status === "success") {
         setFormData({
           fullName: "",
           email: "",
-          nic:"",
+          nic: "",
           contactNumber: "",
           occupation: "",
           address: "",
@@ -62,12 +76,46 @@ const Signup = () => {
           confirmPassword: "",
         });
         localStorage.setItem("isLoggedIn", "true");
+        navigate("/");
       }
     } catch (error) {
-      alert("An error occurred. Please try again.");
-      console.error("Signup error:", error);
+      toast({
+        title: "Server Error",
+        description: "Something went wrong. Please try again later.",
+        variant: "destructive",
+      });
     }
+
+    setIsLoading(false);
   };
+
+  const districtList = [
+    "Ampara",
+    "Anuradhapura",
+    "Badulla",
+    "Batticaloa",
+    "Colombo",
+    "Galle",
+    "Gampaha",
+    "Hambantota",
+    "Jaffna",
+    "Kalutara",
+    "Kandy",
+    "Kegalle",
+    "Kilinochchi",
+    "Kurunegala",
+    "Mannar",
+    "Matale",
+    "Matara",
+    "Monaragala",
+    "Mullaitivu",
+    "Nuwara Eliya",
+    "Polonnaruwa",
+    "Puttalam",
+    "Ratnapura",
+    "Trincomalee",
+    "Vavuniya",
+  ];
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-8">
@@ -98,125 +146,74 @@ const Signup = () => {
 
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input
-                  id="fullName"
-                  name="fullName"
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={formData.fullName}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="Enter your email address"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="nic">NIC</Label>
-                <Input
-                  id="nic"
-                  name="nic"
-                  type="text"
-                  placeholder="Enter your NIC"
-                  value={formData.nic}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="contactNumber">Contact Number</Label>
-                <Input
-                  id="contactNumber"
-                  name="contactNumber"
-                  type="tel"
-                  placeholder="Enter your contact number"
-                  value={formData.contactNumber}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="occupation">Occupation</Label>
-                <Input
-                  id="occupation"
-                  name="occupation"
-                  type="text"
-                  placeholder="Enter your occupation"
-                  value={formData.occupation}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
-                <Input
-                  id="address"
-                  name="address"
-                  type="text"
-                  placeholder="Enter your address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
+              {[
+                { name: "fullName", label: "Full Name", type: "text" },
+                { name: "email", label: "Email Address", type: "email" },
+                { name: "nic", label: "NIC", type: "text" },
+                { name: "contactNumber", label: "Contact Number", type: "tel" },
+                { name: "occupation", label: "Occupation", type: "text" },
+                { name: "address", label: "Address", type: "text" },
+              ].map((field) => (
+                <div className="space-y-2" key={field.name}>
+                  <Label htmlFor={field.name}>{field.label}</Label>
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    type={field.type}
+                    placeholder={`Enter your ${field.label.toLowerCase()}`}
+                    value={(formData as any)[field.name]}
+                    onChange={handleInputChange}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+              ))}
 
               <div className="space-y-2">
                 <Label htmlFor="district">District</Label>
-                <Input
+                <select
                   id="district"
                   name="district"
-                  type="text"
-                  placeholder="Enter your district"
+                  className="w-full border rounded-md px-3 py-2 bg-background text-foreground"
                   value={formData.district}
                   onChange={handleInputChange}
                   required
-                />
+                  disabled={isLoading}
+                >
+                  <option value="">Select your district</option>
+                  {districtList.map((district) => (
+                    <option key={district} value={district}>
+                      {district}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="Create a password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
+              {[
+                { name: "password", label: "Password", type: "password" },
+                {
+                  name: "confirmPassword",
+                  label: "Confirm Password",
+                  type: "password",
+                },
+              ].map((field) => (
+                <div className="space-y-2" key={field.name}>
+                  <Label htmlFor={field.name}>{field.label}</Label>
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    type={field.type}
+                    placeholder={`Enter your ${field.label.toLowerCase()}`}
+                    value={(formData as any)[field.name]}
+                    onChange={handleInputChange}
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+              ))}
 
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  placeholder="Confirm your password"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <Button type="submit" className="w-full">
-                Create Account
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Creating Account..." : "Create Account"}
               </Button>
             </form>
 
