@@ -49,7 +49,7 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost/signin-api/register.php", {
+      const response = await fetch("http://localhost/KindLoop-project01/Backend/Signup.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -79,6 +79,11 @@ const Signup = () => {
         navigate("/");
       }
     } catch (error) {
+      if (error instanceof Error) {
+        console.error("Signup error:", error.message);
+      } else {
+        console.error("Signup error:", error);
+      }
       toast({
         title: "Server Error",
         description: "Something went wrong. Please try again later.",

@@ -21,7 +21,7 @@ const Login = () => {
     setError("");
 
     try {
-      const response = await fetch("http://localhost/signin-api/login.php", {
+      const response = await fetch("http://localhost/KindLoop-project01/Backend/login.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -38,7 +38,7 @@ const Login = () => {
           description: "Welcome back!",
         });
 
-        navigate("/profile");
+        navigate("/");
       } else {
         setError(data.message || "Invalid credentials.");
         toast({
