@@ -38,49 +38,14 @@ const Admin = () => {
 
   // Mock data - in a real app, this would come from your backend
   const [users] = useState([
-    { id: 1, name: "Sarah M.", email: "sarah@example.com", joinDate: "2024-01-15", status: "active", donations: 5 },
-    { id: 2, name: "Mike R.", email: "mike@example.com", joinDate: "2024-02-20", status: "active", donations: 3 },
-    { id: 3, name: "Anna K.", email: "anna@example.com", joinDate: "2024-03-10", status: "suspended", donations: 8 },
-    { id: 4, name: "John D.", email: "john@example.com", joinDate: "2024-03-25", status: "active", donations: 2 },
-  ]);
+    ]);
 
   const [donations] = useState([
-    { id: 1, title: "Winter Coats for Families", donor: "Sarah M.", category: "Clothing", status: "verified", date: "2024-03-20" },
-    { id: 2, title: "Children's Books Collection", donor: "Mike R.", category: "Books", status: "verified", date: "2024-03-19" },
-    { id: 3, title: "Kitchen Appliances Set", donor: "Anna K.", category: "Home", status: "verified", date: "2024-03-18" },
-    { id: 4, title: "Sports Equipment", donor: "John D.", category: "Sports", status: "pending", date: "2024-03-21" },
-    { id: 5, title: "Bicycles for Kids", donor: "Emily R.", category: "Sports", status: "pending", date: "2024-03-22" },
-
+    
   ]);
 
   const [pendingVerifications] = useState([
-    { 
-      id: 1, 
-      title: "Laptop for Students", 
-      donor: "Emma L.", 
-      category: "Electronics", 
-      description: "Working laptop suitable for student use, includes charger",
-      submittedDate: "2024-03-21T10:30:00Z",
-      location: "Downtown Community Center"
-    },
-    { 
-      id: 2, 
-      title: "Baby Clothes Bundle", 
-      donor: "Tom S.", 
-      category: "Clothing", 
-      description: "Various baby clothes sizes 0-12 months, all clean and in good condition",
-      submittedDate: "2024-03-21T14:15:00Z",
-      location: "Westside Community"
-    },
-    { 
-      id: 3, 
-      title: "Board Games Collection", 
-      donor: "Lisa P.", 
-      category: "Toys", 
-      description: "Family board games, all pieces included, great for community centers",
-      submittedDate: "2024-03-22T09:00:00Z",
-      location: "Central Library"
-    },
+    
   ]);
 
   const handleVerifyDonation = (donationId: number, approved: boolean) => {

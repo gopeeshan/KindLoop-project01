@@ -32,7 +32,7 @@ $district = $data['district'];
 $password = password_hash($data['password'], PASSWORD_DEFAULT); // Secure hash
 
 // Check if email or NIC already exists
-$checkSql = "SELECT id FROM user WHERE email = ? OR nic = ?";
+$checkSql = "SELECT userID FROM user WHERE email = ? OR nic = ?";
 $stmtCheck = $conn->prepare($checkSql);
 $stmtCheck->bind_param("ss", $email, $nic);
 $stmtCheck->execute();
