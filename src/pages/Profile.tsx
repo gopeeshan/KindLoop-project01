@@ -20,7 +20,7 @@ const Profile = () => {
       title: "Logged Out",
       description: "You have been successfully logged out.",
     });
-    navigate('/login');
+    navigate('/');
   };
 
   // Mock user data - in a real app this would come from your auth system

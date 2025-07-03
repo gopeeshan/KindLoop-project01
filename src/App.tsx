@@ -11,7 +11,7 @@ import PostCreation from "@/pages/PostCreation";
 import Profile from "./pages/Profile";
 import Donations from "@/pages/Donations";
 import Admin from "./pages/Admin";
-import Admin_Login from "./pages/Admin_login";
+import AdminLogin from "./pages/Admin_login";
 
 
 const App = () => {
@@ -29,7 +29,7 @@ const App = () => {
               <Route path="/profile" element={<Profile />} />
               <Route path="/donations" element={<Donations />} />
               <Route path="/admin" element={<Admin />} />
-              <Route path="/Admin_login" element={<Admin_Login />} />
+              <Route path="/Admin_login" element={<AdminLogin />} />
             </Routes>
           </div>
         </TooltipProvider>
