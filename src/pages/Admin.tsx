@@ -9,16 +9,17 @@ import { Input } from "@/components/ui/input";
 import { CheckCircle, XCircle, Clock, Search, User, Package, AlertTriangle,LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from 'react-router-dom'; 
+import axios from 'axios';
 
 interface User {
-  UserID: number;
+  userID: number;
   fullName: string;
   email: string;
   occupation: string;
   district: string;
   credit_points: number;
   status: string;
-  donations: number;
+  //donations: number;
 }
 
 interface Donation {
@@ -37,12 +38,12 @@ interface Verification {
   category: string;
   condition: string;
   images: string[];
-  submittedDate: string;
+  date_time: string;
 }
 
 
   
-const Admin:React.FC = () => {
+const Admin= () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -50,22 +51,7 @@ const Admin:React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [donations, setDonations] = useState<Donation[]>([]);
   const [PendingVerifications, setPendingVerifications] = useState<Verification[]>([]);
-
-async function fetchData() {
-    try{
-      const res=await fetch("http://localhost/KindLoop-project01/Backend/Admin.php");
-      const data = await res.json();
-      if (data.status === "success") {
-          setUsers(data.users);
-          setDonations(data.donations);
-          setPendingVerifications(data.pendingVerification);
-        }
-    }
-    catch (err) {
-      console.log("Error:", err);
-    }
-}
-
+   
   useEffect(() => {
     const adminLoggedIn = localStorage.getItem('isAdminLoggedIn');
     if (adminLoggedIn === 'true') {
@@ -73,7 +59,20 @@ async function fetchData() {
     } else {
       navigate('/Admin_login');
     }
-
+    
+    axios.get("http://localhost/KindLoop-project01/Backend/Admin.php")
+    .then((response) => {
+      const data = response.data;
+      if (data.status === "success") {
+        setUsers(data.users);
+        setDonations(data.donations);
+        setPendingVerifications(data.pendingVerification);
+        console.log("Fetched data successfully");
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching data:", error);
+    });
   //   fetch("http://localhost/KindLoop-project01/Backend/Admin.php")
   //     .then((res) => res.json())
   //     .then((data) => {
@@ -137,9 +136,15 @@ async function fetchData() {
     });
   };
 
-  const sortedPendingVerifications = [...PendingVerifications].sort((a, b) =>
-    new Date(a.submittedDate).getTime() - new Date(b.submittedDate).getTime()
-  );
+  // const sortedPendingVerifications = [...PendingVerifications].sort((a, b) =>
+  //   new Date(a.date_time).getTime() - new Date(b.date_time).getTime()
+  // );
+
+  const sortedPendingVerifications = Array.isArray(PendingVerifications)
+  ? [...PendingVerifications].sort((a, b) =>
+      new Date(a.date_time).getTime() - new Date(b.date_time).getTime()
+    )
+  : [];
 
    // Show loading or redirect if not authenticated
   if (!isAuthenticated) {
@@ -166,7 +171,7 @@ async function fetchData() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Users</p>
-                  <p className="text-2xl font-bold">{setUsers.length}</p>
+                  <p className="text-2xl font-bold">{users.length}</p>
                 </div>
                 <User className="h-8 w-8 text-primary" />
               </div>
@@ -178,7 +183,7 @@ async function fetchData() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Donations</p>
-                  <p className="text-2xl font-bold">{setDonations.length}</p>
+                  <p className="text-2xl font-bold">{donations.length}</p>
                 </div>
                 <Package className="h-8 w-8 text-primary" />
               </div>
@@ -190,7 +195,7 @@ async function fetchData() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Pending Verification</p>
-                  <p className="text-2xl font-bold text-orange-600">{setPendingVerifications.length}</p>
+                  <p className="text-2xl font-bold text-orange-600">{sortedPendingVerifications.length}</p>
                 </div>
                 <Clock className="h-8 w-8 text-orange-600" />
               </div>
@@ -224,25 +229,25 @@ async function fetchData() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {sortedPendingVerifications.map((setPendingVerifications) => (
-                    <div key={setPendingVerifications.DonationID} className="border rounded-lg p-4 space-y-3">
+                  {sortedPendingVerifications.map((v) => (
+                    <div key={v.DonationID} className="border rounded-lg p-4 space-y-3">
                       <div className="flex items-start justify-between">
                         <div className="space-y-2">
-                          <h3 className="font-semibold text-lg">{setPendingVerifications.title}</h3>
-                          <p className="text-sm text-muted-foreground">{setPendingVerifications.condition}</p>
+                          <h3 className="font-semibold text-lg">{v.title}</h3>
+                          <p className="text-sm text-muted-foreground">{v.condition}</p>
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span>DonorID: {setPendingVerifications.userID}</span>
-                            <span>Category: {setPendingVerifications.category}</span>
+                            <span>DonorID: {v.userID}</span>
+                            <span>Category: {v.category}</span>
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            Submitted: {formatDate(setPendingVerifications.submittedDate)}
+                            Submitted: {formatDate(v.date_time)}
                           </p>
                         </div>
                         <div className="flex gap-2">
                           <Button 
                             size="sm" 
                             className="bg-green-600 hover:bg-green-700"
-                            onClick={() => handleVerifyDonation(setPendingVerifications.DonationID, true)}
+                            onClick={() => handleVerifyDonation(v.DonationID, true)}
                           >
                             <CheckCircle className="h-4 w-4 mr-1" />
                             Approve
@@ -250,7 +255,7 @@ async function fetchData() {
                           <Button 
                             size="sm" 
                             variant="destructive"
-                            onClick={() => handleVerifyDonation(setPendingVerifications.DonationID, false)}
+                            onClick={() => handleVerifyDonation(v.DonationID, false)}
                           >
                             <XCircle className="h-4 w-4 mr-1" />
                             Reject
@@ -294,27 +299,27 @@ async function fetchData() {
                   </TableHeader>
                   <TableBody>
                     {users.map((user) => (
-                      <TableRow key={user.UserID} className="hover:bg-muted">
+                      <TableRow key={user.userID} className="hover:bg-muted">
                         <TableCell className="font-medium">{user.fullName}</TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>{user.occupation}</TableCell>
                         <TableCell>{user.district}</TableCell>
                         <TableCell>{user.credit_points}</TableCell>
                         <TableCell>{getStatusBadge(user.status)}</TableCell>
-                        <TableCell>{user.donations}</TableCell>
+                        {/* <TableCell>{user.donations}</TableCell> */}
                         <TableCell>
                           <div className="flex gap-2">
                             <Button 
                               size="sm" 
                               variant="outline"
-                              onClick={() => handleUserAction(user.UserID, 'view')}
+                              onClick={() => handleUserAction(user.userID, 'view')}
                             >
                               View
                             </Button>
                             <Button 
                               size="sm" 
                               variant={user.status === 'suspended' ? 'default' : 'destructive'}
-                              onClick={() => handleUserAction(user.UserID, user.status === 'suspended' ? 'activate' : 'suspend')}
+                              onClick={() => handleUserAction(user.userID, user.status === 'suspended' ? 'activate' : 'suspend')}
                             >
                               {user.status === 'suspended' ? 'Activate' : 'Suspend'}
                             </Button>
