@@ -40,10 +40,10 @@ const Login = () => {
 
         navigate("/");
       } else {
-        setError(data.message || "Invalid credentials.");
+        setError(data.message ?? "Invalid credentials.");
         toast({
           title: "Login Failed",
-          description: data.message || "Please try again.",
+          description: data.message ?? "Please try again.",
           variant: "destructive",
         });
       }
