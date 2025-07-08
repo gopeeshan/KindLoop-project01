@@ -61,32 +61,17 @@ const Profile = () => {
       .then((data) => {
         setUser(data);
         setFormData(data);
-
-        fetch(
-          `http://localhost/KindLoop-project01/Backend/profile.php?userID=${data.userID}&type=donations`
-        )
-          .then((res) => res.json())
-          .then(setDonationHistory);
-
-        fetch(
-          `http://localhost/KindLoop-project01/Backend/profile.php?userID=${data.userID}&type=received`
-        )
-          .then((res) => res.json())
-          .then(setReceivedHistory);
-
-        fetch(
-          `http://localhost/KindLoop-project01/Backend/profile.php?userID=${data.userID}&type=to_be_received`
-        )
-          .then((res) => res.json())
-          .then(setToBeReceivedItems);
+        setDonationHistory(data.donationHistory || []);
+        setReceivedHistory(data.receivedHistory || []);
+        setToBeReceivedItems(data.toBeReceived || []);
       })
       .catch((err) => console.error("Failed to fetch user data", err));
   }, []);
 
-  const handleInputChange = (e) => {
+  function handleInputChange(e) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  }
 
   const handleSave = async () => {
     try {
@@ -106,11 +91,11 @@ const Profile = () => {
       if (!response.ok) {
         throw new Error(result.error || "Failed to update profile.");
       }
-
       toast({
         title: "Profile Updated",
         description: "Your profile has been successfully updated.",
       });
+      navigate("/");
     } catch (error) {
       console.error("Error updating profile", error);
       toast({
@@ -253,7 +238,7 @@ const Profile = () => {
                     </Badge>
                     <Button variant="outline" size="sm">
                       <Edit className="h-4 w-4 mr-2" />
-                      Edit Profile
+                      Change Password{" "}
                     </Button>
                     <Button
                       onClick={handleLogout}
@@ -297,9 +282,10 @@ const Profile = () => {
                         <div className="flex-1">
                           <h3 className="font-semibold">{donation.title}</h3>
                           <p className="text-sm text-muted-foreground">
-                            {donation.category} • {donation.date}
+                            {donation.category} • {donation.date_time}
                           </p>
                         </div>
+
                         <div className="flex items-center space-x-3">
                           <Badge
                             variant={
