@@ -9,14 +9,49 @@ import { Input } from "@/components/ui/input";
 import { CheckCircle, XCircle, Clock, Search, User, Package, AlertTriangle,LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from 'react-router-dom'; 
+import axios from 'axios';
 
-const Admin = () => {
+interface User {
+  userID: number;
+  fullName: string;
+  email: string;
+  occupation: string;
+  district: string;
+  credit_points: number;
+  status: string;
+  //donations: number;
+}
+
+interface Donation {
+  DonationID: number;
+  title: string;
+  userID: number;
+  category: string;
+  date_time: string;
+  isDonationCompleted: boolean;
+}
+
+interface Verification {
+  DonationID: number;
+  title: string;
+  userID: number;
+  category: string;
+  condition: string;
+  images: string[];
+  date_time: string;
+}
+
+
+  
+const Admin= () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-   // Check admin authentication on component mount
+  const [users, setUsers] = useState<User[]>([]);
+  const [donations, setDonations] = useState<Donation[]>([]);
+  const [PendingVerifications, setPendingVerifications] = useState<Verification[]>([]);
+   
   useEffect(() => {
     const adminLoggedIn = localStorage.getItem('isAdminLoggedIn');
     if (adminLoggedIn === 'true') {
@@ -24,6 +59,30 @@ const Admin = () => {
     } else {
       navigate('/Admin_login');
     }
+    
+    axios.get("http://localhost/KindLoop-project01/Backend/Admin.php")
+    .then((response) => {
+      const data = response.data;
+      if (data.status === "success") {
+        setUsers(data.users);
+        setDonations(data.donations);
+        setPendingVerifications(data.pendingVerification);
+        console.log("Fetched data successfully");
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching data:", error);
+    });
+  //   fetch("http://localhost/KindLoop-project01/Backend/Admin.php")
+  //     .then((res) => res.json())
+  //     .then((data) => {
+  //       if (data.status === "success") {
+  //         setUsers(data.users);
+  //         setDonations(data.donations);
+  //         setPendingVerifications(data.pendingVerification);
+  //       }
+  //     })
+  //     .catch((err) => console.log("Error:", err));
   }, [navigate]);
 
   const handleLogout = () => {
@@ -36,25 +95,12 @@ const Admin = () => {
     navigate('/Admin_login');
   };
 
-  // Mock data - in a real app, this would come from your backend
-  const [users] = useState([
-    ]);
-
-  const [donations] = useState([
-    
-  ]);
-
-  const [pendingVerifications] = useState([
-    
-  ]);
-
   const handleVerifyDonation = (donationId: number, approved: boolean) => {
     const action = approved ? "approved" : "rejected";
     toast({
       title: `Donation ${action}`,
       description: `The donation has been ${action} successfully.`,
     });
-    console.log(`Donation ${donationId} ${action}`);
   };
 
   const handleUserAction = (userId: number, action: string) => {
@@ -90,9 +136,15 @@ const Admin = () => {
     });
   };
 
-  const sortedPendingVerifications = [...pendingVerifications].sort((a, b) => 
-    new Date(a.submittedDate).getTime() - new Date(b.submittedDate).getTime()
-  );
+  // const sortedPendingVerifications = [...PendingVerifications].sort((a, b) =>
+  //   new Date(a.date_time).getTime() - new Date(b.date_time).getTime()
+  // );
+
+  const sortedPendingVerifications = Array.isArray(PendingVerifications)
+  ? [...PendingVerifications].sort((a, b) =>
+      new Date(a.date_time).getTime() - new Date(b.date_time).getTime()
+    )
+  : [];
 
    // Show loading or redirect if not authenticated
   if (!isAuthenticated) {
@@ -113,7 +165,7 @@ const Admin = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -143,21 +195,9 @@ const Admin = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Pending Verification</p>
-                  <p className="text-2xl font-bold text-orange-600">{pendingVerifications.length}</p>
+                  <p className="text-2xl font-bold text-orange-600">{sortedPendingVerifications.length}</p>
                 </div>
                 <Clock className="h-8 w-8 text-orange-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Verified Today</p>
-                  <p className="text-2xl font-bold text-green-600">12</p>
-                </div>
-                <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
             </CardContent>
           </Card>
@@ -189,26 +229,25 @@ const Admin = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {sortedPendingVerifications.map((donation) => (
-                    <div key={donation.id} className="border rounded-lg p-4 space-y-3">
+                  {sortedPendingVerifications.map((v) => (
+                    <div key={v.DonationID} className="border rounded-lg p-4 space-y-3">
                       <div className="flex items-start justify-between">
                         <div className="space-y-2">
-                          <h3 className="font-semibold text-lg">{donation.title}</h3>
-                          <p className="text-sm text-muted-foreground">{donation.description}</p>
+                          <h3 className="font-semibold text-lg">{v.title}</h3>
+                          <p className="text-sm text-muted-foreground">{v.condition}</p>
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span>Donor: {donation.donor}</span>
-                            <span>Category: {donation.category}</span>
-                            <span>Location: {donation.location}</span>
+                            <span>DonorID: {v.userID}</span>
+                            <span>Category: {v.category}</span>
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            Submitted: {formatDate(donation.submittedDate)}
+                            Submitted: {formatDate(v.date_time)}
                           </p>
                         </div>
                         <div className="flex gap-2">
                           <Button 
                             size="sm" 
                             className="bg-green-600 hover:bg-green-700"
-                            onClick={() => handleVerifyDonation(donation.id, true)}
+                            onClick={() => handleVerifyDonation(v.DonationID, true)}
                           >
                             <CheckCircle className="h-4 w-4 mr-1" />
                             Approve
@@ -216,7 +255,7 @@ const Admin = () => {
                           <Button 
                             size="sm" 
                             variant="destructive"
-                            onClick={() => handleVerifyDonation(donation.id, false)}
+                            onClick={() => handleVerifyDonation(v.DonationID, false)}
                           >
                             <XCircle className="h-4 w-4 mr-1" />
                             Reject
@@ -248,9 +287,11 @@ const Admin = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Name</TableHead>
+                      <TableHead>Full Name</TableHead>
                       <TableHead>Email</TableHead>
-                      <TableHead>Join Date</TableHead>
+                      <TableHead>Occupation</TableHead>
+                      <TableHead>District</TableHead>
+                      <TableHead>Credit Points</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Donations</TableHead>
                       <TableHead>Actions</TableHead>
@@ -258,25 +299,27 @@ const Admin = () => {
                   </TableHeader>
                   <TableBody>
                     {users.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell className="font-medium">{user.name}</TableCell>
+                      <TableRow key={user.userID} className="hover:bg-muted">
+                        <TableCell className="font-medium">{user.fullName}</TableCell>
                         <TableCell>{user.email}</TableCell>
-                        <TableCell>{user.joinDate}</TableCell>
+                        <TableCell>{user.occupation}</TableCell>
+                        <TableCell>{user.district}</TableCell>
+                        <TableCell>{user.credit_points}</TableCell>
                         <TableCell>{getStatusBadge(user.status)}</TableCell>
-                        <TableCell>{user.donations}</TableCell>
+                        {/* <TableCell>{user.donations}</TableCell> */}
                         <TableCell>
                           <div className="flex gap-2">
                             <Button 
                               size="sm" 
                               variant="outline"
-                              onClick={() => handleUserAction(user.id, 'view')}
+                              onClick={() => handleUserAction(user.userID, 'view')}
                             >
                               View
                             </Button>
                             <Button 
                               size="sm" 
                               variant={user.status === 'suspended' ? 'default' : 'destructive'}
-                              onClick={() => handleUserAction(user.id, user.status === 'suspended' ? 'activate' : 'suspend')}
+                              onClick={() => handleUserAction(user.userID, user.status === 'suspended' ? 'activate' : 'suspend')}
                             >
                               {user.status === 'suspended' ? 'Activate' : 'Suspend'}
                             </Button>
@@ -309,12 +352,12 @@ const Admin = () => {
                   </TableHeader>
                   <TableBody>
                     {donations.map((donation) => (
-                      <TableRow key={donation.id}>
+                      <TableRow key={donation.DonationID}>
                         <TableCell className="font-medium">{donation.title}</TableCell>
-                        <TableCell>{donation.donor}</TableCell>
+                        <TableCell>{donation.userID}</TableCell>
                         <TableCell>{donation.category}</TableCell>
-                        <TableCell>{donation.date}</TableCell>
-                        <TableCell>{getStatusBadge(donation.status)}</TableCell>
+                        <TableCell>{donation.date_time}</TableCell>
+                        <TableCell>{donation.isDonationCompleted ? 'Completed' : 'Pending'}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
                             <Button size="sm" variant="outline">
