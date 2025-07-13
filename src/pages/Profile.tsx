@@ -329,7 +329,7 @@ const Profile = () => {
                             From {item.donor} • {item.date}
                           </p>
                         </div>
-                        <Badge variant="default">{item.status}</Badge>
+                        {/* <Badge variant="default">{item.status}</Badge> */}
                       </div>
                     ))}
                   </div>
