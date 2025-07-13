@@ -116,71 +116,6 @@ const Profile = () => {
     navigate("/");
   };
 
-  // Mock user data - in a real app this would come from your auth system
-
-  // const donationHistory = [
-  //   {
-  //     id: 1,
-  //     title: "Winter Coats for Families",
-  //     category: "Clothing",
-  //     date: "2024-01-15",
-  //     status: "Completed",
-  //     credits: 50,
-  //   },
-  //   {
-  //     id: 2,
-  //     title: "Children's Books Collection",
-  //     category: "Books",
-  //     date: "2024-01-10",
-  //     status: "Pending",
-  //     credits: 30,
-  //   },
-  // ];
-
-  // const receivedHistory = [
-  //   {
-  //     id: 1,
-  //     title: "Kitchen Appliances",
-  //     donor: "Jane Smith",
-  //     date: "2024-01-12",
-  //     status: "Received",
-  //   },
-  //   {
-  //     id: 2,
-  //     title: "Study Materials",
-  //     donor: "Mike Johnson",
-  //     date: "2024-01-08",
-  //     status: "Received",
-  //   },
-  // ];
-
-  // const [toBeReceivedItems, setToBeReceivedItems] = useState([
-  //   {
-  //     id: 1,
-  //     title: "Laptop for Studies",
-  //     donor: "Sarah Wilson",
-  //     category: "Electronics",
-  //     requestDate: "2024-01-20",
-  //     donorContact: "+1 555 0123",
-  //   },
-  //   {
-  //     id: 2,
-  //     title: "Winter Clothing Set",
-  //     donor: "David Brown",
-  //     category: "Clothing",
-  //     requestDate: "2024-01-18",
-  //     donorContact: "+1 555 0456",
-  //   },
-  //   {
-  //     id: 3,
-  //     title: "Children's Toys",
-  //     donor: "Emily Davis",
-  //     category: "Toys",
-  //     requestDate: "2024-01-16",
-  //     donorContact: "+1 555 0789",
-  //   },
-  // ]);
-
   const handleConfirmReceived = (itemId: number) => {
     setToBeReceivedItems((items) => items.filter((item) => item.id !== itemId));
 
@@ -522,7 +457,7 @@ const Profile = () => {
                     </div>
                   </div>
                   <div className="mt-6">
-                    <Button onClick={handleSave}>Save Changes</Button>
+                    <Button onClick={() => { handleSave(); handleLogout(); }}>Save Changes</Button>
                   </div>
                 </CardContent>
               </Card>

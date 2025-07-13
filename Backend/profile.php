@@ -80,7 +80,7 @@ WHERE donation.userID = ?");
                            FROM donation d
                            JOIN user u ON d.userID = u.userID
 
-                           WHERE d.receiver_id = ? AND isDonationCompleted = 1 ");
+                           WHERE d.receiverID = ? AND isDonationCompleted = 1 ");
    $stmt->bind_param("i", $userID);
    if ($stmt->execute()) {
        $receivedHistory = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -93,7 +93,7 @@ WHERE donation.userID = ?");
                            FROM donation d
                            JOIN user u ON d.userID = u.userID
                            
-                           WHERE d.receiver_id = ? AND isDonationCompleted = 0 ");
+                           WHERE d.receiverID = ? AND isDonationCompleted = 0 ");
    $stmt->bind_param("i", $userID);
    if ($stmt->execute()) {
        $toBeReceived = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
