@@ -18,7 +18,7 @@ interface User {
   occupation: string;
   district: string;
   credit_points: number;
-  status: string;
+  active_state: string;
   //donations: number;
 }
 
@@ -111,8 +111,8 @@ const Admin= () => {
     console.log(`User ${userId} ${action}`);
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
+  const getStatusBadge = (active_state: string) => {
+    switch (active_state) {
       case "active":
         return <Badge variant="default" className="bg-green-500">Active</Badge>;
       case "suspended":
@@ -122,7 +122,7 @@ const Admin= () => {
       case "pending":
         return <Badge variant="secondary" className="bg-orange-100 text-orange-700">Pending</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline">{active_state}</Badge>;
     }
   };
 
@@ -305,8 +305,8 @@ const Admin= () => {
                         <TableCell>{user.occupation}</TableCell>
                         <TableCell>{user.district}</TableCell>
                         <TableCell>{user.credit_points}</TableCell>
-                        <TableCell>{getStatusBadge(user.status)}</TableCell>
-                        {/* <TableCell>{user.donations}</TableCell> */}
+                        <TableCell>{user.active_state}</TableCell>
+                        <TableCell>{}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
                             <Button 
@@ -318,10 +318,10 @@ const Admin= () => {
                             </Button>
                             <Button 
                               size="sm" 
-                              variant={user.status === 'suspended' ? 'default' : 'destructive'}
-                              onClick={() => handleUserAction(user.userID, user.status === 'suspended' ? 'activate' : 'suspend')}
+                              variant={user.active_state === 'suspend' ? 'default' : 'destructive'}
+                              onClick={() => handleUserAction(user.userID, user.active_state === 'suspend' ? 'activate' : 'suspend')}
                             >
-                              {user.status === 'suspended' ? 'Activate' : 'Suspend'}
+                              {user.active_state === 'suspend' ? 'Activate' : 'Suspend'}
                             </Button>
                           </div>
                         </TableCell>

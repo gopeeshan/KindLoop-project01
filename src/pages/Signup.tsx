@@ -67,6 +67,7 @@ const Signup = () => {
       });
 
       if (data.status === "success") {
+        
         setFormData({
           fullName: "",
           email: "",
@@ -79,7 +80,7 @@ const Signup = () => {
           confirmPassword: "",
         });
         localStorage.setItem("isLoggedIn", "true");
-        navigate("/");
+        setTimeout(() => navigate("/"), 1500);
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -169,6 +170,7 @@ const Signup = () => {
                     name={field.name}
                     type={field.type}
                     placeholder={`Enter your ${field.label.toLowerCase()}`}
+                    // value={formData.password}
                     value={(formData as any)[field.name]}
                     onChange={handleInputChange}
                     required
@@ -212,6 +214,7 @@ const Signup = () => {
                     name={field.name}
                     type={field.type}
                     placeholder={`Enter your ${field.label.toLowerCase()}`}
+                    //  value={formData.confirmPassword}
                     value={(formData as any)[field.name]}
                     onChange={handleInputChange}
                     required
