@@ -19,21 +19,17 @@ if ($conn->connect_error) {
 
 $method = $_SERVER['REQUEST_METHOD'];
 
-// // Handle preflight OPTIONS request
-// if ($method === "OPTIONS") {
-//     http_response_code(200);
-//     exit;
-// }
+// Handle preflight OPTIONS request
+if ($method === "OPTIONS") {
+    http_response_code(200);
+    exit;
+}
 
 // GET request to fetch user by email
 if ($method === "GET") {
-    if (!isset($_GET['email'])) {
-        http_response_code(400);
-        echo json_encode(["error" => "Email parameter is required."]);
-        exit;
+    if (isset($_GET['email'])) {
+        $email = $_GET['email'];
     }
-
-    $email = $_GET['email'];
 
    // Step 1: Fetch user info
    $stmt = $conn->prepare("SELECT userID, fullName, email, contactNumber, occupation, address, credit_points FROM user WHERE email = ?");
@@ -57,7 +53,21 @@ if ($method === "GET") {
 
    // Step 2: Fetch Donation History (items donated by the user)
    $donationHistory = [];
-   $stmt = $conn->prepare("SELECT DonationID, title, description, date_time, status FROM donation WHERE userID = ?");
+   $stmt = $conn->prepare("SELECT donation.DonationID, donation.title, donation.date_time, donation.category , donation.credits,
+   
+   CASE
+    WHEN donation.isDonationCompleted = 1 THEN 'Completed'
+    ELSE 'Pending'
+  END AS status,
+
+  CASE
+    WHEN donation.isVerified = 1 THEN 'Verified'
+    ELSE 'Not Verified'
+  END AS verification
+ 
+ FROM donation
+WHERE donation.userID = ?");  
+   
    $stmt->bind_param("i", $userID);
    if ($stmt->execute()) {
        $donationHistory = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -66,9 +76,11 @@ if ($method === "GET") {
 
    // Step 3: Fetch Received History (items received by the user)
    $receivedHistory = [];
-   $stmt = $conn->prepare("SELECT d.DonationID, d.title, d.description, d.date_time, d.status 
-                           FROM donation d 
-                           WHERE d.receiverID = ? AND d.status = 'Received'");
+   $stmt = $conn->prepare("SELECT d.DonationID AS id, d.title, d.received_date AS date, u.fullName AS donor
+                           FROM donation d
+                           JOIN user u ON d.userID = u.userID
+
+                           WHERE d.receiver_id = ? AND isDonationCompleted = 1 ");
    $stmt->bind_param("i", $userID);
    if ($stmt->execute()) {
        $receivedHistory = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -77,9 +89,11 @@ if ($method === "GET") {
 
    // Step 4: Fetch To-Be-Received Items (items accepted but not yet received)
    $toBeReceived = [];
-   $stmt = $conn->prepare("SELECT d.DonationID, d.title, d.description, d.date_time, d.status 
-                           FROM donation d 
-                           WHERE d.receiverID = ? AND d.status = 'Accepted'");
+   $stmt = $conn->prepare("SELECT DonationID AS id, d.title, d.date_time AS requestDate,d.category ,u.fullName AS donor ,u.contactNumber AS donorContact
+                           FROM donation d
+                           JOIN user u ON d.userID = u.userID
+                           
+                           WHERE d.receiver_id = ? AND isDonationCompleted = 0 ");
    $stmt->bind_param("i", $userID);
    if ($stmt->execute()) {
        $toBeReceived = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -94,6 +108,8 @@ if ($method === "GET") {
   echo json_encode($user);
   exit;
 }
+
+
 
 // PUT request to update user info
 elseif ($method === "PUT") {
