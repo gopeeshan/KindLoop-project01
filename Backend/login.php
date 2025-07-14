@@ -31,7 +31,14 @@ $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 
 if ($user && password_verify($password, $user["password"])) {
-    echo json_encode(["status" => "success", "message" => "Login successful"]);
+    echo json_encode([
+        "status" => "success", 
+        "message" => "Login successful",
+        "user" => [
+            "id" => $user["userID"],
+            "email" => $user["email"]
+        ]
+    ]);
 } else {
     echo json_encode(["status" => "error", "message" => "Invalid email or password"]);
 }

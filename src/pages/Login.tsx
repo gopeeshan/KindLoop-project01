@@ -35,6 +35,7 @@ const Login = () => {
       if (data.status === "success") {
         localStorage.setItem("isUserLoggedIn", "true");
         localStorage.setItem("userEmail", email);
+        localStorage.setItem("userID", data.user.id);
 
         toast({
           title: "Login Successful .",
