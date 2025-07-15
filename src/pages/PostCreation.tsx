@@ -33,7 +33,8 @@ const PostCreation = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const userID = 1; // replace with actual logged-in user ID
+    const userID = localStorage.getItem('userID');
+    console.log("User ID:", userID);
 
     if (!title || !description || !category || !location || !condition) {
       toast({
