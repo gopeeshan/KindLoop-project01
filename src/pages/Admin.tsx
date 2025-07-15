@@ -28,6 +28,7 @@ interface Donation {
   userID: number;
   category: string;
   date_time: string;
+  isVerified: number;
   isDonationCompleted: boolean;
 }
 
@@ -39,6 +40,8 @@ interface Verification {
   condition: string;
   images: string[];
   date_time: string;
+  isVerified: number;
+  approvedBy: string;
 }
 
 
@@ -58,31 +61,22 @@ const Admin= () => {
       setIsAuthenticated(true);
     } else {
       navigate('/Admin_login');
+      return;
     }
     
     axios.get("http://localhost/KindLoop-project01/Backend/Admin.php")
-    .then((response) => {
-      const data = response.data;
-      if (data.status === "success") {
-        setUsers(data.users);
-        setDonations(data.donations);
-        setPendingVerifications(data.pendingVerification);
-        console.log("Fetched data successfully");
-      }
-    })
-    .catch((error) => {
-      console.error("Error fetching data:", error);
-    });
-  //   fetch("http://localhost/KindLoop-project01/Backend/Admin.php")
-  //     .then((res) => res.json())
-  //     .then((data) => {
-  //       if (data.status === "success") {
-  //         setUsers(data.users);
-  //         setDonations(data.donations);
-  //         setPendingVerifications(data.pendingVerification);
-  //       }
-  //     })
-  //     .catch((err) => console.log("Error:", err));
+      .then((response) => {
+        const data = response.data;
+        if (data.status === "success") {
+          setUsers(data.users);
+          setDonations(data.donations);
+          setPendingVerifications(data.pendingVerifications);
+          console.log("Fetched data successfully");
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+      });
   }, [navigate]);
 
   const handleLogout = () => {
@@ -95,20 +89,34 @@ const Admin= () => {
     navigate('/Admin_login');
   };
 
-  const handleVerifyDonation = (donationId: number, approved: boolean) => {
-    const action = approved ? "approved" : "rejected";
-    toast({
-      title: `Donation ${action}`,
-      description: `The donation has been ${action} successfully.`,
+  const handleVerifyDonation = (DonationID: number, isVerified: number) => {
+    const action = isVerified === 1 ? "approved" : "rejected";
+
+    axios.post("http://localhost/KindLoop-project01/Backend/Admin.php", {
+      action: "verify_donation",
+      DonationID: DonationID,
+      isVerified: isVerified
+    })
+    .then(() => {
+      toast({
+        title: `Donation ${action}`,
+        description: `The donation has been ${action} successfully.`,
+      });
+    })
+    .catch((error) => {
+      toast({
+        title: "Error",
+        description: "Failed to verify donation.",
+      });
     });
   };
 
-  const handleUserAction = (userId: number, action: string) => {
+  const handleUserAction = (userID: number, action: string) => {
     toast({
       title: `User ${action}`,
       description: `User action completed successfully.`,
     });
-    console.log(`User ${userId} ${action}`);
+    console.log(`User ${userID  } ${action}`);
   };
 
   const getStatusBadge = (active_state: string) => {
@@ -136,15 +144,13 @@ const Admin= () => {
     });
   };
 
-  // const sortedPendingVerifications = [...PendingVerifications].sort((a, b) =>
-  //   new Date(a.date_time).getTime() - new Date(b.date_time).getTime()
-  // );
-
-  const sortedPendingVerifications = Array.isArray(PendingVerifications)
-  ? [...PendingVerifications].sort((a, b) =>
-      new Date(a.date_time).getTime() - new Date(b.date_time).getTime()
-    )
-  : [];
+  // const sortedPendingVerifications = Array.isArray(PendingVerifications)
+  //   ? PendingVerifications
+  //       .filter((item) => item.isVerified === 0)
+  //       .sort((a, b) =>
+  //         new Date(a.date_time).getTime() - new Date(b.date_time).getTime()
+  //       )
+  //   : [];
 
    // Show loading or redirect if not authenticated
   if (!isAuthenticated) {
@@ -195,7 +201,7 @@ const Admin= () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Pending Verification</p>
-                  <p className="text-2xl font-bold text-orange-600">{sortedPendingVerifications.length}</p>
+                  <p className="text-2xl font-bold text-orange-600">{PendingVerifications.length}</p>
                 </div>
                 <Clock className="h-8 w-8 text-orange-600" />
               </div>
@@ -224,12 +230,12 @@ const Admin= () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Clock className="h-5 w-5" />
-                  Donations Waiting for Verification ({sortedPendingVerifications.length})
+                  Donations Waiting for Verification ({PendingVerifications.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {sortedPendingVerifications.map((v) => (
+                  {PendingVerifications.map((v) => (
                     <div key={v.DonationID} className="border rounded-lg p-4 space-y-3">
                       <div className="flex items-start justify-between">
                         <div className="space-y-2">
@@ -247,7 +253,7 @@ const Admin= () => {
                           <Button 
                             size="sm" 
                             className="bg-green-600 hover:bg-green-700"
-                            onClick={() => handleVerifyDonation(v.DonationID, true)}
+                            onClick={() => handleVerifyDonation(v.DonationID, 1)}
                           >
                             <CheckCircle className="h-4 w-4 mr-1" />
                             Approve
@@ -255,7 +261,7 @@ const Admin= () => {
                           <Button 
                             size="sm" 
                             variant="destructive"
-                            onClick={() => handleVerifyDonation(v.DonationID, false)}
+                            onClick={() => handleVerifyDonation(v.DonationID, 0)}
                           >
                             <XCircle className="h-4 w-4 mr-1" />
                             Reject
