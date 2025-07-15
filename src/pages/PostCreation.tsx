@@ -33,7 +33,16 @@ const PostCreation = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const userID = 1; // replace with actual logged-in user ID
+    const storedID = localStorage.getItem("userID");
+    const userID = storedID ? parseInt(storedID, 10) : null;
+
+    if (!userID) {
+      toast({
+        title: "User Not Found",
+        description: "Please log in again.",
+      });
+      return;
+    }
 
     if (!title || !description || !category || !location || !condition) {
       toast({
