@@ -407,7 +407,7 @@ const Profile = () => {
                         className="w-full p-2 border rounded-md"
                       />
                     </div>
-                    <div>
+                    {/* <div>
                       <label className="block text-sm font-medium mb-2">
                         Email
                       </label>
@@ -418,7 +418,7 @@ const Profile = () => {
                         onChange={handleInputChange}
                         className="w-full p-2 border rounded-md"
                       />
-                    </div>
+                    </div> */}
                     <div>
                       <label className="block text-sm font-medium mb-2">
                         Phone
@@ -457,7 +457,7 @@ const Profile = () => {
                     </div>
                   </div>
                   <div className="mt-6">
-                    <Button onClick={() => { handleSave(); handleLogout(); }}>Save Changes</Button>
+                    <Button onClick={handleSave}>Save Changes</Button>
                   </div>
                 </CardContent>
               </Card>
