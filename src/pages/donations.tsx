@@ -64,12 +64,12 @@ const Donations = () => {
     setLoading(false);
   };
 
-  const handleChat = (id: number) => {
-    console.log(`Chat with donor of donation ${id}`);
+  const handleChat = (DonationID: number) => {
+    console.log(`Chat with donor of donation ${DonationID}`);
   };
 
-  const handleRequestItem = (id: number) => {
-    console.log(`Requesting item ${id}`);
+  const handleRequestItem = (DonationID: number) => {
+    console.log(`Requesting item ${DonationID}`);
   };
 
   const filteredDonations = donations.filter((donation) => {
@@ -189,7 +189,7 @@ const Donations = () => {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredDonations.map((donation) => (
-              <Card key={donation.id} className="group hover:shadow-lg">
+              <Card key={donation.DonationID} className="group hover:shadow-lg">
                 <CardContent className="p-0">
                   <div className="aspect-video bg-gradient-to-br from-primary/10 to-secondary/10 rounded-t-lg flex items-center justify-center relative">
                     <div className="text-center p-6">
@@ -231,7 +231,7 @@ const Donations = () => {
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center text-sm text-muted-foreground">
                         <User className="h-4 w-4 mr-2" />
-                        <span>User #{donation.userID}</span>
+                        <span>{donation.fullName}</span>
                       </div>
                       <div className="flex items-center text-sm text-muted-foreground">
                         <MapPin className="h-4 w-4 mr-2" />
@@ -239,21 +239,21 @@ const Donations = () => {
                       </div>
                       <div className="flex items-center text-sm text-muted-foreground">
                         <Clock className="h-4 w-4 mr-2" />
-                        <span>{donation.created_at}</span>
+                        <span>{donation.date_time}</span>
                       </div>
                     </div>
 
                     <div className="flex gap-2">
                       <Button
                         className="flex-1"
-                        onClick={() => handleRequestItem(donation.id)}
+                        onClick={() => handleRequestItem(donation.DonationID)}
                       >
                         Request Item
                       </Button>
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => handleChat(donation.id)}
+                        onClick={() => handleChat(donation.DonationID)}
                       >
                         <MessageCircle className="h-4 w-4" />
                       </Button>

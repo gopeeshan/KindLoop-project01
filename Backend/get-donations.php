@@ -8,8 +8,23 @@ if ($conn->connect_error) {
     echo json_encode(["status" => "error", "message" => "Database connection failed"]);
     exit();
 }
+// Prepare SQL to fetch donations with user fullName using JOIN
+$sql = "SELECT 
+    donation.DonationID, 
+    donation.userID, 
+    user.fullName, 
+    donation.title, 
+    donation.description, 
+    donation.category, 
+    donation.location, 
+    donation.`condition`, 
+    donation.images, 
+    donation.date_time, 
+    donation.isVerified
+FROM donation
+JOIN user ON donation.userID = user.userID
+ORDER BY donation.date_time DESC";
 
-$sql = "SELECT DonationID, userID, title, description, category, location, `condition`, images, date_time FROM donation ORDER BY date_time DESC";
 
 $result = $conn->query($sql);
 
