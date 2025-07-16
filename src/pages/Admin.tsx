@@ -90,18 +90,21 @@ const Admin= () => {
   };
 
   const handleVerifyDonation = (DonationID: number, isVerified: number) => {
+    const adminEmail = localStorage.getItem('adminEmail');
     const action = isVerified === 1 ? "approved" : "rejected";
 
     axios.post("http://localhost/KindLoop-project01/Backend/Admin.php", {
       action: "verify_donation",
-      DonationID: DonationID,
-      isVerified: isVerified
+      DonationID,
+      isVerified,
+      adminEmail,
     })
     .then(() => {
       toast({
         title: `Donation ${action}`,
         description: `The donation has been ${action} successfully.`,
       });
+      window.location.reload();
     })
     .catch((error) => {
       toast({

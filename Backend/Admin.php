@@ -40,6 +40,43 @@ if ($verificationResult->num_rows > 0) {
     }
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $input = json_decode(file_get_contents('php://input'), true);
+
+    $action = $input['action'] ?? '';
+    $DonationID = $input['DonationID'] ?? null;
+    $isVerified = $input['isVerified'] ?? null;
+    $adminEmail = $input['adminEmail'] ?? 'unknown';
+
+    if ($action === 'verify_donation' && $DonationID !== null && $isVerified !== null) {
+        if ($isVerified == 1) {
+        
+            $stmt = $conn->prepare("UPDATE donation SET isVerified = 1, approvedBy = ? WHERE DonationID = ?");
+            $stmt->bind_param("si", $adminEmail, $DonationID);
+            $stmt->execute();
+            echo json_encode(["status" => "success", "message" => "Donation approved"]);
+            exit;
+        } else {
+            
+            $deleteStmt = $conn->prepare("DELETE FROM donation WHERE DonationID = ?");
+            $deleteStmt->bind_param("i", $DonationID);
+            $deleteStmt->execute();
+
+            $deletedAt = date("Y-m-d H:i:s");
+            $logStmt = $conn->prepare("INSERT INTO DeletedItems (DonationID, deletedBy, deleted_at) VALUES (?, ?, ?)");
+            $logStmt->bind_param("iss", $DonationID, $adminEmail, $deletedAt);
+            $logStmt->execute();
+
+            echo json_encode(["status" => "success", "message" => "Donation rejected and logged"]);
+            exit;
+        }
+    } else {
+        echo json_encode(["status" => "error", "message" => "Invalid request"]);
+        exit;
+    }
+}
+
+
 echo json_encode([
     "status" => "success",
     "users" => $users,
