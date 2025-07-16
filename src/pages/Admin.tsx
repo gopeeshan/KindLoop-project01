@@ -90,6 +90,7 @@ const Admin= () => {
   };
 
   const handleVerifyDonation = (DonationID: number, isVerified: number) => {
+   console.log(`Verifying donation ${DonationID} with status ${isVerified} and adminEmail ${localStorage.getItem('adminEmail')}`);
     const adminEmail = localStorage.getItem('adminEmail');
     const action = isVerified === 1 ? "approved" : "rejected";
 
@@ -104,7 +105,7 @@ const Admin= () => {
         title: `Donation ${action}`,
         description: `The donation has been ${action} successfully.`,
       });
-      window.location.reload();
+       window.location.reload();
     })
     .catch((error) => {
       toast({

@@ -48,26 +48,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $isVerified = $input['isVerified'] ?? null;
     $adminEmail = $input['adminEmail'] ?? 'unknown';
 
+
+
     if ($action === 'verify_donation' && $DonationID !== null && $isVerified !== null) {
         if ($isVerified == 1) {
-        
-            $stmt = $conn->prepare("UPDATE donation SET isVerified = 1, approvedBy = ? WHERE DonationID = ?");
-            $stmt->bind_param("si", $adminEmail, $DonationID);
-            $stmt->execute();
-            echo json_encode(["status" => "success", "message" => "Donation approved"]);
+
+            $adminStmt = $conn->prepare("SELECT AdminID FROM admin WHERE email = ?");
+            $adminStmt->bind_param("s", $adminEmail);
+            $adminStmt->execute();
+            $adminResult = $adminStmt->get_result();
+
+            if ($adminRow = $adminResult->fetch_assoc()) {
+                $adminID = $adminRow['AdminID'];
+
+                $stmt = $conn->prepare("UPDATE `donation` SET `isVerified` = 1, `approvedBy` = ? WHERE `DonationID` = ?");
+                $stmt->bind_param("ii", $adminID, $DonationID);
+
+                if ($stmt->execute()) {
+                    echo json_encode(["status" => "success", "message" => "Donation approved"]);
+                } else {
+                    echo json_encode(["status" => "error", "message" => "Failed to update donation", "error" => $stmt->error]);
+                }
+
+                $stmt->close();
+            } else {
+                echo json_encode(["status" => "error", "message" => "Admin email not found"]);
+            }
+            $adminStmt->close();
             exit;
-        } else {
-            
-            $deleteStmt = $conn->prepare("DELETE FROM donation WHERE DonationID = ?");
-            $deleteStmt->bind_param("i", $DonationID);
-            $deleteStmt->execute();
-
+        }
+        if ($isVerified == 0) {
             $deletedAt = date("Y-m-d H:i:s");
-            $logStmt = $conn->prepare("INSERT INTO DeletedItems (DonationID, deletedBy, deleted_at) VALUES (?, ?, ?)");
+            $logStmt = $conn->prepare("INSERT INTO `deleteditems`(`DonationID`, `deletedBy`, `deletedAt`) VALUES (?, ?, ?)");
             $logStmt->bind_param("iss", $DonationID, $adminEmail, $deletedAt);
-            $logStmt->execute();
 
-            echo json_encode(["status" => "success", "message" => "Donation rejected and logged"]);
+            if ($logStmt->execute()) {
+                $deleteStmt = $conn->prepare("DELETE FROM `donation` WHERE `DonationID` = ?");
+                $deleteStmt->bind_param("i", $DonationID);
+
+                if ($deleteStmt->execute()) {
+                    echo json_encode(["status" => "success", "message" => "Donation rejected, logged, and deleted"]);
+                } else {
+                    echo json_encode(["status" => "error", "message" => "Failed to delete donation", "error" => $deleteStmt->error]);
+                }
+
+                $deleteStmt->close();
+            } else {
+                echo json_encode(["status" => "error", "message" => "Failed to log deleted donation", "error" => $logStmt->error]);
+            }
+
+            $logStmt->close();
             exit;
         }
     } else {
