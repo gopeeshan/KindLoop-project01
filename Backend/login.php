@@ -31,6 +31,12 @@ $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 
 if ($user && password_verify($password, $user["password"])) {
+    if($user["active_state"]=== "suspend"){
+        echo json_encode([
+            "status" => "error" ,
+            "message" => "Your account has been blocked due to inappropriate activities." ]);
+            exit();
+    } elseif ($user["active_state"] === "active") {
     echo json_encode([
         "status" => "success", 
         "message" => "Login successful",
@@ -39,6 +45,10 @@ if ($user && password_verify($password, $user["password"])) {
             "email" => $user["email"]
         ]
     ]);
+    exit();
+    } else {
+    echo json_encode(["status" => "error", "message" => "Unknown account status."]);
+}
 } else {
     echo json_encode(["status" => "error", "message" => "Invalid email or password"]);
 }
