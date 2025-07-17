@@ -10,6 +10,8 @@ import { CheckCircle, XCircle, Clock, Search, User, Package, AlertTriangle,LogOu
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from 'react-router-dom'; 
 import axios from 'axios';
+import {Dialog,DialogContent, DialogHeader,DialogTitle,DialogDescription,DialogFooter} from "@/components/ui/dialog";
+
 
 interface User {
   userID: number;
@@ -36,6 +38,7 @@ interface Verification {
   DonationID: number;
   title: string;
   userID: number;
+  userName: string;
   category: string;
   condition: string;
   images: string[];
@@ -54,7 +57,9 @@ const Admin= () => {
   const [users, setUsers] = useState<User[]>([]);
   const [donations, setDonations] = useState<Donation[]>([]);
   const [PendingVerifications, setPendingVerifications] = useState<Verification[]>([]);
-   
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
   useEffect(() => {
     const adminLoggedIn = localStorage.getItem('isAdminLoggedIn');
     if (adminLoggedIn === 'true') {
@@ -137,6 +142,15 @@ const Admin= () => {
     });
   };
 
+  const handleViewUser = (userID: number) => {
+  const user = users.find(u => u.userID === userID);
+  if (user) {
+    setSelectedUser(user);
+    setIsDialogOpen(true);
+  }
+};
+
+
   const getStatusBadge = (active_state: string) => {
     switch (active_state) {
       case "active":
@@ -161,14 +175,6 @@ const Admin= () => {
       minute: '2-digit'
     });
   };
-
-  // const sortedPendingVerifications = Array.isArray(PendingVerifications)
-  //   ? PendingVerifications
-  //       .filter((item) => item.isVerified === 0)
-  //       .sort((a, b) =>
-  //         new Date(a.date_time).getTime() - new Date(b.date_time).getTime()
-  //       )
-  //   : [];
 
    // Show loading or redirect if not authenticated
   if (!isAuthenticated) {
@@ -259,8 +265,8 @@ const Admin= () => {
                         <div className="space-y-2">
                           <h3 className="font-semibold text-lg">{v.title}</h3>
                           <p className="text-sm text-muted-foreground">{v.condition}</p>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span>DonorID: {v.userID}</span>
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                            <span>Donor: {v.userName}</span>
                             <span>Category: {v.category}</span>
                           </div>
                           <p className="text-xs text-muted-foreground">
@@ -292,6 +298,8 @@ const Admin= () => {
               </CardContent>
             </Card>
           </TabsContent>
+          
+          
 
           <TabsContent value="users" className="space-y-6">
             <Card>
@@ -322,7 +330,11 @@ const Admin= () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {users.map((user) => (
+                    {users.filter((user) =>
+                      user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      user.district.toLowerCase().includes(searchTerm.toLowerCase())
+                    ).map((user) => (
                       <TableRow key={user.userID} className="hover:bg-muted">
                         <TableCell className="font-medium">{user.fullName}</TableCell>
                         <TableCell>{user.email}</TableCell>
@@ -336,7 +348,7 @@ const Admin= () => {
                             <Button 
                               size="sm" 
                               variant="outline"
-                              onClick={() => handleUserAction(user.userID, 'view')}
+                              onClick={() => handleViewUser(user.userID)}
                             >
                               View
                             </Button>
@@ -399,6 +411,50 @@ const Admin= () => {
               </CardContent>
             </Card>
           </TabsContent>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>User Details</DialogTitle>
+                <DialogDescription>Read-only user information</DialogDescription>
+              </DialogHeader>
+
+              {selectedUser && (
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <p><strong>Full Name:</strong> {selectedUser.fullName}</p>
+                  <p><strong>Email:</strong> {selectedUser.email}</p>
+                  <p><strong>Occupation:</strong> {selectedUser.occupation}</p>
+                  <p><strong>District:</strong> {selectedUser.district}</p>
+                  <p><strong>Credit Points:</strong> {selectedUser.credit_points}</p>
+                  <p><strong>Status:</strong> {selectedUser.active_state}</p>
+                  {/* <p><strong>Donation History:</strong> 
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Title</th>
+                          <th>Amount</th>
+                          <th>Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedUser.donationHistory.map((donation) => (
+                          <tr key={donation.id}>
+                            <td>{donation.title}</td>
+                            <td>{donation.amount}</td>
+                            <td>{donation.date}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </p> */}
+                  <p><strong>Status:</strong> {selectedUser.active_state}</p>
+                </div>
+              )}
+
+              <DialogFooter>
+                <Button onClick={() => setIsDialogOpen(false)}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </Tabs>
       </div>
     </div>

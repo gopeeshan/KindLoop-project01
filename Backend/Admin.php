@@ -29,7 +29,7 @@ if ($donationResult->num_rows > 0) {
 }
 
 $pendingVerifications = [];
-$verificationResult = $conn->query("SELECT DonationID,title,userID,category,`condition`,images,date_time,isVerified,approvedBy FROM donation WHERE isVerified = 0");
+$verificationResult = $conn->query("SELECT donation.DonationID,donation.title,donation.userID,user.fullName AS userName,donation.`condition`,donation.category,donation.images,donation.date_time,donation.isVerified,donation.approvedBy FROM donation JOIN user ON donation.userID = user.userID WHERE donation.isVerified = 0 ORDER BY date_time");
 if ($verificationResult->num_rows > 0) {
     while ($row = $verificationResult->fetch_assoc()) {
         $row['images'] = json_decode($row['images'] ?? '[]', true);
