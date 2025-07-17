@@ -9,7 +9,8 @@ $conn = new mysqli("localhost", "root", "", "kindloop");
 if ($conn->connect_error) {
     die(json_encode(["status" => "error", "message" => "Database connection failed: " . $conn->connect_error]));
 }
-$sql_01 = "SELECT userID,fullName,email,occupation,district,credit_points,active_state FROM user";
+$sql_01 = "SELECT u.userID, u.fullName, u.email, u.occupation, u.district, u.credit_points, u.active_state, COUNT(d.DonationID) AS donation_count
+FROM user u LEFT JOIN donation d ON u.userID = d.userID GROUP BY u.userID, u.fullName, u.email ORDER BY donation_count DESC";
 $userResult = $conn->query($sql_01);
 
 $users = [];

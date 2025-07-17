@@ -21,7 +21,7 @@ interface User {
   district: string;
   credit_points: number;
   active_state: string;
-  //donations: number;
+  donation_count: number;
 }
 
 interface Donation {
@@ -342,7 +342,7 @@ const Admin= () => {
                         <TableCell>{user.district}</TableCell>
                         <TableCell>{user.credit_points}</TableCell>
                         <TableCell>{user.active_state}</TableCell>
-                        <TableCell>{}</TableCell>
+                        <TableCell>{user.donation_count}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
                             <Button 
@@ -426,6 +426,7 @@ const Admin= () => {
                   <p><strong>District:</strong> {selectedUser.district}</p>
                   <p><strong>Credit Points:</strong> {selectedUser.credit_points}</p>
                   <p><strong>Status:</strong> {selectedUser.active_state}</p>
+                  <p><strong>Donations:</strong> {selectedUser.donation_count}</p>
                   {/* <p><strong>Donation History:</strong> 
                     <table>
                       <thead>
@@ -445,8 +446,7 @@ const Admin= () => {
                         ))}
                       </tbody>
                     </table>
-                  </p> */}
-                  <p><strong>Status:</strong> {selectedUser.active_state}</p>
+                  // </p> */}
                 </div>
               )}
 
