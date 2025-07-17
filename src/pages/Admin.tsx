@@ -115,12 +115,26 @@ const Admin= () => {
     });
   };
 
-  const handleUserAction = (userID: number, action: string) => {
-    toast({
-      title: `User ${action}`,
-      description: `User action completed successfully.`,
+  const handleUserAction = (userID: number, active_state: string) => {
+
+    axios.post("http://localhost/KindLoop-project01/Backend/Admin.php", {
+      action: "user_action",
+      userID,
+      active_state,
+    }).then(() => {
+      toast({
+        title: `User ${active_state}`,
+        description: `User action completed successfully.`,
+      });
+      window.location.reload();
+      //console.log(`User ${userID} ${active_state}`);
+    })
+    .catch((error) => {
+      toast({
+        title: "Error",
+        description: "Failed to perform user action.",
+      });
     });
-    console.log(`User ${userID  } ${action}`);
   };
 
   const getStatusBadge = (active_state: string) => {
@@ -329,9 +343,9 @@ const Admin= () => {
                             <Button 
                               size="sm" 
                               variant={user.active_state === 'suspend' ? 'default' : 'destructive'}
-                              onClick={() => handleUserAction(user.userID, user.active_state === 'suspend' ? 'activate' : 'suspend')}
+                              onClick={() => handleUserAction(user.userID, user.active_state === 'suspend' ? 'active' : 'suspend')}
                             >
-                              {user.active_state === 'suspend' ? 'Activate' : 'Suspend'}
+                              {user.active_state === 'suspend' ? 'active' : 'suspend'}
                             </Button>
                           </div>
                         </TableCell>

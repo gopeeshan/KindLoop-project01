@@ -47,6 +47,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $DonationID = $input['DonationID'] ?? null;
     $isVerified = $input['isVerified'] ?? null;
     $adminEmail = $input['adminEmail'] ?? 'unknown';
+    $userID = $input['userID'] ?? null;
+    $active_state = $input['active_state'] ?? null;
 
 
 
@@ -78,9 +80,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
         if ($isVerified == 0) {
-            $deletedAt = date("Y-m-d H:i:s");
-            $logStmt = $conn->prepare("INSERT INTO `deleteditems`(`DonationID`, `deletedBy`, `deletedAt`) VALUES (?, ?, ?)");
-            $logStmt->bind_param("iss", $DonationID, $adminEmail, $deletedAt);
+            // $deletedAt = date("Y-m-d H:i:s");
+            $logStmt = $conn->prepare("INSERT INTO `deleteditems`(`DonationID`, `deletedBy`) VALUES (?, ?)");
+            $logStmt->bind_param("is", $DonationID, $adminEmail);
 
             if ($logStmt->execute()) {
                 $deleteStmt = $conn->prepare("DELETE FROM `donation` WHERE `DonationID` = ?");
@@ -100,11 +102,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $logStmt->close();
             exit;
         }
+    } elseif($action === 'user_action' && $userID !== null && $active_state !== null) {
+        $stmt = $conn->prepare("UPDATE `user` SET `active_state` = ? WHERE `userID` = ?");
+        $stmt->bind_param("si", $active_state, $userID);
+
+        if ($stmt->execute()) {
+            echo json_encode(["status" => "success", "message" => "User status updated"]);
+        } else {
+            echo json_encode(["status" => "error", "message" => "Failed to update user status", "error" => $stmt->error]);
+            
+        }
+
+        $stmt->close();
+        exit;
     } else {
         echo json_encode(["status" => "error", "message" => "Invalid request"]);
         exit;
     }
 }
+
 
 
 echo json_encode([
