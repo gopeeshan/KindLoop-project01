@@ -20,9 +20,11 @@ $sql = "SELECT
     donation.`condition`, 
     donation.images, 
     donation.date_time, 
-    donation.isVerified
+    donation.isVerified,
+    donation.setVisible
 FROM donation
 JOIN user ON donation.userID = user.userID
+WHERE donation.setVisible = 1
 ORDER BY donation.date_time DESC";
 
 

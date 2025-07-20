@@ -31,7 +31,8 @@ interface Donation {
   category: string;
   date_time: string;
   isVerified: number;
-  isDonationCompleted: boolean;
+  isDonationCompleted: number;
+  setVisible: number;
 }
 
 interface Verification {
@@ -45,6 +46,7 @@ interface Verification {
   date_time: string;
   isVerified: number;
   approvedBy: string;
+  setVisible: number;
 }
 
 
@@ -94,8 +96,9 @@ const Admin= () => {
     navigate('/Admin_login');
   };
 
-  const handleVerifyDonation = (DonationID: number, isVerified: number) => {
+  const handleVerifyDonation = (DonationID: number, isVerified: number ,setVisible: number) => {
    console.log(`Verifying donation ${DonationID} with status ${isVerified} and adminEmail ${localStorage.getItem('adminEmail')}`);
+   console.log(`Setting visibility to ${setVisible}`);
     const adminEmail = localStorage.getItem('adminEmail');
     const action = isVerified === 1 ? "approved" : "rejected";
 
@@ -104,13 +107,14 @@ const Admin= () => {
       DonationID,
       isVerified,
       adminEmail,
+      setVisible,
     })
     .then(() => {
       toast({
         title: `Donation ${action}`,
         description: `The donation has been ${action} successfully.`,
       });
-       window.location.reload();
+     window.location.reload();
     })
     .catch((error) => {
       toast({
@@ -149,7 +153,26 @@ const Admin= () => {
     setIsDialogOpen(true);
   }
 };
-
+  const handleDonation=(DonationID:number)=>{
+    console.log(`Removing donation with ID: ${DonationID}`);
+    axios.post("http://localhost/KindLoop-project01/Backend/Admin.php", {
+      action: "remove_donation",
+      DonationID,
+    })
+    .then(() => {
+      toast({
+        title: "Donation Removed",
+        description: "The donation has been removed successfully.",
+      });
+      window.location.reload();
+    })
+    .catch((error) => {
+      toast({
+        title: "Error",
+        description: "Failed to remove donation.",
+      });
+    });
+  }
 
   const getStatusBadge = (active_state: string) => {
     switch (active_state) {
@@ -273,11 +296,17 @@ const Admin= () => {
                             Submitted: {formatDate(v.date_time)}
                           </p>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-3">
+                          <Button
+                            size="sm"
+                            onClick={() => ""}
+                          ><CheckCircle className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
                           <Button 
                             size="sm" 
                             className="bg-green-600 hover:bg-green-700"
-                            onClick={() => handleVerifyDonation(v.DonationID, 1)}
+                            onClick={() => handleVerifyDonation(v.DonationID, 1 ,1)}
                           >
                             <CheckCircle className="h-4 w-4 mr-1" />
                             Approve
@@ -285,7 +314,7 @@ const Admin= () => {
                           <Button 
                             size="sm" 
                             variant="destructive"
-                            onClick={() => handleVerifyDonation(v.DonationID, 0)}
+                            onClick={() => handleVerifyDonation(v.DonationID, 0 ,0)}
                           >
                             <XCircle className="h-4 w-4 mr-1" />
                             Reject
@@ -393,13 +422,13 @@ const Admin= () => {
                         <TableCell>{donation.userID}</TableCell>
                         <TableCell>{donation.category}</TableCell>
                         <TableCell>{donation.date_time}</TableCell>
-                        <TableCell>{donation.isDonationCompleted ? 'Completed' : 'Pending'}</TableCell>
+                        <TableCell>{donation.isDonationCompleted == 1 ? 'Completed' : 'Pending'}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline">
+                            <Button size="sm" variant="outline" onClick={()=>""}>
                               View
                             </Button>
-                            <Button size="sm" variant="destructive">
+                            <Button size="sm" variant="destructive" onClick={() => handleDonation(donation.DonationID)}>
                               Remove
                             </Button>
                           </div>
