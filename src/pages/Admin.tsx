@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from 'react-router-dom'; 
 import axios from 'axios';
 import {Dialog,DialogContent, DialogHeader,DialogTitle,DialogDescription,DialogFooter} from "@/components/ui/dialog";
+import set from 'node_modules/react-hook-form/dist/utils/set';
 
 
 interface User {
@@ -28,11 +29,17 @@ interface Donation {
   DonationID: number;
   title: string;
   userID: number;
+  description: string;
+  images: string[];
   category: string;
+  condition: string;
+  location: string;
   date_time: string;
   isVerified: number;
   isDonationCompleted: number;
   setVisible: number;
+  ReceiverID: number;
+  approvedBy: string;
 }
 
 interface Verification {
@@ -61,6 +68,7 @@ const Admin= () => {
   const [PendingVerifications, setPendingVerifications] = useState<Verification[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null);
 
   useEffect(() => {
     const adminLoggedIn = localStorage.getItem('isAdminLoggedIn');
@@ -150,6 +158,7 @@ const Admin= () => {
   const user = users.find(u => u.userID === userID);
   if (user) {
     setSelectedUser(user);
+    setSelectedDonation(null);
     setIsDialogOpen(true);
   }
 };
@@ -174,6 +183,14 @@ const Admin= () => {
     });
   }
 
+  const handleViewDonation = (DonationID: number) => {
+    const donation = donations.find(d => d.DonationID === DonationID);
+    if (donation) {
+      setSelectedDonation(donation);
+      setSelectedUser(null); 
+      setIsDialogOpen(true);
+    }
+  };
   const getStatusBadge = (active_state: string) => {
     switch (active_state) {
       case "active":
@@ -299,7 +316,7 @@ const Admin= () => {
                         <div className="flex gap-3">
                           <Button
                             size="sm"
-                            onClick={() => ""}
+                            onClick={() => handleViewDonation(v.DonationID)}
                           ><CheckCircle className="h-4 w-4 mr-1" />
                             View
                           </Button>
@@ -425,7 +442,7 @@ const Admin= () => {
                         <TableCell>{donation.isDonationCompleted == 1 ? 'Completed' : 'Pending'}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline" onClick={()=>""}>
+                            <Button size="sm" variant="outline" onClick={()=>handleViewDonation(donation.DonationID)}>
                               View
                             </Button>
                             <Button size="sm" variant="destructive" onClick={() => handleDonation(donation.DonationID)}>
@@ -440,12 +457,17 @@ const Admin= () => {
               </CardContent>
             </Card>
           </TabsContent>
+          
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>User Details</DialogTitle>
-                <DialogDescription>Read-only user information</DialogDescription>
-              </DialogHeader>
+              <DialogTitle>
+                {selectedUser ? "User Details" : selectedDonation ? "Donation Details" : "Details"}
+              </DialogTitle>
+              <DialogDescription>
+                {selectedUser ? "Read-only user information" : selectedDonation ? "Donation item details" : ""}
+              </DialogDescription>
+            </DialogHeader>
 
               {selectedUser && (
                 <div className="space-y-2 text-sm text-muted-foreground">
@@ -477,6 +499,31 @@ const Admin= () => {
                     </table>
                   // </p> */}
                 </div>
+              )}
+
+              {selectedDonation && (
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p><strong>Title:</strong> {selectedDonation.title}</p>
+                <p><strong>Category:</strong> {selectedDonation.category}</p>
+                <p><strong>Condition:</strong> {selectedDonation.condition ?? "N/A"}</p>
+                <p><strong>Description:</strong> {selectedDonation.description ?? "N/A"}</p>
+                <p><strong>Location:</strong> {selectedDonation.location ?? "N/A"}</p>
+                <p><strong>Date:</strong> {formatDate(selectedDonation.date_time)}</p>
+                <p><strong>Verified:</strong> {selectedDonation.isVerified==1 ? "Yes" : "No"}</p>
+                <p><strong>Visible:</strong> {selectedDonation.setVisible==1 ? "Yes" : "No"}</p>
+                <p><strong>Status:</strong> {selectedDonation.isDonationCompleted==1 ? "Completed" : "Pending"}</p>
+                <p><strong>Approved By:</strong> {selectedDonation.approvedBy ?? "N/A"}</p>
+                {selectedDonation.images && selectedDonation.images.length > 0 && (
+                  <div>
+                    <strong>Images:</strong>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      {selectedDonation.images.map((img, idx) => (
+                        <img key={idx} src={img} alt={`Donation ${idx}`} className="w-full h-32 object-cover rounded-md" />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
               )}
 
               <DialogFooter>
