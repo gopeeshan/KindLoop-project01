@@ -4,29 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  ArrowLeft,
-  Edit,
-  Gift,
-  Heart,
-  Star,
-  CheckCircle,
-  AlertTriangle,
-  LogOut,
-} from "lucide-react";
+import {AlertDialog,AlertDialogAction,AlertDialogCancel,AlertDialogContent,AlertDialogDescription,AlertDialogFooter,AlertDialogHeader,AlertDialogTitle,AlertDialogTrigger,} from "@/components/ui/alert-dialog";
+import {ArrowLeft,Edit, Gift,Heart,Star,CheckCircle,AlertTriangle,LogOut,} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -52,20 +34,20 @@ const Profile = () => {
     const email = localStorage.getItem("userEmail");
     if (!email) return;
 
-    fetch(
+    axios.get(
       `http://localhost/KindLoop-project01/Backend/profile.php?email=${encodeURIComponent(
         email
       )}`
     )
-      .then((res) => res.json())
-      .then((data) => {
+      .then((res) => {
+        const data = res.data;
         setUser(data);
         setFormData(data);
         setDonationHistory(data.donationHistory || []);
         setReceivedHistory(data.receivedHistory || []);
         setToBeReceivedItems(data.toBeReceived || []);
       })
-      .catch((err) => console.error("Failed to fetch user data", err));
+      .catch((err) => console.log("Failed to fetch user data", err));
   }, []);
 
   function handleInputChange(e) {

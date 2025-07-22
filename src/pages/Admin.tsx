@@ -11,8 +11,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from 'react-router-dom'; 
 import axios from 'axios';
 import {Dialog,DialogContent, DialogHeader,DialogTitle,DialogDescription,DialogFooter} from "@/components/ui/dialog";
-import set from 'node_modules/react-hook-form/dist/utils/set';
-
 
 interface User {
   userID: number;
@@ -30,28 +28,32 @@ interface Donation {
   title: string;
   userID: number;
   description: string;
-  images: string[];
+  date_time: string;
   category: string;
   condition: string;
   location: string;
-  date_time: string;
+  images: string[];
   isVerified: number;
   isDonationCompleted: number;
-  setVisible: number;
   ReceiverID: number;
   approvedBy: string;
+  setVisible: number;
 }
 
 interface Verification {
-  DonationID: number;
+   DonationID: number;
   title: string;
   userID: number;
   userName: string;
+  description: string;
+  date_time: string;
   category: string;
   condition: string;
+  location: string;
   images: string[];
-  date_time: string;
   isVerified: number;
+  isDonationCompleted: number;
+  ReceiverID: number;
   approvedBy: string;
   setVisible: number;
 }

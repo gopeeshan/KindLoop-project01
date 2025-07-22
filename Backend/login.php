@@ -2,17 +2,11 @@
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 
-if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-    echo json_encode(["status" => "error", "message" => "Invalid request method"]);
-    exit();
-}
+require_once 'Main/user.php';
 
-$conn = new mysqli("localhost", "root", "", "kindloop");
-
-if ($conn->connect_error) {
-    die(json_encode(["error" => "Database connection failed"]));
-}
+$loginUser = new User();
 
 $data = json_decode(file_get_contents("php://input"), true);
 $email = $data["email"] ?? null;
@@ -22,35 +16,9 @@ if (!$email || !$password) {
     echo json_encode(["status" => "error", "message" => "Email and password are required"]);
     exit();
 }
+else{
+    $response = $loginUser->login($email, $password);
 
-$sql = "SELECT * FROM user WHERE email = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $email);
-$stmt->execute();
-$result = $stmt->get_result();
-$user = $result->fetch_assoc();
-
-if ($user && password_verify($password, $user["password"])) {
-    if($user["active_state"]=== "suspend"){
-        echo json_encode([
-            "status" => "error" ,
-            "message" => "Your account has been blocked due to inappropriate activities." ]);
-            exit();
-    } elseif ($user["active_state"] === "active") {
-    echo json_encode([
-        "status" => "success", 
-        "message" => "Login successful",
-        "user" => [
-            "id" => $user["userID"],
-            "email" => $user["email"]
-        ]
-    ]);
-    exit();
-    } else {
-    echo json_encode(["status" => "error", "message" => "Unknown account status."]);
+    echo json_encode($response);
 }
-} else {
-    echo json_encode(["status" => "error", "message" => "Invalid email or password"]);
-}
-$conn->close();
 ?>

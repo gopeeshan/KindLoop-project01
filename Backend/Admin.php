@@ -3,12 +3,11 @@ header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 header("Access-Control-Allow-Headers: Content-Type");
 
+require_once 'Main/dbc.php';
 
-$conn = new mysqli("localhost", "root", "", "kindloop");
+$db = new DBconnector();
+$conn = $db->connect();
 
-if ($conn->connect_error) {
-    die(json_encode(["status" => "error", "message" => "Database connection failed: " . $conn->connect_error]));
-}
 $sql_01 = "SELECT u.userID, u.fullName, u.email, u.occupation, u.district, u.credit_points, u.active_state, COUNT(d.DonationID) AS donation_count
 FROM user u LEFT JOIN donation d ON u.userID = d.userID GROUP BY u.userID, u.fullName, u.email ORDER BY donation_count DESC";
 $userResult = $conn->query($sql_01);
