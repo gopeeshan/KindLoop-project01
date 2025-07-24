@@ -27,6 +27,7 @@ interface Donation {
   DonationID: number;
   title: string;
   userID: number;
+  userName: string;
   description: string;
   date_time: string;
   category: string;
@@ -35,7 +36,7 @@ interface Donation {
   images: string[];
   isVerified: number;
   isDonationCompleted: number;
-  ReceiverID: number;
+  receiverID: number;
   approvedBy: string;
   setVisible: number;
 }
@@ -164,26 +165,26 @@ const Admin= () => {
     setIsDialogOpen(true);
   }
 };
-  const handleDonation=(DonationID:number)=>{
-    console.log(`Removing donation with ID: ${DonationID}`);
-    axios.post("http://localhost/KindLoop-project01/Backend/Admin.php", {
-      action: "remove_donation",
-      DonationID,
-    })
-    .then(() => {
-      toast({
-        title: "Donation Removed",
-        description: "The donation has been removed successfully.",
-      });
-      window.location.reload();
-    })
-    .catch((error) => {
-      toast({
-        title: "Error",
-        description: "Failed to remove donation.",
-      });
-    });
-  }
+  // const handleDonation=(DonationID:number)=>{
+  //   console.log(`Removing donation with ID: ${DonationID}`);
+  //   axios.post("http://localhost/KindLoop-project01/Backend/Admin.php", {
+  //     action: "remove_donation",
+  //     DonationID,
+  //   })
+  //   .then(() => {
+  //     toast({
+  //       title: "Donation Removed",
+  //       description: "The donation has been removed successfully.",
+  //     });
+  //     window.location.reload();
+  //   })
+  //   .catch((error) => {
+  //     toast({
+  //       title: "Error",
+  //       description: "Failed to remove donation.",
+  //     });
+  //   });
+  // }
 
   const handleViewDonation = (DonationID: number) => {
     const donation = donations.find(d => d.DonationID === DonationID);
@@ -417,7 +418,7 @@ const Admin= () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="donations" className="space-y-6">
+          <TabsContent value="donations" className="space-y-7">
             <Card>
               <CardHeader>
                 <CardTitle>Donation Management</CardTitle>
@@ -438,18 +439,19 @@ const Admin= () => {
                     {donations.map((donation) => (
                       <TableRow key={donation.DonationID}>
                         <TableCell className="font-medium">{donation.title}</TableCell>
-                        <TableCell>{donation.userID}</TableCell>
+                        <TableCell>{donation.userName}</TableCell>
                         <TableCell>{donation.category}</TableCell>
                         <TableCell>{donation.date_time}</TableCell>
                         <TableCell>{donation.isDonationCompleted == 1 ? 'Completed' : 'Pending'}</TableCell>
+                        <TableCell>{donation.isVerified == 1 ? 'Verified' : 'Unverified'}</TableCell>
                         <TableCell>
-                          <div className="flex gap-2">
+                          <div className="flex gap-1">
                             <Button size="sm" variant="outline" onClick={()=>handleViewDonation(donation.DonationID)}>
                               View
                             </Button>
-                            <Button size="sm" variant="destructive" onClick={() => handleDonation(donation.DonationID)}>
+                            {/* <Button size="sm" variant="destructive" onClick={() => handleDonation(donation.DonationID)}>
                               Remove
-                            </Button>
+                            </Button> */}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -511,10 +513,11 @@ const Admin= () => {
                 <p><strong>Description:</strong> {selectedDonation.description ?? "N/A"}</p>
                 <p><strong>Location:</strong> {selectedDonation.location ?? "N/A"}</p>
                 <p><strong>Date:</strong> {formatDate(selectedDonation.date_time)}</p>
-                <p><strong>Verified:</strong> {selectedDonation.isVerified==1 ? "Yes" : "No"}</p>
-                <p><strong>Visible:</strong> {selectedDonation.setVisible==1 ? "Yes" : "No"}</p>
+                <p><strong>Verification:</strong> {selectedDonation.isVerified==1 ? "Verified" : "Unverified"}</p>
+                <p><strong>Visible:</strong> {selectedDonation.setVisible==1 ? "Public" : "Private"}</p>
                 <p><strong>Status:</strong> {selectedDonation.isDonationCompleted==1 ? "Completed" : "Pending"}</p>
                 <p><strong>Approved By:</strong> {selectedDonation.approvedBy ?? "N/A"}</p>
+                <p><strong>Receiver:</strong> {selectedDonation.receiverID ?? "N/A"}</p>
                 {selectedDonation.images && selectedDonation.images.length > 0 && (
                   <div>
                     <strong>Images:</strong>
