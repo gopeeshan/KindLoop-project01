@@ -98,12 +98,19 @@ const Profile = () => {
     navigate("/");
   };
 
-  const handleConfirmReceived = (itemId: number) => {
-    setToBeReceivedItems((items) => items.filter((item) => item.id !== itemId));
-
-    toast({
-      title: "Item Confirmed",
-      description: "Thank you for confirming receipt of your item!",
+  const handleConfirmReceived = (DonationID: number) => {
+    setToBeReceivedItems((items) => items.filter((item) => item.DonationID !== DonationID));
+      axios.post(
+      "http://localhost/KindLoop-project01/Backend/profile.php",
+      {
+        action: "confirm_received",
+        DonationID: DonationID,
+      }
+    ).then(() => {
+      toast({
+        title: "Item Confirmed",
+        description: "Thank you for confirming receipt of your item!",
+      });
     });
   };
 
@@ -206,12 +213,25 @@ const Profile = () => {
                         <div className="flex items-center space-x-3">
                           <Badge
                             variant={
-                              donation.status === "Completed"
+                              donation.isVerified === 1
                                 ? "default"
                                 : "secondary"
                             }
                           >
-                            {donation.status}
+                            {donation.isVerified == 1
+                              ? "Verified"
+                              : "Unverified"}
+                          </Badge>
+                          <Badge
+                            variant={
+                              donation.isDonationCompleted === 1
+                                ? "default"
+                                : "secondary"
+                            }
+                          >
+                            {donation.isDonationCompleted === 1
+                              ? "Completed"
+                              : "Pending"}
                           </Badge>
                           <span className="text-sm font-medium">
                             +{donation.credits} credits
@@ -237,16 +257,16 @@ const Profile = () => {
                   <div className="space-y-4">
                     {receivedHistory.map((item) => (
                       <div
-                        key={item.id}
+                        key={item.DonationID}
                         className="flex items-center justify-between p-4 border rounded-lg"
                       >
                         <div className="flex-1">
                           <h3 className="font-semibold">{item.title}</h3>
                           <p className="text-sm text-muted-foreground">
-                            From {item.donor} • {item.date}
+                            From {item.donor} • {item.received_date}
                           </p>
                         </div>
-                        {/* <Badge variant="default">{item.status}</Badge> */}
+                        {/* <Badge variant="default">{item.isDonationCompleted === 1 ? "Completed" : "Pending"}</Badge> */}
                       </div>
                     ))}
                   </div>
@@ -316,7 +336,7 @@ const Profile = () => {
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() =>
-                                      handleConfirmReceived(item.id)
+                                      handleConfirmReceived(item.DonationID)
                                     }
                                   >
                                     Confirm Receipt

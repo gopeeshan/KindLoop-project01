@@ -41,9 +41,19 @@ if ($method === "GET") {
   echo json_encode($user);
    exit;
 }
+if ($method === 'POST') {
+    $input = json_decode(file_get_contents('php://input'), true);
 
+    $action = $input['action'] ?? '';
+    $DonationID = $input['DonationID'] ?? null;
 
+   if ($action === 'confirm_received' && $DonationID !== null) {
+       $profile->confirmReceived($DonationID);
+       echo json_encode(["success" => true]);
+       exit;
+   }
 
+}
 // PUT request to update user info
 elseif ($method === "PUT") {
     // Read input JSON body

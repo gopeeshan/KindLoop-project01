@@ -6,6 +6,7 @@ class Profile{
     private $conn;
     protected $email;
     protected $userID;
+    protected $DonationID;
 
     public function __construct() {
         $db = new DBconnector();
@@ -35,21 +36,23 @@ class Profile{
     public function getDonationHistory($userID) {
         $this->userID = $userID;
         $donationHistory = [];
-        $stmt = $this->conn->prepare("SELECT donation.DonationID, donation.title, donation.date_time, donation.category , donation.credits,
+        // $stmt = $this->conn->prepare("SELECT donation.DonationID, donation.title, donation.date_time, donation.category , donation.credits,
 
-        CASE
-            WHEN donation.isDonationCompleted = 1 THEN 'Completed'
-            ELSE 'Pending'
-        END AS status,
+        // CASE
+        //     WHEN donation.isDonationCompleted = 1 THEN 'Completed'
+        //     ELSE 'Pending'
+        // END AS status,
 
-        CASE
-            WHEN donation.isVerified = 1 THEN 'Verified'
-            ELSE 'Not Verified'
-        END AS verification
+        // CASE
+        //     WHEN donation.isVerified = 1 THEN 'Verified'
+        //     ELSE 'Not Verified'
+        // END AS verification
         
-        FROM donation
-        WHERE donation.userID = ?");
-        
+        // FROM donation
+        // WHERE donation.userID = ?");
+        $stmt= $this->conn->prepare("SELECT donation.DonationID, donation.title, donation.date_time, donation.category, donation.credits,donation.isDonationCompleted, donation.isVerified
+                                    FROM donation
+                                    WHERE donation.userID = ?");
         $stmt->bind_param("i", $userID);
         if ($stmt->execute()) {
             $donationHistory = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -87,7 +90,17 @@ class Profile{
         $stmt->close();
         return $toBeReceived;
     }
-    
+    public function confirmReceived($DonationID) {
+        $this->DonationID = $DonationID;
+        $stmt = $this->conn->prepare("UPDATE donation SET isDonationCompleted = 1 WHERE DonationID = ?");
+        $stmt->bind_param("i", $this->DonationID);
+        if ($stmt->execute()) {
+            return ["success" => true];
+        } else {
+            return ["error" => "Failed to confirm receipt."];
+        }
+    }
+
     public function updateUserInfo($userID, $fullName, $contactNumber, $occupation, $address) {
         $stmt = $this->conn->prepare("UPDATE user SET fullName = ?, contactNumber = ?, occupation = ?, address = ? WHERE userID = ?");
         $stmt->bind_param("ssssi", $fullName, $contactNumber, $occupation, $address, $userID);
