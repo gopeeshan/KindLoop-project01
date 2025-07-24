@@ -57,27 +57,34 @@ const Profile = () => {
 
   const handleSave = async () => {
     try {
-      const response = await fetch(
-        `http://localhost/KindLoop-project01/Backend/profile.php?userID=${user.userID}`,
+      const response = await axios.put(
+        "http://localhost/KindLoop-project01/Backend/profile.php",
         {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
+          // method: "PUT",
+          // headers: {
+          //   "Content-Type": "application/json",
+          // },
+          // body: JSON.stringify(formData),
+          action: "update_profile",
+          userID: user.userID,
+          fullName: formData.fullName,
+          contactNumber: formData.contactNumber,
+          occupation: formData.occupation,
+          address: formData.address,
         }
       );
 
-      const result = await response.json();
+      const result = response.data;
 
-      if (!response.ok) {
+      if (!result || result.error) {
         throw new Error(result.error || "Failed to update profile.");
       }
       toast({
         title: "Profile Updated",
         description: "Your profile has been successfully updated.",
       });
-      navigate("/");
+      //navigate("/");
+      window.location.reload();
     } catch (error) {
       console.error("Error updating profile", error);
       toast({

@@ -52,12 +52,14 @@ if ($method === 'POST') {
        echo json_encode(["success" => true]);
        exit;
    }
-
 }
-// PUT request to update user info
+
 elseif ($method === "PUT") {
-    // Read input JSON body
+ 
     $input = json_decode(file_get_contents("php://input"), true);
+
+    $action = $input['action'] ?? '';
+    $userID = $input['userID'] ?? null;
 
     if (
         !isset($input["userID"]) || !isset($input["fullName"]) ||
@@ -74,6 +76,18 @@ elseif ($method === "PUT") {
         $input["occupation"],
         $input["address"]
     );
+     if ($result["status"] === "success") {
+        echo json_encode([
+            "success" => true,
+            "message" => $result["message"]
+        ]);
+    } else {
+        echo json_encode([
+            "error" => $result["message"]
+        ]);
+    }
+
+    exit;
 }
 
 else {
