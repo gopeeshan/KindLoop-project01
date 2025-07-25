@@ -142,7 +142,7 @@ const Donations = () => {
             </SelectContent>
           </Select>
 
-          <Select
+          {/* <Select
             value={verificationFilter}
             onValueChange={(value) => setVerificationFilter(value)}
           >
@@ -155,7 +155,7 @@ const Donations = () => {
               <SelectItem value="verified">Verified Only</SelectItem>
               <SelectItem value="unverified">Unverified Only</SelectItem>
             </SelectContent>
-          </Select>
+          </Select> */}
         </div>
 
         {/* Results */}
@@ -203,7 +203,7 @@ const Donations = () => {
                       </span>
                     </div>
                     <div className="absolute top-3 right-3">
-                      {donation.isVerified ? (
+                      {donation.isVerified == 1 ? (
                         <Badge variant="default" className="bg-green-500 text-white">
                           <CheckCircle className="h-3 w-3 mr-1" />
                           Verified
