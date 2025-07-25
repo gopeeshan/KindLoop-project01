@@ -62,10 +62,10 @@ class User {
             return ["status" => "error", "message" => "Email or NIC already registered."];
         }
         $stmtCheck->close();
+        // return ["status" => "success", "message" => "Credentials are available."];
     }
 
     public function signup($fullName, $email, $nic, $contactNumber, $occupation, $address, $district, $password) {
-        $password = password_hash($password, PASSWORD_DEFAULT);
 
         $sql = "INSERT INTO user (fullName, email, nic, contactNumber, occupation, address, district, password)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
