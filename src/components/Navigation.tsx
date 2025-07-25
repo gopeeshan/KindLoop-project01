@@ -33,17 +33,19 @@ const Navigation = () => {
               Home
             </a>
             <a
-              href="#browse"
-              className="text-muted-foreground hover:text-primary transition-colors"
-            >
-              Browse Items
-            </a>
-            <a
               href="#how-it-works"
               className="text-muted-foreground hover:text-primary transition-colors"
             >
               How It Works
             </a>
+
+            <a
+              href="#browse"
+              className="text-muted-foreground hover:text-primary transition-colors"
+            >
+              Browse Items
+            </a>
+            
 
             {isLoggedIn ? (
               <div className="flex items-center space-x-2">
@@ -91,17 +93,18 @@ const Navigation = () => {
                 Home
               </a>
               <a
-                href="#browse"
-                className="block px-3 py-2 text-muted-foreground hover:text-primary"
-              >
-                Browse Items
-              </a>
-              <a
                 href="#how-it-works"
                 className="block px-3 py-2 text-muted-foreground hover:text-primary"
               >
                 How It Works
               </a>
+              <a
+                href="#browse"
+                className="block px-3 py-2 text-muted-foreground hover:text-primary"
+              >
+                Browse Items
+              </a>
+              
 
               {isLoggedIn ? (
                 <div className="px-3 py-2">
