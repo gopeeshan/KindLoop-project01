@@ -8,6 +8,7 @@ import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,} from "@/comp
 import { ArrowLeft, MapPin } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
 
 const PostCreation = () => {
   const [title, setTitle] = useState("");
@@ -61,16 +62,11 @@ const PostCreation = () => {
     }
 
     try {
-      const response = await fetch(
+      const response = await axios.post(
         "http://localhost/KindLoop-project01/Backend/create-post.php",
-        {
-          method: "POST",
-          body: formData,
-        }
+        formData
       );
-
-      const data = await response.json();
-
+      const data = await response.data;
       if (data.status === "success") {
         toast({
           title: "Success",
