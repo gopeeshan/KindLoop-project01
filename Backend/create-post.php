@@ -3,17 +3,12 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=utf-8");
 
+require_once 'Main/create_post.php';
+
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     echo json_encode(["status" => "error", "message" => "Invalid request method"]);
     exit();
 }
-
-$conn = new mysqli("localhost", "root", "", "kindloop");
-
-if ($conn->connect_error) {
-    die(json_encode(["status" => "error", "message" => "Database connection failed: " . $conn->connect_error]));
-}
-
 $userID = $_POST['userID'] ?? null;
 $title = $_POST['title'] ?? null;
 $description = $_POST['description'] ?? null;
@@ -47,26 +42,6 @@ if (!empty($_FILES['images'])) {
 
 $imagesJson = json_encode($imagePaths);
 
-$sql = "INSERT INTO donation (userID, title, description, category, location, `condition`, images)
-        VALUES (?, ?, ?, ?, ?, ?, ?)";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param(
-    "issssss",
-    $userID,
-    $title,
-    $description,
-    $category,
-    $location,
-    $condition,
-    $imagesJson
-);
-
-if ($stmt->execute()) {
-    echo json_encode(["status" => "success", "message" => "Your post is posted successfully!"]);
-} else {
-    echo json_encode(["status" => "error", "message" => "Posting failed: " . $stmt->error]);
-}
-
-$stmt->close();
-$conn->close();
-?>
+$createPost = new CreatePost();
+$response = $createPost->createNewPost($userID, $title, $description, $category, $location, $condition, $imagesJson);
+echo json_encode($response);
