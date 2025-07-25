@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Recycle, ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -49,16 +50,25 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(
+      const response = await axios.post(
         "http://localhost/KindLoop-project01/Backend/Signup.php",
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          // method: "POST",
+          // headers: { "Content-Type": "application/json" },
+          // body: JSON.stringify(formData),
+          fullName: formData.fullName,
+          email: formData.email,
+          nic: formData.nic,
+          contactNumber: formData.contactNumber,
+          occupation: formData.occupation,
+          address: formData.address,
+          district: formData.district,
+          password: formData.password,
+          confirmPassword: formData.confirmPassword,
         }
       );
 
-      const data = await response.json();
+      const data = response.data;
 
       toast({
         title: data.status === "success" ? "Account Created" : "Signup Failed",

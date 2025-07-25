@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Recycle, ArrowLeft, AlertCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -21,16 +22,17 @@ const Login = () => {
     setError("");
 
     try {
-      const response = await fetch(
+      const response = await axios.post(
         "http://localhost/KindLoop-project01/Backend/login.php",
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+          // method: "POST",
+          // headers: { "Content-Type": "application/json" },
+          "email": email,
+          "password": password,
         }
       );
 
-      const data = await response.json();
+      const data = response.data;
 
       if (data.status === "success") {
         localStorage.setItem("isUserLoggedIn", "true");

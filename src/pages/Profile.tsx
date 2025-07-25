@@ -4,29 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  ArrowLeft,
-  Edit,
-  Gift,
-  Heart,
-  Star,
-  CheckCircle,
-  AlertTriangle,
-  LogOut,
-} from "lucide-react";
+import {AlertDialog,AlertDialogAction,AlertDialogCancel,AlertDialogContent,AlertDialogDescription,AlertDialogFooter,AlertDialogHeader,AlertDialogTitle,AlertDialogTrigger,} from "@/components/ui/alert-dialog";
+import {ArrowLeft,Edit, Gift,Heart,Star,CheckCircle,AlertTriangle,LogOut,} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -52,20 +34,20 @@ const Profile = () => {
     const email = localStorage.getItem("userEmail");
     if (!email) return;
 
-    fetch(
+    axios.get(
       `http://localhost/KindLoop-project01/Backend/profile.php?email=${encodeURIComponent(
         email
       )}`
     )
-      .then((res) => res.json())
-      .then((data) => {
+      .then((res) => {
+        const data = res.data;
         setUser(data);
         setFormData(data);
         setDonationHistory(data.donationHistory || []);
         setReceivedHistory(data.receivedHistory || []);
         setToBeReceivedItems(data.toBeReceived || []);
       })
-      .catch((err) => console.error("Failed to fetch user data", err));
+      .catch((err) => console.log("Failed to fetch user data", err));
   }, []);
 
   function handleInputChange(e) {
@@ -75,27 +57,34 @@ const Profile = () => {
 
   const handleSave = async () => {
     try {
-      const response = await fetch(
-        `http://localhost/KindLoop-project01/Backend/profile.php?userID=${user.userID}`,
+      const response = await axios.put(
+        "http://localhost/KindLoop-project01/Backend/profile.php",
         {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
+          // method: "PUT",
+          // headers: {
+          //   "Content-Type": "application/json",
+          // },
+          // body: JSON.stringify(formData),
+          action: "update_profile",
+          userID: user.userID,
+          fullName: formData.fullName,
+          contactNumber: formData.contactNumber,
+          occupation: formData.occupation,
+          address: formData.address,
         }
       );
 
-      const result = await response.json();
+      const result = response.data;
 
-      if (!response.ok) {
+      if (!result || result.error) {
         throw new Error(result.error || "Failed to update profile.");
       }
       toast({
         title: "Profile Updated",
         description: "Your profile has been successfully updated.",
       });
-      navigate("/");
+      //navigate("/");
+      window.location.reload();
     } catch (error) {
       console.error("Error updating profile", error);
       toast({
@@ -116,12 +105,19 @@ const Profile = () => {
     navigate("/");
   };
 
-  const handleConfirmReceived = (itemId: number) => {
-    setToBeReceivedItems((items) => items.filter((item) => item.id !== itemId));
-
-    toast({
-      title: "Item Confirmed",
-      description: "Thank you for confirming receipt of your item!",
+  const handleConfirmReceived = (DonationID: number) => {
+    setToBeReceivedItems((items) => items.filter((item) => item.DonationID !== DonationID));
+      axios.post(
+      "http://localhost/KindLoop-project01/Backend/profile.php",
+      {
+        action: "confirm_received",
+        DonationID: DonationID,
+      }
+    ).then(() => {
+      toast({
+        title: "Item Confirmed",
+        description: "Thank you for confirming receipt of your item!",
+      });
     });
   };
 
@@ -224,12 +220,25 @@ const Profile = () => {
                         <div className="flex items-center space-x-3">
                           <Badge
                             variant={
-                              donation.status === "Completed"
+                              donation.isVerified === 1
                                 ? "default"
                                 : "secondary"
                             }
                           >
-                            {donation.status}
+                            {donation.isVerified == 1
+                              ? "Verified"
+                              : "Unverified"}
+                          </Badge>
+                          <Badge
+                            variant={
+                              donation.isDonationCompleted === 1
+                                ? "default"
+                                : "secondary"
+                            }
+                          >
+                            {donation.isDonationCompleted === 1
+                              ? "Completed"
+                              : "Pending"}
                           </Badge>
                           <span className="text-sm font-medium">
                             +{donation.credits} credits
@@ -255,16 +264,16 @@ const Profile = () => {
                   <div className="space-y-4">
                     {receivedHistory.map((item) => (
                       <div
-                        key={item.id}
+                        key={item.DonationID}
                         className="flex items-center justify-between p-4 border rounded-lg"
                       >
                         <div className="flex-1">
                           <h3 className="font-semibold">{item.title}</h3>
                           <p className="text-sm text-muted-foreground">
-                            From {item.donor} • {item.date}
+                            From {item.donor} • {item.received_date}
                           </p>
                         </div>
-                        {/* <Badge variant="default">{item.status}</Badge> */}
+                        {/* <Badge variant="default">{item.isDonationCompleted === 1 ? "Completed" : "Pending"}</Badge> */}
                       </div>
                     ))}
                   </div>
@@ -334,7 +343,7 @@ const Profile = () => {
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() =>
-                                      handleConfirmReceived(item.id)
+                                      handleConfirmReceived(item.DonationID)
                                     }
                                   >
                                     Confirm Receipt
