@@ -72,6 +72,24 @@ const Admin= () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  const fetchAdminData = () => {
+  axios.get("http://localhost/KindLoop-project01/Backend/Admin.php")
+    .then((response) => {
+      const data = response.data;
+      if (data.status === "success") {
+        setUsers(data.users);
+        setDonations(data.donations);
+        setPendingVerifications(data.pendingVerifications);
+        console.log("Fetched data successfully");
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching data:", error);
+    });
+};
+
 
   useEffect(() => {
     const adminLoggedIn = localStorage.getItem('isAdminLoggedIn');
@@ -82,20 +100,24 @@ const Admin= () => {
       return;
     }
     
-    axios.get("http://localhost/KindLoop-project01/Backend/Admin.php")
-      .then((response) => {
-        const data = response.data;
-        if (data.status === "success") {
-          setUsers(data.users);
-          setDonations(data.donations);
-          setPendingVerifications(data.pendingVerifications);
-          console.log("Fetched data successfully");
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-      });
+    fetchAdminData();
   }, [navigate]);
+
+  // useEffect(() => {
+  //   axios.get("http://localhost/KindLoop-project01/Backend/Admin.php")
+  //     .then((response) => {
+  //       const data = response.data;
+  //       if (data.status === "success") {
+  //         setUsers(data.users);
+  //         setDonations(data.donations);
+  //         setPendingVerifications(data.pendingVerifications);
+  //         console.log("Fetched data successfully");
+  //       }
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error fetching data:", error);
+  //     });
+  //   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('isAdminLoggedIn');
@@ -125,7 +147,8 @@ const Admin= () => {
         title: `Donation ${action}`,
         description: `The donation has been ${action} successfully.`,
       });
-     window.location.reload();
+    // window.location.reload();
+      fetchAdminData(); 
     })
     .catch((error) => {
       toast({
@@ -146,8 +169,9 @@ const Admin= () => {
         title: `User ${active_state}`,
         description: `User action completed successfully.`,
       });
-      window.location.reload();
+      //window.location.reload();
       //console.log(`User ${userID} ${active_state}`);
+      fetchAdminData();
     })
     .catch((error) => {
       toast({
@@ -276,7 +300,7 @@ const Admin= () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="verification" className="space-y-6">
+        <Tabs defaultValue='verification'  className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="verification" className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
@@ -523,13 +547,31 @@ const Admin= () => {
                     <strong>Images:</strong>
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       {selectedDonation.images.map((img, idx) => (
-                        <img key={idx} src={img} alt={`Donation ${idx}`} className="w-full h-32 object-cover rounded-md" />
+                        <img key={idx}
+                         src={`http://localhost/KindLoop-project01/Backend/${img}`} 
+                         alt={`Donation ${idx}`} 
+                         className="w-full h-32 object-cover rounded-md cursor-pointer transition-transform hover:scale-105"
+                        onClick={() => setSelectedImage(`http://localhost/KindLoop-project01/Backend/${img}`)} />
                       ))}
                     </div>
                   </div>
                 )}
               </div>
               )}
+
+              <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+                <DialogContent className="max-w-3xl p-4">
+                  <img
+                    src={selectedImage ?? ""}
+                    alt="Full Size"
+                    className="max-w-[50vw] max-h-[50vh] w-auto h-auto mx-auto rounded-lg object-contain"
+
+                  />
+                  <DialogFooter>
+                    <Button onClick={() => setSelectedImage(null)}>Close</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
 
               <DialogFooter>
                 <Button onClick={() => setIsDialogOpen(false)}>Close</Button>
