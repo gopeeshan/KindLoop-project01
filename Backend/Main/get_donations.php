@@ -3,6 +3,7 @@
 
     class Donation {
         private $conn;
+        protected $donationID;
 
         public function __construct() {
             $db= new DBconnector();
@@ -41,6 +42,26 @@
                 return ["status" => "success", "data" => $donations];
             } else {
                 return ["status" => "error", "message" => "Failed to fetch donations"];
+            }
+        }
+
+        public function getDonationById($donationID) {
+            $this->donationID = $donationID;
+            $stmt = $this->conn->prepare("
+                SELECT *, user.fullName
+                FROM donation
+                JOIN user ON donation.userID = user.userID
+                WHERE donation.DonationID = ?
+            ");
+            $stmt->bind_param("i", $donationID);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            if ($result->num_rows > 0) {
+                $donation = $result->fetch_assoc();
+                return ["status" => "success", "data" => $donation];
+            } else {
+                return ["status" => "error", "message" => "Donation not found."];
             }
         }
 
