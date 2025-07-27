@@ -23,7 +23,13 @@ const Signup = () => {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [passwordStrengthError, setPasswordStrengthError] = useState(false);
   const { toast } = useToast();
+
+  const isPasswordStrong = (password: string): boolean => {
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+    return regex.test(password);
+  };
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -33,6 +39,10 @@ const Signup = () => {
       ...prev,
       [name]: value,
     }));
+    if (name === "password") {
+      const isStrong = isPasswordStrong(value);
+      setPasswordStrengthError(!isStrong);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,7 +87,6 @@ const Signup = () => {
       });
 
       if (data.status === "success") {
-        
         setFormData({
           fullName: "",
           email: "",
@@ -90,7 +99,7 @@ const Signup = () => {
           confirmPassword: "",
         });
         localStorage.setItem("isLoggedIn", "true");
-        setTimeout(() => navigate("/"), 1500);
+        setTimeout(() => navigate("/login"), 1500);
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -209,31 +218,45 @@ const Signup = () => {
                 </select>
               </div>
 
-              {[
-                { name: "password", label: "Password", type: "password" },
-                {
-                  name: "confirmPassword",
-                  label: "Confirm Password",
-                  type: "password",
-                },
-              ].map((field) => (
-                <div className="space-y-2" key={field.name}>
-                  <Label htmlFor={field.name}>{field.label}</Label>
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    type={field.type}
-                    placeholder={`Enter your ${field.label.toLowerCase()}`}
-                    //  value={formData.confirmPassword}
-                    value={(formData as any)[field.name]}
-                    onChange={handleInputChange}
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-              ))}
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  required
+                  disabled={isLoading}
+                />
+                {passwordStrengthError && formData.password.length > 0 && (
+                  <p className="text-sm text-red-500">
+                    Password must be at least 8 characters long and include
+                    uppercase, lowercase, number, and special character.
+                  </p>
+                )}
+              </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  placeholder="Confirm your password"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading || passwordStrengthError}
+              >
                 {isLoading ? "Creating Account..." : "Create Account"}
               </Button>
             </form>
