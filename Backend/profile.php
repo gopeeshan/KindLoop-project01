@@ -52,6 +52,32 @@ if ($method === 'POST') {
        echo json_encode(["success" => true]);
        exit;
    }
+
+// Case: Change password
+    if ($action === 'changePassword') {
+        $email = $input['email'] ?? '';
+        $currentPassword = $input['currentPassword'] ?? '';
+        $newPassword = $input['newPassword'] ?? '';
+        $confirmPassword = $input['confirmPassword'] ?? '';
+
+        // Validate required fields
+        if (!$email || !$currentPassword || !$newPassword || !$confirmPassword) {
+            echo json_encode(["status" => "error", "message" => "Missing required fields."]);
+            exit;
+        }
+
+        // Check if new passwords match
+        if ($newPassword !== $confirmPassword) {
+            echo json_encode(["status" => "error", "message" => "New passwords do not match."]);
+            exit;
+        }
+
+        // Attempt password change
+        $result = $profile->changePassword($email, $currentPassword, $newPassword);
+        echo json_encode($result);
+        exit;
+    }
+
 }
 
 elseif ($method === "PUT") {

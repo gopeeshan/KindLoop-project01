@@ -4,15 +4,52 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {AlertDialog,AlertDialogAction,AlertDialogCancel,AlertDialogContent,AlertDialogDescription,AlertDialogFooter,AlertDialogHeader,AlertDialogTitle,AlertDialogTrigger,} from "@/components/ui/alert-dialog";
-import {ArrowLeft,Edit, Gift,Heart,Star,CheckCircle,AlertTriangle,LogOut,} from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  ArrowLeft,
+  Edit,
+  Gift,
+  Heart,
+  Star,
+  CheckCircle,
+  AlertTriangle,
+  LogOut,
+} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const [isPasswordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordStrengthError, setPasswordStrengthError] = useState("");
 
   const [user, setUser] = useState({
     fullName: "",
@@ -34,11 +71,12 @@ const Profile = () => {
     const email = localStorage.getItem("userEmail");
     if (!email) return;
 
-    axios.get(
-      `http://localhost/KindLoop-project01/Backend/profile.php?email=${encodeURIComponent(
-        email
-      )}`
-    )
+    axios
+      .get(
+        `http://localhost/KindLoop-project01/Backend/profile.php?email=${encodeURIComponent(
+          email
+        )}`
+      )
       .then((res) => {
         const data = res.data;
         setUser(data);
@@ -106,19 +144,20 @@ const Profile = () => {
   };
 
   const handleConfirmReceived = (DonationID: number) => {
-    setToBeReceivedItems((items) => items.filter((item) => item.DonationID !== DonationID));
-      axios.post(
-      "http://localhost/KindLoop-project01/Backend/profile.php",
-      {
+    setToBeReceivedItems((items) =>
+      items.filter((item) => item.DonationID !== DonationID)
+    );
+    axios
+      .post("http://localhost/KindLoop-project01/Backend/profile.php", {
         action: "confirm_received",
         DonationID: DonationID,
-      }
-    ).then(() => {
-      toast({
-        title: "Item Confirmed",
-        description: "Thank you for confirming receipt of your item!",
+      })
+      .then(() => {
+        toast({
+          title: "Item Confirmed",
+          description: "Thank you for confirming receipt of your item!",
+        });
       });
-    });
   };
 
   const handleMakeComplaint = (itemId: number, itemTitle: string) => {
@@ -127,6 +166,82 @@ const Profile = () => {
       description: `Your complaint about "${itemTitle}" has been submitted to our support team.`,
       variant: "destructive",
     });
+  };
+
+  const handlePasswordChangeInput = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value } = e.target;
+
+    setPasswordData((prev) => ({ ...prev, [name]: value }));
+
+    // Real-time strength validation for new password only
+    if (name === "newPassword") {
+      if (!isPasswordStrong(value)) {
+        setPasswordStrengthError(
+          "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character."
+        );
+      } else {
+        setPasswordStrengthError("");
+      }
+    }
+  };
+
+  const isPasswordStrong = (password: string): boolean => {
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+    return regex.test(password);
+  };
+
+  const handlePasswordChange = async () => {
+    const email = localStorage.getItem("userEmail");
+
+    setPasswordError("");
+
+    if (
+      !passwordData.currentPassword ||
+      !passwordData.newPassword ||
+      !passwordData.confirmPassword
+    ) {
+      setPasswordError("All password fields are required.");
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError("New password and confirm password do not match.");
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        "http://localhost/KindLoop-project01/Backend/profile.php",
+        {
+          action: "changePassword",
+          email,
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+          confirmPassword: passwordData.confirmPassword,
+        }
+      );
+
+      const result = response.data;
+
+      if (result.status === "success") {
+        toast({
+          title: "Password Changed",
+          description: "Your password has been updated successfully.",
+        });
+        setPasswordData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+        setPasswordDialogOpen(false);
+      } else {
+        setPasswordError(result.message || "Failed to change password.");
+      }
+    } catch (error) {
+      setPasswordError(error.message || "An unexpected error occurred.");
+    }
   };
 
   return (
@@ -167,10 +282,112 @@ const Profile = () => {
                       <Star className="h-4 w-4 mr-2" />
                       {user.credit_points} Credits
                     </Badge>
-                    <Button variant="outline" size="sm">
-                      <Edit className="h-4 w-4 mr-2" />
-                      Change Password{" "}
-                    </Button>
+
+                    <Dialog
+                      open={isPasswordDialogOpen}
+                      onOpenChange={setPasswordDialogOpen}
+                    >
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Edit className="h-4 w-4 mr-2" />
+                          Change Password
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Change Password</DialogTitle>
+                          <p className="text-sm text-muted-foreground">
+                            To change your password, please enter your current
+                            password and the new password.
+                          </p>
+                        </DialogHeader>
+
+                        <div className="space-y-4 py-2">
+                          <div>
+                            <label
+                              htmlFor="currentPassword"
+                              className="block text-sm font-medium text-gray-700"
+                            >
+                              Current Password
+                            </label>
+                            <input
+                              type="password"
+                              id="currentPassword"
+                              name="currentPassword"
+                              placeholder="Enter Current password"
+                              value={passwordData.currentPassword}
+                              onChange={handlePasswordChangeInput}
+                              className="w-full p-2 border rounded-md mt-1"
+                            />
+                          </div>
+
+                          <div>
+                            <label
+                              htmlFor="newPassword"
+                              className="block text-sm font-medium text-gray-700"
+                            >
+                              New Password
+                            </label>
+                            <input
+                              type="password"
+                              name="newPassword"
+                              placeholder="Enter New password"
+                              value={passwordData.newPassword}
+                              onChange={handlePasswordChangeInput}
+                              className="w-full p-2 border rounded-md mt-1"
+                            />
+                            {passwordStrengthError && (
+                              <p className="text-sm text-red-500 mt-1">
+                                {passwordStrengthError}
+                              </p>
+                            )}
+                          </div>
+
+                          <div>
+                            <label
+                              htmlFor="confirmPassword"
+                              className="block text-sm font-medium text-gray-700"
+                            >
+                              Confirm New Password
+                            </label>
+                            <input
+                              type="password"
+                              name="confirmPassword"
+                              placeholder="Confirm New password"
+                              value={passwordData.confirmPassword}
+                              onChange={handlePasswordChangeInput}
+                              className="w-full p-2 border rounded-md mt-1"
+                            />
+                          </div>
+                          {passwordError && (
+                            <p className="text-sm text-red-600">
+                              {passwordError}
+                            </p>
+                          )}
+                        </div>
+
+                        <DialogFooter>
+                          <Button
+                            variant="ghost"
+                            onClick={() => {
+                              setPasswordDialogOpen(false);
+                              setPasswordData({
+                                currentPassword: "",
+                                newPassword: "",
+                                confirmPassword: "",
+                              });
+                              setPasswordError("");
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button onClick={handlePasswordChange}>
+                            Update Password
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+
                     <Button
                       onClick={handleLogout}
                       variant="outline"
