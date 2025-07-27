@@ -111,4 +111,35 @@ class Profile{
             return ["status" => "error", "message" => "Failed to update user information."];
         }
     }
+
+    public function changePassword($email, $currentPassword, $newPassword) {
+    $stmt = $this->conn->prepare("SELECT password FROM user WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $stmt->close();
+
+    if ($result->num_rows === 0) {
+        return ["status" => "error", "message" => "User not found."];
+    }
+
+    $row = $result->fetch_assoc();
+    $hashedPassword = $row['password'];
+
+    if (!password_verify($currentPassword, $hashedPassword)) {
+        return ["status" => "error", "message" => "Current password is incorrect."];
+    }
+
+    $newHashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+
+    $updateStmt = $this->conn->prepare("UPDATE user SET password = ? WHERE email = ?");
+    $updateStmt->bind_param("ss", $newHashedPassword, $email);
+
+    if ($updateStmt->execute()) {
+        return ["status" => "success", "message" => "Password updated successfully."];
+    } else {
+        return ["status" => "error", "message" => "Failed to update password."];
+    }
+}
+
 }
