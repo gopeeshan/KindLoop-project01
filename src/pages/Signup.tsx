@@ -99,7 +99,7 @@ const Signup = () => {
           confirmPassword: "",
         });
         localStorage.setItem("isLoggedIn", "true");
-        setTimeout(() => navigate("/login"), 1500);
+        setTimeout(() => navigate("/"), 1500);
       }
     } catch (error) {
       if (error instanceof Error) {
