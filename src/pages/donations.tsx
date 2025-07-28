@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Link } from "react-router-dom";
 import {
   Select,
   SelectContent,
@@ -19,7 +20,7 @@ import {
   AlertCircle,
   Search,
   Filter,
-  MessageCircle,
+  Eye,
 } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -62,14 +63,6 @@ const Donations = () => {
     }
 
     setLoading(false);
-  };
-
-  const handleChat = (DonationID: number) => {
-    console.log(`Chat with donor of donation ${DonationID}`);
-  };
-
-  const handleRequestItem = (DonationID: number) => {
-    console.log(`Requesting item ${DonationID}`);
   };
 
   const filteredDonations = donations.filter((donation) => {
@@ -189,78 +182,74 @@ const Donations = () => {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredDonations.map((donation) => (
-              <Card key={donation.DonationID} className="group hover:shadow-lg">
-                <CardContent className="p-0">
-                  <div className="aspect-video bg-gradient-to-br from-primary/10 to-secondary/10 rounded-t-lg flex items-center justify-center relative">
-                    <div className="text-center p-6">
-                      <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-2xl font-bold text-primary">
-                          {donation.category?.[0] || "?"}
+              <Link
+                to={`/donation/${donation.DonationID}`}
+                key={donation.DonationID}
+              >
+                <Card className="group hover:shadow-lg cursor-pointer">
+                  <CardContent className="p-0">
+                    <div className="aspect-video bg-gradient-to-br from-primary/10 to-secondary/10 rounded-t-lg flex items-center justify-center relative">
+                      <div className="text-center p-6">
+                        <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <span className="text-2xl font-bold text-primary">
+                            {donation.category?.[0] || "?"}
+                          </span>
+                        </div>
+                        <span className="text-sm font-medium text-primary">
+                          {donation.category}
                         </span>
                       </div>
-                      <span className="text-sm font-medium text-primary">
-                        {donation.category}
-                      </span>
-                    </div>
-                    <div className="absolute top-3 right-3">
-                      {donation.isVerified == 1 ? (
-                        <Badge variant="default" className="bg-green-500 text-white">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Verified
-                        </Badge>
-                      ) : (
-                        <Badge
-                          variant="secondary"
-                          className="bg-orange-100 text-orange-700 border-orange-200"
-                        >
-                          <AlertCircle className="h-3 w-3 mr-1" />
-                          Unverified
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="p-6">
-                    <h3 className="text-xl font-semibold text-foreground mb-2">
-                      {donation.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      {donation.description}
-                    </p>
-
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <User className="h-4 w-4 mr-2" />
-                        <span>{donation.fullName}</span>
-                      </div>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <MapPin className="h-4 w-4 mr-2" />
-                        <span>{donation.location}</span>
-                      </div>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4 mr-2" />
-                        <span>{donation.date_time}</span>
+                      <div className="absolute top-3 right-3">
+                        {donation.isVerified == 1 ? (
+                          <Badge
+                            variant="default"
+                            className="bg-green-500 text-white"
+                          >
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Verified
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="secondary"
+                            className="bg-orange-100 text-orange-700 border-orange-200"
+                          >
+                            <AlertCircle className="h-3 w-3 mr-1" />
+                            Unverified
+                          </Badge>
+                        )}
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
-                      <Button
-                        className="flex-1"
-                        onClick={() => handleRequestItem(donation.DonationID)}
-                      >
-                        Request Item
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleChat(donation.DonationID)}
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                      </Button>
+                    <div className="p-6">
+                      <h3 className="text-xl font-semibold text-foreground mb-2">
+                        {donation.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        {donation.description}
+                      </p>
+
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <User className="h-4 w-4 mr-2" />
+                          <span>{donation.fullName}</span>
+                        </div>
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <MapPin className="h-4 w-4 mr-2" />
+                          <span>{donation.location}</span>
+                        </div>
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <Clock className="h-4 w-4 mr-2" />
+                          <span>{donation.date_time}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer transition-all">
+                        <Eye className="h-4 w-4" />
+                        <span>Click to view details</span>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         )}

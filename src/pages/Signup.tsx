@@ -24,6 +24,10 @@ const Signup = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [passwordStrengthError, setPasswordStrengthError] = useState(false);
+  const [emailError, setEmailError] = useState(false);
+  const [nicError, setNicError] = useState(false);
+  const [phoneError, setPhoneError] = useState(false);
+
   const { toast } = useToast();
 
   const isPasswordStrong = (password: string): boolean => {
@@ -35,13 +39,28 @@ const Signup = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+
     if (name === "password") {
       const isStrong = isPasswordStrong(value);
       setPasswordStrengthError(!isStrong);
+    }
+    if (name === "nic") {
+      const isValidNIC =
+        /^[0-9]{9}[vVxX]$/.test(value) || /^[0-9]{12}$/.test(value);
+      setNicError(!isValidNIC);
+    }
+    if (name === "contactNumber") {
+      const isValidPhone = /^07[0-9]{8}$/.test(value);
+      setPhoneError(!isValidPhone);
+    }
+    if (name === "email") {
+      const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+      setEmailError(!isValidEmail);
     }
   };
 
@@ -99,7 +118,7 @@ const Signup = () => {
           confirmPassword: "",
         });
         localStorage.setItem("isLoggedIn", "true");
-        setTimeout(() => navigate("/"), 1000);
+        setTimeout(() => navigate("/login"), 1000);
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -189,12 +208,33 @@ const Signup = () => {
                     name={field.name}
                     type={field.type}
                     placeholder={`Enter your ${field.label.toLowerCase()}`}
-                    // value={formData.password}
                     value={(formData as any)[field.name]}
                     onChange={handleInputChange}
                     required
                     disabled={isLoading}
                   />
+                  {field.name === "nic" &&
+                    nicError &&
+                    formData.nic.length > 0 && (
+                      <p className="text-sm text-red-500">
+                        NIC must be 9 digits followed by 'V' or 'X', or 12
+                        digits only.
+                      </p>
+                    )}
+                  {field.name === "contactNumber" &&
+                    phoneError &&
+                    formData.contactNumber.length > 0 && (
+                      <p className="text-sm text-red-500">
+                        Contact number must be 10 digits starting with 07.
+                      </p>
+                    )}
+                  {field.name === "email" &&
+                    emailError &&
+                    formData.email.length > 0 && (
+                      <p className="text-sm text-red-500">
+                        Please enter a valid email address.
+                      </p>
+                    )}
                 </div>
               ))}
 
@@ -255,7 +295,16 @@ const Signup = () => {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={isLoading || passwordStrengthError}
+                disabled={
+                  isLoading ||
+                  passwordStrengthError ||
+                  nicError ||
+                  phoneError ||
+                  emailError ||
+                  !formData.nic ||
+                  !formData.contactNumber ||
+                  !formData.email
+                }
               >
                 {isLoading ? "Creating Account..." : "Create Account"}
               </Button>

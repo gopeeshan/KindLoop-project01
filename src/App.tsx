@@ -12,6 +12,7 @@ import Profile from "./pages/Profile";
 import Donations from "@/pages/Donations";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/Admin_login";
+import DonationDetails from "./pages/DonationDetails";
 
 
 const App = () => {
@@ -28,6 +29,7 @@ const App = () => {
               <Route path="/post-creation" element={<PostCreation />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/donations" element={<Donations />} />
+              <Route path="/donation/:id" element={<DonationDetails />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/Admin_login" element={<AdminLogin />} />
             </Routes>

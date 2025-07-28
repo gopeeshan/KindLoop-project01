@@ -548,9 +548,9 @@ const Admin= () => {
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       {selectedDonation.images.map((img, idx) => (
                         <img key={idx}
-                         src={`http://localhost/KindLoop-project01/Backend/${img}`} 
-                         alt={`Donation ${idx}`} 
-                         className="w-full h-32 object-cover rounded-md cursor-pointer transition-transform hover:scale-105"
+                         src={`http://localhost/KindLoop-project01/Backend/${img.trim()}`}
+                        alt={`donation-${idx}`}
+                        className="w-40 h-40 object-cover rounded-lg shadow-sm"
                         onClick={() => setSelectedImage(`http://localhost/KindLoop-project01/Backend/${img}`)} />
                       ))}
                     </div>
