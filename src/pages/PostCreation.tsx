@@ -4,7 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,} from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ArrowLeft, MapPin } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +22,7 @@ const PostCreation = () => {
   const [category, setCategory] = useState("");
   const [location, setLocation] = useState("");
   const [condition, setCondition] = useState("");
+  const [usageDuration, setUsageDuration] = useState("");
   const [images, setImages] = useState<FileList | null>(null);
 
   const { toast } = useToast();
@@ -54,6 +61,7 @@ const PostCreation = () => {
     formData.append("category", category);
     formData.append("location", location);
     formData.append("condition", condition);
+    formData.append("usageDuration", usageDuration);
 
     if (images) {
       for (let i = 0; i < images.length; i++) {
@@ -174,6 +182,24 @@ const PostCreation = () => {
                         <SelectItem value="poor">Poor</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="usageDuration">
+                    Usage Period (in years) *
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      min="1"
+                      id="usageDuration"
+                      placeholder="e.g., 2"
+                      value={usageDuration}
+                      onChange={(e) => setUsageDuration(e.target.value)}
+                      className="pl-10"
+                      required
+                    />
                   </div>
                 </div>
 

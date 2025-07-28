@@ -10,13 +10,14 @@
         protected $location;
         protected $condition;
         protected $images;
+        protected $usageDuration;
 
         public function __construct() {
             $db = new DBconnector();
             $this->conn = $db->connect();
         }
 
-        public function createNewPost($userID, $title, $description, $category, $location, $condition, $images) {
+        public function createNewPost($userID, $title, $description, $category, $location, $condition, $images, $usageDuration) {
             $this->userID = $userID;
             $this->title = $title;
             $this->description = $description;
@@ -24,13 +25,14 @@
             $this->location = $location;
             $this->condition = $condition;
             $this->images = $images;
+            $this->usageDuration = $usageDuration;
             // $imagesJson = json_encode($this->images);
 
-            $sql = "INSERT INTO donation (userID, title, description, category, location, `condition`, images)
-        VALUES (?, ?, ?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO donation (userID, title, description, category, location, `condition`, images, usageDuration)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $this->conn->prepare($sql);
             $stmt->bind_param(
-                "issssss",
+                "issssssi",
                 $userID,
                 $title,
                 $description,
@@ -38,6 +40,7 @@
                 $location,
                 $condition,
                 $images,
+                $usageDuration
             );
 
         if ($stmt->execute()) {
