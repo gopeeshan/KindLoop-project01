@@ -153,13 +153,16 @@ const PostCreation = () => {
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="clothing">Clothing</SelectItem>
-                        <SelectItem value="books">Books</SelectItem>
-                        <SelectItem value="home">Home & Kitchen</SelectItem>
+                        <SelectItem value="clothingAccessories">Clothing & Accessories</SelectItem>
                         <SelectItem value="electronics">Electronics</SelectItem>
-                        <SelectItem value="toys">Toys</SelectItem>
+                        <SelectItem value="booksEducation">Books & Education</SelectItem>
                         <SelectItem value="furniture">Furniture</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
+                        <SelectItem value="sportsOutdoors">Sports & Outdoors</SelectItem>
+                        <SelectItem value="kitchenDining">Kitchen & Dining</SelectItem>
+                        <SelectItem value="homeGarden">Home & Garden</SelectItem>
+                        <SelectItem value="toysGames">Toys & Games</SelectItem>
+                        <SelectItem value="babyKids">Baby & Kids</SelectItem>
+                        <SelectItem value="others">Others</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

@@ -1,4 +1,4 @@
-import { Shirt, Laptop, Book, Gamepad2, Home, Baby, Sofa, Utensils } from "lucide-react";
+import { Shirt, Laptop, Book, Volleyball, Gamepad2, Home, Baby, Sofa, Utensils } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 
@@ -9,7 +9,7 @@ const Categories = () => {
       icon: Shirt,
       title: "Clothing & Accessories",
       description: "Clothes, shoes, bags, and accessories for all ages",
-      filterValue: "Clothing",
+      filterValue: "Clothing & Accessories",
       gradient: "from-pink-400 to-purple-500",
       iconBg: "bg-pink-100",
       iconColor: "text-pink-600"
@@ -27,19 +27,10 @@ const Categories = () => {
       icon: Book,
       title: "Books & Education",
       description: "Books, educational materials, and learning resources",
-      filterValue: "Books",
+      filterValue: "Books & Education",
       gradient: "from-green-400 to-emerald-500",
       iconBg: "bg-green-100",
       iconColor: "text-green-600"
-    },
-    {
-      icon: Gamepad2,
-      title: "Toys & Games",
-      description: "For Gameers of all ages, from toddlers to adults",
-      filterValue: "Electronics",
-      gradient: "from-orange-400 to-red-500",
-      iconBg: "bg-orange-100",
-      iconColor: "text-orange-600"
     },
     {
       icon: Sofa,
@@ -51,10 +42,19 @@ const Categories = () => {
       iconColor: "text-indigo-600"
     },
     {
+      icon: Volleyball,
+      title: "Sports & Outdoors",
+      description: "Sports equipment, outdoor gear, and fitness items",
+      filterValue: "Sports & Outdoors",
+      gradient: "from-purple-400 to-pink-500",
+      iconBg: "bg-purple-100",
+      iconColor: "text-purple-600"
+    },
+    {
       icon: Utensils,
       title: "Kitchen & Dining",
       description: "Cookware, appliances, dinnerware, and kitchen tools",
-      filterValue: "Electronics",
+      filterValue: "Kitchen & Dining",
       gradient: "from-yellow-400 to-orange-500",
       iconBg: "bg-yellow-100",
       iconColor: "text-yellow-600"
@@ -63,10 +63,19 @@ const Categories = () => {
       icon: Home,
       title: "Home & Garden",
       description: "Decorations, plants, garden tools, and household items",
-      filterValue: "Electronics",
+      filterValue: "Home & Garden",
       gradient: "from-teal-400 to-green-500",
       iconBg: "bg-teal-100",
       iconColor: "text-teal-600"
+    },
+    {
+      icon: Gamepad2,
+      title: "Toys & Games",
+      description: "For Gamers of all ages, from toddlers to adults",
+      filterValue: "Toys & Games",
+      gradient: "from-orange-400 to-red-500",
+      iconBg: "bg-orange-100",
+      iconColor: "text-orange-600"
     },
     {
       icon: Baby,
@@ -93,7 +102,7 @@ const Categories = () => {
           </p>
         </div>
         
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-9">
           {categories.map((category, index) => (
             <Card 
               key={index} 
