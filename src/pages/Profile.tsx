@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +25,8 @@ import {
   CheckCircle,
   AlertTriangle,
   LogOut,
+  Bell,
+  X,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -36,6 +39,17 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+
+interface Notification {
+  id: number;
+  message: string;
+  type: "donation_request" | "general";
+  timestamp: string;
+}
+interface NotificationsTabProps {
+  notifications: Notification[];
+  onDismiss: (id: number) => void;
+}
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -63,6 +77,7 @@ const Profile = () => {
   });
 
   const [formData, setFormData] = useState(user);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [donationHistory, setDonationHistory] = useState([]);
   const [receivedHistory, setReceivedHistory] = useState([]);
   const [toBeReceivedItems, setToBeReceivedItems] = useState([]);
@@ -92,6 +107,10 @@ const Profile = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   }
+
+  const onDismiss = (id: number) => {
+  setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
 
   const handleSave = async () => {
     try {
@@ -242,6 +261,8 @@ const Profile = () => {
     } catch (error) {
       setPasswordError(error.message || "An unexpected error occurred.");
     }
+    
+    
   };
 
   return (
@@ -403,13 +424,62 @@ const Profile = () => {
           </Card>
 
           {/* Dashboard Tabs */}
-          <Tabs defaultValue="to-be-received" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+          <Tabs defaultValue="notifications" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="notifications">Notifications</TabsTrigger>
               <TabsTrigger value="donations">Donation History</TabsTrigger>
               <TabsTrigger value="received">Received History</TabsTrigger>
               <TabsTrigger value="to-be-received">To Be Received</TabsTrigger>
               <TabsTrigger value="details">Edit Details</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="notifications">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Bell className="h-5 w-5 text-primary" />
+                    <span>Notifications</span>
+                    {notifications.length > 0 && (
+                      <Badge variant="secondary">{notifications.length}</Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {notifications.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No notifications at the moment</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {notifications.map((notification) => (
+                        <Alert
+                          key={notification.id}
+                          className="border-primary/20 bg-primary/5"
+                        >
+                          <AlertDescription className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <p className="text-sm">{notification.message}</p>
+                              <span className="text-xs text-muted-foreground">
+                                {notification.timestamp}
+                              </span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onDismiss(notification.id)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </AlertDescription>
+                        </Alert>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             {/* Donation History */}
             <TabsContent value="donations">
