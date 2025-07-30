@@ -32,7 +32,7 @@
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $this->conn->prepare($sql);
             $stmt->bind_param(
-                "issssssi",
+                "isssssss",
                 $userID,
                 $title,
                 $description,

@@ -15,21 +15,10 @@ $description = $_POST['description'] ?? null;
 $category = $_POST['category'] ?? null;
 $location = $_POST['location'] ?? null;
 $condition = $_POST['condition'] ?? null;
-$usageDuration = isset($_POST['usageDuration']) && $_POST['usageDuration'] !== ''
-    ? (int)$_POST['usageDuration']
-    : null;
-
-if ($usageDuration !== null && $usageDuration < 0) {
-    echo json_encode([
-        "status" => "error",
-        "message" => "Usage duration must be 0 or greater."
-    ]);
-    exit;
-}
-
+$usageDuration = $_POST['usageDuration'] ?? null;
 
 // Validate required fields
-if (!$userID || !$title || !$description || !$category || !$location || !$condition) {
+if (!$userID || !$title || !$description || !$category || !$location || !$condition || !$usageDuration) {
     echo json_encode(["status" => "error", "message" => "Missing required fields."]);
     exit;
 }
