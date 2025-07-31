@@ -27,6 +27,7 @@ import {
   LogOut,
   Bell,
   X,
+  Eye,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -46,10 +47,33 @@ interface Notification {
   type: "donation_request" | "general";
   timestamp: string;
 }
-interface NotificationsTabProps {
-  notifications: Notification[];
-  onDismiss: (id: number) => void;
+interface Donation {
+  id: number;
+  title: string;
+  category: string;
+  date_time: string;
+  isVerified: number;
+  isDonationCompleted: number;
+  credits: number;
 }
+
+interface ReceivedItem {
+  DonationID: number;
+  title: string;
+  donor: string;
+  received_date: string;
+}
+
+interface ToBeReceivedItem {
+  DonationID: number;
+  id: number;
+  title: string;
+  category: string;
+  donor: string;
+  donorContact: string;
+  requestDate: string;
+}
+
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -78,9 +102,9 @@ const Profile = () => {
 
   const [formData, setFormData] = useState(user);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [donationHistory, setDonationHistory] = useState([]);
-  const [receivedHistory, setReceivedHistory] = useState([]);
-  const [toBeReceivedItems, setToBeReceivedItems] = useState([]);
+  const [donationHistory, setDonationHistory] = useState<Donation[]>([]);
+  const [receivedHistory, setReceivedHistory] = useState<ReceivedItem[]>([]);
+  const [toBeReceivedItems, setToBeReceivedItems] = useState<ToBeReceivedItem[]>([]);
 
   useEffect(() => {
     const email = localStorage.getItem("userEmail");
@@ -109,7 +133,12 @@ const Profile = () => {
   }
 
   const onDismiss = (id: number) => {
-  setNotifications((prev) => prev.filter((n) => n.id !== id));
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
+
+  const handleViewDetails = (donationId: number) => {
+    console.log("Viewing details for donation ID:", donationId);
+    navigate(`/profiledonation/${donationId}`);
   };
 
   const handleSave = async () => {
@@ -179,7 +208,7 @@ const Profile = () => {
       });
   };
 
-  const handleMakeComplaint = (itemId: number, itemTitle: string) => {
+  const handleMakeComplaint = (DonationID: number, itemTitle: string) => {
     toast({
       title: "Complaint Submitted",
       description: `Your complaint about "${itemTitle}" has been submitted to our support team.`,
@@ -261,8 +290,6 @@ const Profile = () => {
     } catch (error) {
       setPasswordError(error.message || "An unexpected error occurred.");
     }
-    
-    
   };
 
   return (
@@ -495,16 +522,21 @@ const Profile = () => {
                     {donationHistory.map((donation) => (
                       <div
                         key={donation.id}
-                        className="flex items-center justify-between p-4 border rounded-lg"
+                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
                       >
-                        <div className="flex-1">
-                          <h3 className="font-semibold">{donation.title}</h3>
+                        <div
+                          className="flex-1 cursor-pointer"
+                          onClick={() => handleViewDetails(donation.id)}
+                        >
+                          <h3 className="font-semibold hover:text-primary">
+                            {donation.title}
+                          </h3>
                           <p className="text-sm text-muted-foreground">
                             {donation.category} • {donation.date_time}
                           </p>
                         </div>
 
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-4">
                           <Badge
                             variant={
                               donation.isVerified === 1
@@ -530,6 +562,14 @@ const Profile = () => {
                           <span className="text-sm font-medium">
                             +{donation.credits} credits
                           </span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewDetails(donation.id)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Details
+                          </Button>
                         </div>
                       </div>
                     ))}

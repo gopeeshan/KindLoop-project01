@@ -4,15 +4,16 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "@/pages/Index";
+import Index from "@/pages/index";
 import Login from "@/pages/Login";
 import Signup from "./pages/Signup";
 import PostCreation from "@/pages/PostCreation";
 import Profile from "./pages/Profile";
-import Donations from "@/pages/Donations";
+import Donations from "@/pages/donations";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/Admin_login";
 import DonationDetails from "./pages/DonationDetails";
+import Profiledd from "./pages/ProfileDD";
 
 
 const App = () => {
@@ -30,6 +31,7 @@ const App = () => {
               <Route path="/profile" element={<Profile />} />
               <Route path="/donations" element={<Donations />} />
               <Route path="/donation/:id" element={<DonationDetails />} />
+              <Route path="/profiledonation/:id" element={<Profiledd />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/Admin_login" element={<AdminLogin />} />
             </Routes>
