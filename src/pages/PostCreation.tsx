@@ -4,7 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue,} from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ArrowLeft, MapPin } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +22,7 @@ const PostCreation = () => {
   const [category, setCategory] = useState("");
   const [location, setLocation] = useState("");
   const [condition, setCondition] = useState("");
+  const [usageDuration, setUsageDuration] = useState<string>("");
   const [images, setImages] = useState<FileList | null>(null);
 
   const { toast } = useToast();
@@ -54,6 +61,7 @@ const PostCreation = () => {
     formData.append("category", category);
     formData.append("location", location);
     formData.append("condition", condition);
+    formData.append("usageDuration", usageDuration);
 
     if (images) {
       for (let i = 0; i < images.length; i++) {
@@ -145,13 +153,28 @@ const PostCreation = () => {
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="clothing">Clothing</SelectItem>
-                        <SelectItem value="books">Books</SelectItem>
-                        <SelectItem value="home">Home & Kitchen</SelectItem>
-                        <SelectItem value="electronics">Electronics</SelectItem>
-                        <SelectItem value="toys">Toys</SelectItem>
-                        <SelectItem value="furniture">Furniture</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
+                        <SelectItem value="Clothing & Accessories">
+                          Clothing & Accessories
+                        </SelectItem>
+                        <SelectItem value="Electronics">Electronics</SelectItem>
+                        <SelectItem value="Books & Education">
+                          Books & Education
+                        </SelectItem>
+                        <SelectItem value="Furniture">Furniture</SelectItem>
+                        <SelectItem value="Sports & Outdoors">
+                          Sports & Outdoors
+                        </SelectItem>
+                        <SelectItem value="Kitchen & Dining">
+                          Kitchen & Dining
+                        </SelectItem>
+                        <SelectItem value="Home & Garden">
+                          Home & Garden
+                        </SelectItem>
+                        <SelectItem value="Toys & Games">
+                          Toys & Games
+                        </SelectItem>
+                        <SelectItem value="Baby & Kids">Baby & Kids</SelectItem>
+                        <SelectItem value="Others">Others</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -167,14 +190,34 @@ const PostCreation = () => {
                         <SelectValue placeholder="Select condition" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="new">New</SelectItem>
-                        <SelectItem value="like-new">Like New</SelectItem>
-                        <SelectItem value="good">Good</SelectItem>
-                        <SelectItem value="fair">Fair</SelectItem>
-                        <SelectItem value="poor">Poor</SelectItem>
+                        <SelectItem value="Excellent">Excellent</SelectItem>
+                        <SelectItem value="Very Good">Very Good</SelectItem>
+                        <SelectItem value="Good">Good</SelectItem>
+                        <SelectItem value="Acceptable">Acceptable</SelectItem>
+                        <SelectItem value="Needs Repair">
+                          Needs Repair
+                        </SelectItem>
+                        <SelectItem value="Not Sure">Not Sure</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="usageDuration">Usage Duration *</Label>
+                  <Select onValueChange={(value) => setUsageDuration(value)}>
+                    <SelectTrigger id="usageDuration" className="pl-3">
+                      <SelectValue placeholder="Select usage duration" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Within 1">Within 1 year</SelectItem>
+                      <SelectItem value="2 to 4">2 – 4 years</SelectItem>
+                      <SelectItem value="5 to 7">5 – 7 years</SelectItem>
+                      <SelectItem value="8 to 10">8 – 10 years</SelectItem>
+                      <SelectItem value="More Than 10">More than 10 years</SelectItem>
+                      <SelectItem value="Not Sure">Not sure</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
@@ -195,7 +238,7 @@ const PostCreation = () => {
                 <div className="space-y-2">
                   <Label htmlFor="images">Images (Optional)</Label>
                   <Input
-                    id="images"
+                    id="images[]"
                     type="file"
                     multiple
                     accept="image/*"

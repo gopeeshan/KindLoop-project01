@@ -24,7 +24,8 @@
                 donation.images,
                 donation.date_time,
                 donation.isVerified,
-                donation.setVisible
+                donation.setVisible,
+                donation.usageDuration
             FROM donation
             JOIN user ON donation.userID = user.userID
             WHERE donation.setVisible = 1 && donation.isVerified = 1

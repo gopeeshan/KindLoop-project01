@@ -15,9 +15,10 @@ $description = $_POST['description'] ?? null;
 $category = $_POST['category'] ?? null;
 $location = $_POST['location'] ?? null;
 $condition = $_POST['condition'] ?? null;
+$usageDuration = $_POST['usageDuration'] ?? null;
 
 // Validate required fields
-if (!$userID || !$title || !$description || !$category || !$location || !$condition) {
+if (!$userID || !$title || !$description || !$category || !$location || !$condition || !$usageDuration) {
     echo json_encode(["status" => "error", "message" => "Missing required fields."]);
     exit;
 }
@@ -43,5 +44,5 @@ if (!empty($_FILES['images'])) {
 $imagesJson = json_encode($imagePaths);
 
 $createPost = new CreatePost();
-$response = $createPost->createNewPost($userID, $title, $description, $category, $location, $condition, $imagesJson);
+$response = $createPost->createNewPost($userID, $title, $description, $category, $location, $condition, $imagesJson, $usageDuration);
 echo json_encode($response);

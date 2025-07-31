@@ -84,12 +84,16 @@ const FeaturedDonations = () => {
 
   const categories = [
     "all",
-    "Clothing",
-    "Books",
+    "Clothing & Accessories",
     "Electronics",
-    "Baby & Kids",
+    "Books & Education",
     "Furniture",
-    "Sports",
+    "Sports & Outdoors",
+    "Kitchen & Dining",
+    "Home & Garden",
+    "Toys & Games",
+    "Baby & Kids",
+    "Others"
   ];
 
   function handleViewAllDonations(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
