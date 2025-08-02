@@ -27,9 +27,6 @@ const Signup = () => {
   const [emailError, setEmailError] = useState(false);
   const [nicError, setNicError] = useState(false);
   const [phoneError, setPhoneError] = useState(false);
-  const [fullNameError, setFullNameError] = useState(false);
-  const [occupationError, setOccupationError] = useState(false);
-  const [addressError, setAddressError] = useState(false);
 
   const { toast } = useToast();
 
@@ -65,43 +62,6 @@ const Signup = () => {
       const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
       setEmailError(!isValidEmail);
     }
-    // if (name === "fullName") {
-    //   const isValid = /^[A-Za-z\s]{3,}$/.test(value.trim());
-    //   setFullNameError(!isValid);
-    // }
-    // if (name === "occupation") {
-    //   const isValid = /^[A-Za-z\s.]{2,}$/.test(value.trim());
-    //   setOccupationError(!isValid);
-    // }
-    // if (name === "address") {
-    //   const isValid =
-    //     /^[A-Za-z0-9\s,./-]{5,100}$/.test(value.trim()) && !/[<>]/.test(value);
-    //   setAddressError(!isValid);
-    // }
-  };
-
-  const validateOtherFields = () => {
-    let valid = true;
-
-    if (!/^[A-Za-z\s]{3,}$/.test(formData.fullName.trim())) {
-      setFullNameError(true);
-      valid = false;
-    } else setFullNameError(false);
-
-    if (!/^[A-Za-z\s.]{2,}$/.test(formData.occupation.trim())) {
-      setOccupationError(true);
-      valid = false;
-    } else setOccupationError(false);
-
-    if (
-      !/^[A-Za-z0-9\s,./-]{5,100}$/.test(formData.address.trim()) ||
-      /[<>]/.test(formData.address)
-    ) {
-      setAddressError(true);
-      valid = false;
-    } else setAddressError(false);
-
-    return valid;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -116,28 +76,15 @@ const Signup = () => {
       return;
     }
 
-    const isValid = validateOtherFields();
-
-    if (
-      !formData.email ||
-      !formData.nic ||
-      !formData.contactNumber ||
-      !formData.password ||
-      emailError ||
-      nicError ||
-      phoneError ||
-      passwordStrengthError ||
-      !isValid
-    ) {
-      return;
-    }
-
     setIsLoading(true);
 
     try {
       const response = await axios.post(
         "http://localhost/KindLoop-project01/Backend/Signup.php",
         {
+          // method: "POST",
+          // headers: { "Content-Type": "application/json" },
+          // body: JSON.stringify(formData),
           fullName: formData.fullName,
           email: formData.email,
           nic: formData.nic,
@@ -288,21 +235,6 @@ const Signup = () => {
                         Please enter a valid email address.
                       </p>
                     )}
-                  {field.name === "fullName" && fullNameError && (
-                    <p className="text-sm text-red-500">
-                      Full name must be at least 3 letters (A–Z only).
-                    </p>
-                  )}
-                  {field.name === "occupation" && occupationError && (
-                    <p className="text-sm text-red-500">
-                      Occupation must be letters only, at least 2 characters.
-                    </p>
-                  )}
-                  {field.name === "address" && addressError && (
-                    <p className="text-sm text-red-500">
-                      Address must be 5–100 characters, no &lt; or &gt; allowed.
-                    </p>
-                  )}
                 </div>
               ))}
 
@@ -369,9 +301,6 @@ const Signup = () => {
                   nicError ||
                   phoneError ||
                   emailError ||
-                  // fullNameError ||
-                  // occupationError ||
-                  // addressError ||
                   !formData.nic ||
                   !formData.contactNumber ||
                   !formData.email
