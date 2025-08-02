@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +25,9 @@ import {
   CheckCircle,
   AlertTriangle,
   LogOut,
+  Bell,
+  X,
+  Eye,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -36,6 +40,40 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+
+interface Notification {
+  id: number;
+  message: string;
+  type: "donation_request" | "general";
+  timestamp: string;
+}
+interface Donation {
+  id: number;
+  title: string;
+  category: string;
+  date_time: string;
+  isVerified: number;
+  isDonationCompleted: number;
+  credits: number;
+}
+
+interface ReceivedItem {
+  DonationID: number;
+  title: string;
+  donor: string;
+  received_date: string;
+}
+
+interface ToBeReceivedItem {
+  DonationID: number;
+  id: number;
+  title: string;
+  category: string;
+  donor: string;
+  donorContact: string;
+  requestDate: string;
+}
+
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -63,9 +101,10 @@ const Profile = () => {
   });
 
   const [formData, setFormData] = useState(user);
-  const [donationHistory, setDonationHistory] = useState([]);
-  const [receivedHistory, setReceivedHistory] = useState([]);
-  const [toBeReceivedItems, setToBeReceivedItems] = useState([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [donationHistory, setDonationHistory] = useState<Donation[]>([]);
+  const [receivedHistory, setReceivedHistory] = useState<ReceivedItem[]>([]);
+  const [toBeReceivedItems, setToBeReceivedItems] = useState<ToBeReceivedItem[]>([]);
 
   useEffect(() => {
     const email = localStorage.getItem("userEmail");
@@ -92,6 +131,15 @@ const Profile = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   }
+
+  const onDismiss = (id: number) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
+
+  const handleViewDetails = (donationId: number) => {
+    console.log("Viewing details for donation ID:", donationId);
+    navigate(`/profiledonation/${donationId}`);
+  };
 
   const handleSave = async () => {
     try {
@@ -160,7 +208,7 @@ const Profile = () => {
       });
   };
 
-  const handleMakeComplaint = (itemId: number, itemTitle: string) => {
+  const handleMakeComplaint = (DonationID: number, itemTitle: string) => {
     toast({
       title: "Complaint Submitted",
       description: `Your complaint about "${itemTitle}" has been submitted to our support team.`,
@@ -403,13 +451,62 @@ const Profile = () => {
           </Card>
 
           {/* Dashboard Tabs */}
-          <Tabs defaultValue="to-be-received" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+          <Tabs defaultValue="notifications" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="notifications">Notifications</TabsTrigger>
               <TabsTrigger value="donations">Donation History</TabsTrigger>
               <TabsTrigger value="received">Received History</TabsTrigger>
               <TabsTrigger value="to-be-received">To Be Received</TabsTrigger>
               <TabsTrigger value="details">Edit Details</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="notifications">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Bell className="h-5 w-5 text-primary" />
+                    <span>Notifications</span>
+                    {notifications.length > 0 && (
+                      <Badge variant="secondary">{notifications.length}</Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {notifications.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No notifications at the moment</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {notifications.map((notification) => (
+                        <Alert
+                          key={notification.id}
+                          className="border-primary/20 bg-primary/5"
+                        >
+                          <AlertDescription className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <p className="text-sm">{notification.message}</p>
+                              <span className="text-xs text-muted-foreground">
+                                {notification.timestamp}
+                              </span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onDismiss(notification.id)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </AlertDescription>
+                        </Alert>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             {/* Donation History */}
             <TabsContent value="donations">
@@ -425,16 +522,21 @@ const Profile = () => {
                     {donationHistory.map((donation) => (
                       <div
                         key={donation.id}
-                        className="flex items-center justify-between p-4 border rounded-lg"
+                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
                       >
-                        <div className="flex-1">
-                          <h3 className="font-semibold">{donation.title}</h3>
+                        <div
+                          className="flex-1 cursor-pointer"
+                          onClick={() => handleViewDetails(donation.id)}
+                        >
+                          <h3 className="font-semibold hover:text-primary">
+                            {donation.title}
+                          </h3>
                           <p className="text-sm text-muted-foreground">
                             {donation.category} • {donation.date_time}
                           </p>
                         </div>
 
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-4">
                           <Badge
                             variant={
                               donation.isVerified === 1
@@ -460,6 +562,14 @@ const Profile = () => {
                           <span className="text-sm font-medium">
                             +{donation.credits} credits
                           </span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewDetails(donation.id)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Details
+                          </Button>
                         </div>
                       </div>
                     ))}

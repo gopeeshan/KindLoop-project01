@@ -15,5 +15,6 @@ if (!isset($_GET['DonationID'])) {
 }
 
 $donationID = intval($_GET['DonationID']);
+
 $response = $donation->getDonationById($donationID);
 echo json_encode($response);
