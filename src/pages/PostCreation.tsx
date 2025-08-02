@@ -24,6 +24,7 @@ const PostCreation = () => {
   const [condition, setCondition] = useState("");
   const [usageDuration, setUsageDuration] = useState<string>("");
   const [images, setImages] = useState<FileList | null>(null);
+  
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ const PostCreation = () => {
       return;
     }
 
-    if (!title || !description || !category || !location || !condition) {
+    if (!title || !description || !category || !location || !condition || !usageDuration) {
       toast({
         title: "Missing Fields",
         description: "Please fill all required fields.",
@@ -246,7 +247,7 @@ const PostCreation = () => {
                   />
                 </div>
 
-                <Button type="submit" className="w-full" size="lg">
+                <Button type="submit" className="w-full" size="lg" >
                   Post Donation
                 </Button>
               </form>
