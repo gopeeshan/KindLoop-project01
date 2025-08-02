@@ -4,6 +4,7 @@ header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=utf-8");
 
 require_once 'Main/create_post.php';
+require_once 'CreditPointSystem.php';
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     echo json_encode(["status" => "error", "message" => "Invalid request method"]);
@@ -16,6 +17,8 @@ $category = $_POST['category'] ?? null;
 $location = $_POST['location'] ?? null;
 $condition = $_POST['condition'] ?? null;
 $usageDuration = $_POST['usageDuration'] ?? null;
+
+
 
 // Validate required fields
 if (!$userID || !$title || !$description || !$category || !$location || !$condition || !$usageDuration) {
@@ -42,7 +45,7 @@ if (!empty($_FILES['images'])) {
 }
 
 $imagesJson = json_encode($imagePaths);
-
+$credits = calculateNormalizedCreditPoints($category, $condition, $usageDuration);
 $createPost = new CreatePost();
-$response = $createPost->createNewPost($userID, $title, $description, $category, $location, $condition, $imagesJson, $usageDuration);
+$response = $createPost->createNewPost($userID, $title, $description, $category, $location, $condition, $imagesJson, $usageDuration, $credits);
 echo json_encode($response);

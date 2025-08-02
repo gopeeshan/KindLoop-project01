@@ -74,7 +74,6 @@ interface ToBeReceivedItem {
   requestDate: string;
 }
 
-
 const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -104,7 +103,9 @@ const Profile = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [donationHistory, setDonationHistory] = useState<Donation[]>([]);
   const [receivedHistory, setReceivedHistory] = useState<ReceivedItem[]>([]);
-  const [toBeReceivedItems, setToBeReceivedItems] = useState<ToBeReceivedItem[]>([]);
+  const [toBeReceivedItems, setToBeReceivedItems] = useState<
+    ToBeReceivedItem[]
+  >([]);
 
   useEffect(() => {
     const email = localStorage.getItem("userEmail");
@@ -536,7 +537,7 @@ const Profile = () => {
                           </p>
                         </div>
 
-                        <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-4 ">
                           <Badge
                             variant={
                               donation.isVerified === 1
@@ -559,9 +560,10 @@ const Profile = () => {
                               ? "Completed"
                               : "Pending"}
                           </Badge>
-                          <span className="text-sm font-medium">
-                            +{donation.credits} credits
-                          </span>
+                          <div className="w-28 text-center bg-teal-100 text-teal-800 text-sm font-semibold px-3 py-1 rounded-xl shadow-sm select-none">
+                            {donation.credits} credits
+                          </div>
+
                           <Button
                             variant="outline"
                             size="sm"
