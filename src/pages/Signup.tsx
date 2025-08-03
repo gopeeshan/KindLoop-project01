@@ -27,6 +27,9 @@ const Signup = () => {
   const [emailError, setEmailError] = useState(false);
   const [nicError, setNicError] = useState(false);
   const [phoneError, setPhoneError] = useState(false);
+  const [fullNameError, setFullNameError] = useState(false);
+  const [occupationError, setOccupationError] = useState(false);
+  const [addressError, setAddressError] = useState(false);
 
   const { toast } = useToast();
 
@@ -64,6 +67,30 @@ const Signup = () => {
     }
   };
 
+  const validateOtherFields = () => {
+    let valid = true;
+
+    if (!/^[A-Za-z\s]{3,}$/.test(formData.fullName.trim())) {
+      setFullNameError(true);
+      valid = false;
+    } else setFullNameError(false);
+
+    if (!/^[A-Za-z\s.]{2,}$/.test(formData.occupation.trim())) {
+      setOccupationError(true);
+      valid = false;
+    } else setOccupationError(false);
+
+    if (
+      !/^[A-Za-z0-9\s,./-]{5,100}$/.test(formData.address.trim()) ||
+      /[<>]/.test(formData.address)
+    ) {
+      setAddressError(true);
+      valid = false;
+    } else setAddressError(false);
+
+    return valid;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -73,6 +100,22 @@ const Signup = () => {
         description: "Passwords do not match.",
         variant: "destructive",
       });
+      return;
+    }
+
+    const isValid = validateOtherFields();
+
+    if (
+      !formData.email ||
+      !formData.nic ||
+      !formData.contactNumber ||
+      !formData.password ||
+      emailError ||
+      nicError ||
+      phoneError ||
+      passwordStrengthError ||
+      !isValid
+    ) {
       return;
     }
 
@@ -235,6 +278,21 @@ const Signup = () => {
                         Please enter a valid email address.
                       </p>
                     )}
+                  {field.name === "fullName" && fullNameError && (
+                    <p className="text-sm text-red-500">
+                      Full name must be at least 3 letters (A–Z only).
+                    </p>
+                  )}
+                  {field.name === "occupation" && occupationError && (
+                    <p className="text-sm text-red-500">
+                      Occupation must be letters only, at least 2 characters.
+                    </p>
+                  )}
+                  {field.name === "address" && addressError && (
+                    <p className="text-sm text-red-500">
+                      Address must be 5–100 characters, no &lt; or &gt; allowed.
+                    </p>
+                  )}
                 </div>
               ))}
 
