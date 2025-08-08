@@ -12,10 +12,8 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 
 // GET request to fetch user by email
-if ($method === "GET") {
-    if (isset($_GET['email'])) {
+if ($method === "GET" && isset($_GET['email'])) {
         $email = $_GET['email'];
-    }
 
    // Step 1: Fetch user info
    $user = $profile->getUserDetails($email);
@@ -40,6 +38,12 @@ if ($method === "GET") {
 
   echo json_encode($user);
    exit;
+}
+if ($method === 'GET' && isset($_GET['donationId'])) {
+    $donationId = intval($_GET['donationId']);
+    $result = $profile->viewDonationDetails($donationId);
+    echo json_encode($result);
+    exit;
 }
 if ($method === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
@@ -115,6 +119,7 @@ elseif ($method === "PUT") {
 
     exit;
 }
+
 
 else {
     echo json_encode(["error" => "Method not allowed"]);

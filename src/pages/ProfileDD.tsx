@@ -1,32 +1,78 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Gift, User, Calendar, MapPin } from "lucide-react";
 import RequestingUsers from "@/components/donation/RequestingUsers";
+import axios from "axios";
+
+interface Donation {
+  DonationID: number;
+  title: string;
+  userID: number;
+  userName: string;
+  description: string;
+  date_time: string;
+  category: string;
+  condition: string;
+  quantity: number;
+  location: string;
+  images: string[];
+  isVerified: number;
+  isDonationCompleted: number;
+  receiverID: number;
+  approvedBy: string;
+  setVisible: number;
+  usageDuration: string;
+  credits: number;
+}
 
 const Profiledd = () => {
   const { id } = useParams();
+  // console.log("Route param id:", id);
+  const [donation, setDonation] = useState<Donation | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [requestingUsers, setRequestingUsers] = useState<any[]>([]); // fetch later if needed
 
-  // Mock donation data - in real app this would come from API
-  const donation = {
-    id: parseInt(id || "1"),
-    title: "Winter Coats for Families",
-    category: "Clothing",
-    description:
-      "Brand new winter coats in various sizes for families in need. All coats are waterproof and suitable for harsh winter conditions.",
-    date: "2024-01-15",
-    status: "Active",
-    credits: 50,
-    location: "San Francisco, CA",
-    donor: "John Doe",
-    images: ["/placeholder.svg"],
-    condition: "New",
-    quantity: 5,
-  };
+  useEffect(() => {
+    const fetchDonation = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost/KindLoop-project01/Backend/profile.php`,
+          {
+            params: { donationId: id },
+          }
+        );
 
-  const [requestingUsers] = useState([]);
+        if (response.data && !response.data.error) {
+          setDonation(response.data);
+        } else {
+          console.error("Donation not found");
+        }
+      } catch (error) {
+        console.error("Error fetching donation:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchDonation();
+    }
+  }, [id]);
+
+  if (loading) {
+    return <div className="text-center py-10">Loading donation details...</div>;
+  }
+
+  if (!donation) {
+    return (
+      <div className="text-center py-10 text-destructive">
+        Donation not found
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -78,7 +124,9 @@ const Profiledd = () => {
                       <span className="text-sm font-medium text-muted-foreground">
                         Quantity
                       </span>
-                      <p className="font-semibold">{donation.quantity}</p>
+                      <p className="font-semibold">
+                        {donation.quantity || "N/A"}
+                      </p>
                     </div>
                     <div>
                       <span className="text-sm font-medium text-muted-foreground">
@@ -87,39 +135,49 @@ const Profiledd = () => {
                       <p className="font-semibold">+{donation.credits}</p>
                     </div>
                   </div>
-
                   <div className="flex items-center space-x-4">
                     <Badge
                       variant={
-                        donation.status === "Active" ? "default" : "secondary"
+                        donation.isDonationCompleted ? "default" : "secondary"
                       }
                     >
-                      {donation.status}
+                      {donation.isDonationCompleted ? "Completed" : "Active"}
                     </Badge>
                     <div className="flex items-center text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4 mr-1" />
-                      {donation.date}
+                      {donation.date_time?.split(" ")[0]}
                     </div>
                     <div className="flex items-center text-sm text-muted-foreground">
                       <MapPin className="h-4 w-4 mr-1" />
-                      {donation.location}
+                      {donation.location || "Not specified"}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex justify-center items-center">
-                  <img
-                    src={donation.images[0]}
-                    alt={donation.title}
-                    className="w-full max-w-sm h-64 object-cover rounded-lg border"
-                  />
-                </div>
+                {donation.images && (
+                  <div className="pt-4">
+                    <h3 className="text-lg font-medium mb-1">Images:</h3>
+                    <div className="flex flex-wrap gap-4">
+                      {donation.images.map((img: string, idx: number) => (
+                        <img
+                          key={idx}
+                          src={`http://localhost/KindLoop-project01/Backend/${img}`}
+                          alt={`Donation ${idx}`}
+                          className="w-32 h-32 object-contain border rounded-md shadow-sm bg-white p-1 transition-transform hover:scale-105"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
 
           {/* Requesting Users */}
-          <RequestingUsers users={requestingUsers} donationId={donation.id} />
+          <RequestingUsers
+            users={requestingUsers}
+            donationId={parseInt(id || "0")}
+          />
         </div>
       </div>
     </div>

@@ -113,33 +113,51 @@ class Profile{
     }
 
     public function changePassword($email, $currentPassword, $newPassword) {
-    $stmt = $this->conn->prepare("SELECT password FROM user WHERE email = ?");
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $stmt->close();
+        $stmt = $this->conn->prepare("SELECT password FROM user WHERE email = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $stmt->close();
 
-    if ($result->num_rows === 0) {
-        return ["status" => "error", "message" => "User not found."];
+        if ($result->num_rows === 0) {
+            return ["status" => "error", "message" => "User not found."];
+        }
+
+        $row = $result->fetch_assoc();
+        $hashedPassword = $row['password'];
+
+        if (!password_verify($currentPassword, $hashedPassword)) {
+            return ["status" => "error", "message" => "Current password is incorrect."];
+        }
+
+        $newHashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+
+        $updateStmt = $this->conn->prepare("UPDATE user SET password = ? WHERE email = ?");
+        $updateStmt->bind_param("ss", $newHashedPassword, $email);
+
+        if ($updateStmt->execute()) {
+            return ["status" => "success", "message" => "Password updated successfully."];
+        } else {
+            return ["status" => "error", "message" => "Failed to update password."];
+        }
     }
 
-    $row = $result->fetch_assoc();
-    $hashedPassword = $row['password'];
+    public function viewDonationDetails($donationId) {
+        $stmt = $this->conn->prepare("SELECT d.*, u.fullName as donor 
+                                        FROM donation d 
+                                        JOIN user u ON d.userID = u.userID 
+                                        WHERE d.DonationID = ?");
+        $stmt->bind_param("i", $donationId);
+        $stmt->execute();
 
-    if (!password_verify($currentPassword, $hashedPassword)) {
-        return ["status" => "error", "message" => "Current password is incorrect."];
+        $result = $stmt->get_result();
+        if ($result->num_rows > 0) {
+        $donation = $result->fetch_assoc();
+        $donation['images'] = json_decode($donation['images'] ?? '[]');
+        return $donation;
+        } else {
+            $stmt->close();
+            return ["error" => "Donation not found"];
+        }
     }
-
-    $newHashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-
-    $updateStmt = $this->conn->prepare("UPDATE user SET password = ? WHERE email = ?");
-    $updateStmt->bind_param("ss", $newHashedPassword, $email);
-
-    if ($updateStmt->execute()) {
-        return ["status" => "success", "message" => "Password updated successfully."];
-    } else {
-        return ["status" => "error", "message" => "Failed to update password."];
-    }
-}
-
 }

@@ -39,6 +39,7 @@ interface Donation {
   receiverID: number;
   approvedBy: string;
   setVisible: number;
+  usageDuration: string;
 }
 
 interface Verification {
@@ -57,6 +58,7 @@ interface Verification {
   ReceiverID: number;
   approvedBy: string;
   setVisible: number;
+  usageDuration: string;
 }
 
 
@@ -540,8 +542,7 @@ const Admin= () => {
                 <p><strong>Verification:</strong> {selectedDonation.isVerified==1 ? "Verified" : "Unverified"}</p>
                 <p><strong>Visible:</strong> {selectedDonation.setVisible==1 ? "Public" : "Private"}</p>
                 <p><strong>Status:</strong> {selectedDonation.isDonationCompleted==1 ? "Completed" : "Pending"}</p>
-                <p><strong>Approved By:</strong> {selectedDonation.approvedBy ?? "N/A"}</p>
-                <p><strong>Receiver:</strong> {selectedDonation.receiverID ?? "N/A"}</p>
+                <p><strong>Usage Duration:</strong> {selectedDonation.usageDuration ?? "N/A"}</p>
                 {selectedDonation.images && selectedDonation.images.length > 0 && (
                   <div>
                     <strong>Images:</strong>

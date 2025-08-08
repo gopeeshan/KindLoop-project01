@@ -48,7 +48,7 @@ interface Notification {
   timestamp: string;
 }
 interface Donation {
-  id: number;
+  DonationID: number;
   title: string;
   category: string;
   date_time: string;
@@ -137,9 +137,9 @@ const Profile = () => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
-  const handleViewDetails = (donationId: number) => {
-    console.log("Viewing details for donation ID:", donationId);
-    navigate(`/profiledonation/${donationId}`);
+  const handleViewDetails = (DonationID: number) => {
+    // console.log("Viewing details for donation ID:", DonationID);
+    navigate(`/profiledonation/${DonationID}`);
   };
 
   const handleSave = async () => {
@@ -522,12 +522,12 @@ const Profile = () => {
                   <div className="space-y-4">
                     {donationHistory.map((donation) => (
                       <div
-                        key={donation.id}
+                        key={donation.DonationID}
                         className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
                       >
                         <div
                           className="flex-1 cursor-pointer"
-                          onClick={() => handleViewDetails(donation.id)}
+                          onClick={() => handleViewDetails(donation.DonationID)}
                         >
                           <h3 className="font-semibold hover:text-primary">
                             {donation.title}
@@ -567,7 +567,13 @@ const Profile = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleViewDetails(donation.id)}
+                            onClick={() => {
+                              if (donation.DonationID) {
+                                handleViewDetails(donation.DonationID);
+                              } else {
+                                console.error("Donation ID is missing!");
+                              }
+                            }}
                           >
                             <Eye className="h-4 w-4 mr-2" />
                             View Details
