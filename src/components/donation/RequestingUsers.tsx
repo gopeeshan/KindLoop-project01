@@ -1,43 +1,79 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Users, Eye, Calendar, User } from "lucide-react";
+import axios from "axios";
 import UserDonationHistory from "./UserDonationHistory";
+import { Action } from "@radix-ui/react-toast";
 
 interface RequestingUser {
-  id: number;
-  name: string;
+  userID: number;
+  fullName: string;
   email: string;
-  requestDate: string;
+  request_date: string;
   status: string;
-  reason: string;
-  priority: string;
 }
 
 interface RequestingUsersProps {
-  users: RequestingUser[];
   donationId: number;
 }
 
-const RequestingUsers = ({ users, donationId }: RequestingUsersProps) => {
-  const [selectedUser, setSelectedUser] = useState<RequestingUser | null>(null);
-const getPriorityColor = (priority: string) => {
-    switch (priority.toLowerCase()) {
-      case 'urgent': return 'destructive';
-      case 'high': return 'default';
-      case 'medium': return 'secondary';
-      default: return 'outline';
-    }
+const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationId }) => {
+  const [requestingUsers, setRequestingUsers] = useState<RequestingUser[]>([]);
+  const [currentUser, setCurrentUser] = useState<RequestingUser | null>(null);
+
+   useEffect(() => {
+    fetchRequests();
+  }, [donationId]);
+
+  const fetchRequests = () => {
+    axios.get(`http://localhost/KindLoop-project01/Backend/HandleDonation.php?donationID=${donationId}`)
+      .then((res) => {
+        if (res.data.success) {
+          setRequestingUsers(res.data.data);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching requests", err);
+      });
+  };
+
+  const handleStatusChange = (userID: number, newStatus: string) => {
+    axios.post("http://localhost/KindLoop-project01/Backend/UpdateRequestStatus.php", {
+        Action: newStatus === "approved" ? "accept" : "reject",
+        donationID: donationId,
+        userID: userID,
+        status: newStatus,
+      })
+      .then((res) => {
+        if (res.data.success) {
+          // Update state without refetching
+          setRequestingUsers((prev) =>
+            prev.map((u) =>
+              u.userID === userID ? { ...u, status: newStatus } : u
+            )
+          );
+        } else {
+          alert("Failed to update status");
+        }
+      })
+      .catch((err) => {
+        console.error("Error updating status", err);
+      });
   };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'approved': return 'default';
-      case 'pending': return 'secondary';
-      case 'rejected': return 'destructive';
-      default: return 'outline';
+      case "approved":
+        return "default";
+      case "pending":
+        return "secondary";
+      case "rejected":
+        return "destructive";
+      default:
+        return "outline";
     }
   };
 
@@ -47,57 +83,66 @@ const getPriorityColor = (priority: string) => {
         <CardTitle className="flex items-center space-x-2">
           <Users className="h-5 w-5 text-primary" />
           <span>Requesting Users</span>
-          <Badge variant="secondary">{users.length}</Badge>
+          <Badge variant="secondary">{requestingUsers.length}</Badge>
         </CardTitle>
       </CardHeader>
       <CardContent>
-         {users.length === 0 ? (
+        {requestingUsers.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>No users have requested this donation yet</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {users.map((user) => (
-              <div key={user.id} className="border rounded-lg p-4">
+            {requestingUsers.map((user) => (
+              <div key={user.userID} className="border rounded-lg p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-3">
                     <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                       <User className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <h4 className="font-semibold">{user.name}</h4>
+                      <h4 className="font-semibold">{user.fullName}</h4>
                       <p className="text-sm text-muted-foreground">{user.email}</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
-                    <Badge variant={getPriorityColor(user.priority)}>
-                      {user.priority}
-                    </Badge>
                     <Badge variant={getStatusColor(user.status)}>
                       {user.status}
                     </Badge>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => handleStatusChange(user.userID, "approved")}
+                      disabled={user.status === "approved"}
+                    >
+                      Accept
+                    </Button>
+                    
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleStatusChange(user.userID, "rejected")}
+                      disabled={user.status === "rejected"}
+                    >
+                      Reject
+                    </Button>
                   </div>
-                </div>
-
-                <div className="mb-3">
-                  <p className="text-sm text-muted-foreground mb-1">Request Reason:</p>
-                  <p className="text-sm">{user.reason}</p>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center text-sm text-muted-foreground">
                     <Calendar className="h-4 w-4 mr-1" />
-                    Requested on {user.requestDate}
+                    Requested on {user.request_date}
                   </div>
-                  
+
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
-                        onClick={() => setSelectedUser(user)}
+                        onClick={() => setCurrentUser(user)}
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         View History
@@ -105,13 +150,15 @@ const getPriorityColor = (priority: string) => {
                     </DialogTrigger>
                     <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                       <DialogHeader>
-                        <DialogTitle>User Donation & Received History - {user.name}</DialogTitle>
+                        <DialogTitle>
+                          User Donation & Received History - {currentUser?.fullName}
+                        </DialogTitle>
                       </DialogHeader>
-                      {selectedUser && (
-                        <UserDonationHistory 
-                          userId={selectedUser.id} 
-                          userName={selectedUser.name}
-                          userEmail={selectedUser.email}
+                      {currentUser && (
+                        <UserDonationHistory
+                          userId={currentUser.userID}
+                          userName={currentUser.fullName}
+                          userEmail={currentUser.email}
                         />
                       )}
                     </DialogContent>
@@ -127,4 +174,3 @@ const getPriorityColor = (priority: string) => {
 };
 
 export default RequestingUsers;
-      

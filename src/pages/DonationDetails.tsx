@@ -11,6 +11,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import axios from "axios";
+import { toast } from "@/hooks/use-toast";
+
 
 const DonationDetails = () => {
   const { id } = useParams();
@@ -46,8 +49,26 @@ const DonationDetails = () => {
     console.log(`Chat with donor of donation ${DonationID}`);
   };
 
-  const handleRequestItem = (DonationID: number) => {
-    console.log(`Requesting item ${DonationID}`);
+  const handleRequestItem = async (DonationID: number) => {
+    console.log(`Requesting item ${DonationID} from user ${localStorage.getItem("userID")}`);
+    
+    const response=await axios.post("http://localhost/KindLoop-project01/Backend/HandleDonation.php", {
+      Action: "request-item",
+      DonationID: DonationID,
+      UserID: localStorage.getItem("userID"),
+    });
+    if(response.data.success) {
+      toast({
+        title: "Request Sent ",
+        description: response.data.message || "Your request has been submitted successfully.",
+      });
+    } else {
+      toast({
+        title: "Request Failed ",
+        description: response.data.message || "Unable to send request.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
