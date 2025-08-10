@@ -2,7 +2,14 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Users, Eye, Calendar, User } from "lucide-react";
 import axios from "axios";
 import UserDonationHistory from "./UserDonationHistory";
@@ -24,12 +31,15 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationId }) => {
   const [requestingUsers, setRequestingUsers] = useState<RequestingUser[]>([]);
   const [currentUser, setCurrentUser] = useState<RequestingUser | null>(null);
 
-   useEffect(() => {
+  useEffect(() => {
     fetchRequests();
   }, [donationId]);
 
   const fetchRequests = () => {
-    axios.get(`http://localhost/KindLoop-project01/Backend/HandleDonation.php?donationID=${donationId}`)
+    axios
+      .get(
+        `http://localhost/KindLoop-project01/Backend/HandleDonation.php?donationID=${donationId}`
+      )
       .then((res) => {
         if (res.data.success) {
           setRequestingUsers(res.data.data);
@@ -41,15 +51,18 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationId }) => {
   };
 
   const handleStatusChange = (userID: number, newStatus: string) => {
-    axios.post("http://localhost/KindLoop-project01/Backend/UpdateRequestStatus.php", {
-        Action: newStatus === "approved" ? "accept" : "reject",
-        donationID: donationId,
-        userID: userID,
-        status: newStatus,
-      })
+    axios
+      .post(
+        "http://localhost/KindLoop-project01/Backend/UpdateRequestStatus.php",
+        {
+          Action: newStatus === "approved" ? "accept" : "reject",
+          donationID: donationId,
+          userID: userID,
+          status: newStatus,
+        }
+      )
       .then((res) => {
         if (res.data.success) {
-          // Update state without refetching
           setRequestingUsers((prev) =>
             prev.map((u) =>
               u.userID === userID ? { ...u, status: newStatus } : u
@@ -103,7 +116,9 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationId }) => {
                     </div>
                     <div>
                       <h4 className="font-semibold">{user.fullName}</h4>
-                      <p className="text-sm text-muted-foreground">{user.email}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {user.email}
+                      </p>
                     </div>
                   </div>
 
@@ -114,16 +129,20 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationId }) => {
                     <Button
                       variant="default"
                       size="sm"
-                      onClick={() => handleStatusChange(user.userID, "approved")}
+                      onClick={() =>
+                        handleStatusChange(user.userID, "approved")
+                      }
                       disabled={user.status === "approved"}
                     >
                       Accept
                     </Button>
-                    
+
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => handleStatusChange(user.userID, "rejected")}
+                      onClick={() =>
+                        handleStatusChange(user.userID, "rejected")
+                      }
                       disabled={user.status === "rejected"}
                     >
                       Reject
@@ -151,8 +170,12 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationId }) => {
                     <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle>
-                          User Donation & Received History - {currentUser?.fullName}
+                          User Donation & Received History -{" "}
+                          {currentUser?.fullName}
                         </DialogTitle>
+                        <DialogDescription>
+                          Here you can view the full details of the donation.
+                        </DialogDescription>
                       </DialogHeader>
                       {currentUser && (
                         <UserDonationHistory

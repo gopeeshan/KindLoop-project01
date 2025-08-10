@@ -3,8 +3,10 @@ header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 header("Access-Control-Allow-Headers: Content-Type");
 require_once './Main/HandleDonation.php';
+require_once './Main/profile.php';
 
 $handleDonation = new HandleDonation();
+
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -24,12 +26,33 @@ if ($method === 'POST' && $data['Action'] === 'request-item') {
         exit;
     }
 }
+else if (isset($_GET['userId']) && !empty($_GET['userId'])) {
+    $userId = intval($_GET['userId']);
 
-if (!isset($_GET['donationID'])) {
-    echo json_encode(['success' => false, 'message' => 'Donation ID required']);
-    exit;
-} else {
+// ---------------- Fetch Donations ----------------
+$donations = $handleDonation->fetchDonation($userId);
+
+// ---------------- Fetch Received Items ----------------
+$received = $handleDonation->fetchReceived($userId);
+
+$user_credits=$handleDonation->getcredits($userId);
+
+echo json_encode([
+    "donations" => $donations,
+    "received" => $received,
+    "credits" => $user_credits
+]);
+}
+
+else if ($method == 'GET' && isset($_GET['donationID'])) {
     $donationID = intval($_GET['donationID']);
     $requests = $handleDonation->requestingUser($donationID);
     echo json_encode(['success' => true, 'data' => $requests]);
+} else {
+    echo json_encode(['success' => false, 'message' => 'Invalid request']);
 }
+
+
+
+
+

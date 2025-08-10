@@ -1,8 +1,27 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Gift, Package, User, Mail } from "lucide-react";
+import axios from "axios";
+
+interface Donation {
+  donationID: number;
+  title: string;
+  category: string;
+  date_time: string;
+  status: number;
+  credits: number;
+}
+
+interface ReceivedItem {
+  donationID: number;
+  title: string;
+  donor: string;
+  category: string;
+  date_time: string;
+  status: number;
+}
 
 interface UserDonationHistoryProps {
   userId: number;
@@ -10,18 +29,48 @@ interface UserDonationHistoryProps {
   userEmail: string;
 }
 
-const UserDonationHistory = ({ userId, userName, userEmail }: UserDonationHistoryProps) => {
-  // Mock user data - in real app this would come from API based on userId
-  const userDonations = [
-    // Sample donation data
-    { id: 1, title: "Winter Coats", category: "Clothing", date: "2024-01-10", status: "Completed", credits: 50 },
-    { id: 2, title: "Books for Kids", category: "Education", date: "2024-01-12", status: "Pending", credits: 30 },
-  ];
-  const userReceived = [
-    // Sample received items data
-    { id: 1, title: "Toys for Kids", donor: "Jane Smith", category: "Toys", date: "2024-01-15", status: "Completed" },
-  ];
-  const totalCredits = userDonations.reduce((sum, donation) => sum + donation.credits, 0);
+const UserDonationHistory = ({
+  userId,
+  userName,
+  userEmail,
+}: UserDonationHistoryProps) => {
+  const [userDonations, setUserDonations] = useState<Donation[]>([]);
+  const [userReceived, setUserReceived] = useState<ReceivedItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userCredits, setUserCredits] = useState(0);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost/KindLoop-project01/Backend/HandleDonation.php?userId=${userId}`
+        );
+
+        setUserDonations(Array.isArray(res.data.donations) ? res.data.donations : []);
+        setUserReceived(Array.isArray(res.data.received) ? res.data.received : []);
+        setUserCredits(res.data.credits ?? 0);
+      } catch (error) {
+        console.error("Error fetching donation history:", error);
+        setUserDonations([]);
+        setUserReceived([]);
+        setUserCredits(0);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHistory();
+  }, [userId]);
+
+// const totalCredits = userDonations.reduce((sum, donation) => sum + Number(donation.credits || 0), 0);
+
+  if (loading) {
+    return (
+      <p className="text-center py-6 text-muted-foreground">
+        Loading history...
+      </p>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -40,7 +89,7 @@ const UserDonationHistory = ({ userId, userName, userEmail }: UserDonationHistor
               </div>
             </div>
             <Badge variant="secondary" className="text-lg px-4 py-2">
-              {totalCredits} Credits
+              {userCredits} Credits
             </Badge>
           </div>
         </CardContent>
@@ -53,6 +102,7 @@ const UserDonationHistory = ({ userId, userName, userEmail }: UserDonationHistor
           <TabsTrigger value="received">Received History</TabsTrigger>
         </TabsList>
 
+        {/* Donations */}
         <TabsContent value="donations" className="space-y-4">
           <Card>
             <CardHeader>
@@ -66,20 +116,31 @@ const UserDonationHistory = ({ userId, userName, userEmail }: UserDonationHistor
                 <div className="text-center py-8 text-muted-foreground">
                   <Gift className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No donations made yet</p>
-                  </div>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {userDonations.map((donation) => (
-                    <div key={donation.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div
+                      key={donation.donationID}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                    >
                       <div className="flex-1">
                         <h4 className="font-medium">{donation.title}</h4>
-                        <p className="text-sm text-muted-foreground">{donation.category} • {donation.date}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {donation.category} • {donation.date_time}
+                        </p>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <Badge variant={donation.status === "Completed" ? "default" : "secondary"}>
-                          {donation.status}
+                        <Badge
+                          variant={
+                            donation.status === 1 ? "default" : "secondary"
+                          }
+                        >
+                          {donation.status === 1 ? "Completed" : "Pending"}
                         </Badge>
-                        <span className="text-sm font-medium">+{donation.credits}</span>
+                        <span className="text-sm font-medium">
+                          +{donation.credits}
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -89,6 +150,7 @@ const UserDonationHistory = ({ userId, userName, userEmail }: UserDonationHistor
           </Card>
         </TabsContent>
 
+        {/* Received Items */}
         <TabsContent value="received" className="space-y-4">
           <Card>
             <CardHeader>
@@ -106,14 +168,19 @@ const UserDonationHistory = ({ userId, userName, userEmail }: UserDonationHistor
               ) : (
                 <div className="space-y-3">
                   {userReceived.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div
+                      key={item.donationID}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                    >
                       <div className="flex-1">
                         <h4 className="font-medium">{item.title}</h4>
                         <p className="text-sm text-muted-foreground">
-                          From {item.donor} • {item.category} • {item.date}
+                          From {item.donor} • {item.category} • {item.date_time}
                         </p>
                       </div>
-                      <Badge variant="default">{item.status}</Badge>
+                      <Badge variant={item.status === 1 ? "default" : "secondary"}>
+                        {item.status === 1 ? "Completed" : "Pending"}
+                      </Badge>
                     </div>
                   ))}
                 </div>
