@@ -125,7 +125,7 @@ const Profiledd = () => {
                         Quantity
                       </span>
                       <p className="font-semibold">
-                        {donation.quantity || "N/A"}
+                        {donation.quantity || 1}
                       </p>
                     </div>
                     <div>

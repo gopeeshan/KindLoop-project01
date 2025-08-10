@@ -14,6 +14,7 @@ import { Users, Eye, Calendar, User } from "lucide-react";
 import axios from "axios";
 import UserDonationHistory from "./UserDonationHistory";
 import { Action } from "@radix-ui/react-toast";
+import { useToast } from "../ui/use-toast";
 
 interface RequestingUser {
   userID: number;
@@ -30,6 +31,7 @@ interface RequestingUsersProps {
 const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationId }) => {
   const [requestingUsers, setRequestingUsers] = useState<RequestingUser[]>([]);
   const [currentUser, setCurrentUser] = useState<RequestingUser | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchRequests();
@@ -52,15 +54,12 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationId }) => {
 
   const handleStatusChange = (userID: number, newStatus: string) => {
     axios
-      .post(
-        "http://localhost/KindLoop-project01/Backend/UpdateRequestStatus.php",
-        {
-          Action: newStatus === "approved" ? "accept" : "reject",
-          donationID: donationId,
-          userID: userID,
-          status: newStatus,
-        }
-      )
+      .post("http://localhost/KindLoop-project01/Backend/HandleDonation.php", {
+        Action: "accept_or_reject",
+        donationID: donationId,
+        userID: userID,
+        status: newStatus,
+      })
       .then((res) => {
         if (res.data.success) {
           setRequestingUsers((prev) =>
@@ -68,12 +67,27 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationId }) => {
               u.userID === userID ? { ...u, status: newStatus } : u
             )
           );
+
+          toast({
+            title: "Success",
+            description: `User has been ${newStatus} successfully.`,
+            variant: "default",
+          });
         } else {
-          alert("Failed to update status");
+          toast({
+            title: "Error",
+            description: "Failed to update status.",
+            variant: "destructive",
+          });
         }
       })
       .catch((err) => {
         console.error("Error updating status", err);
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred.",
+          variant: "destructive",
+        });
       });
   };
 
@@ -129,9 +143,10 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationId }) => {
                     <Button
                       variant="default"
                       size="sm"
-                      onClick={() =>
-                        handleStatusChange(user.userID, "approved")
-                      }
+                      onClick={() => {
+                        console.log(donationId + " " + user.userID);
+                        handleStatusChange(user.userID, "selected");
+                      }}
                       disabled={user.status === "approved"}
                     >
                       Accept

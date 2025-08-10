@@ -6,6 +6,7 @@ class HandleDonation {
     private $conn;
     protected $donationId;
     protected $userId;
+    protected $status;
 
     public function __construct()
     {
@@ -77,10 +78,22 @@ class HandleDonation {
         return $donations;
     }
     public function fetchReceived($userId){
-        $sqlReceived = "SELECT DonationID, title, category, date_time, isDonationCompleted AS status, credits
-                 FROM donation
-                 WHERE userID = ?
-                 ORDER BY date_time DESC";
+        $sqlReceived = "SELECT
+                d.DonationID,
+                d.title,
+                d.date_time AS requestDate,
+                d.category,
+                d.isDonationCompleted AS status,
+                u.fullName AS donor,
+                u.contactNumber AS donorContact,
+                ri.quantity,
+                ri.received_date
+            FROM receive_items ri
+            JOIN donation d ON ri.donationID = d.DonationID
+            JOIN user u ON ri.donorID = u.userID
+            WHERE ri.receiverID = ?
+              AND d.isDonationCompleted = 1
+            ORDER BY ri.received_date DESC";
         $stmtRec = $this->conn->prepare($sqlReceived);
         $stmtRec->bind_param("i", $userId);
         $stmtRec->execute();
@@ -105,5 +118,19 @@ class HandleDonation {
         }
 
         return $userCredits;
+    }
+
+    public function requestConfirmation($userID,$donationID,$status){
+        $this->userId = $userID;
+        $this->status = $status;
+        $this->donationId = $donationID;
+        $sql="UPDATE donation_requests SET status = ? WHERE userID = ? AND donationID = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("sii", $this->status, $this->userId, $this->donationId);
+        $a=$stmt->execute();
+
+        if ($a>0) {
+            return ['success' => true];
+        }
     }
 }

@@ -64,10 +64,21 @@ class Profile{
     public function getReceivedHistory($userID) {
         $this->userID = $userID;
         $receivedHistory = [];
-        $stmt = $this->conn->prepare("SELECT donation.DonationID, donation.title, donation.received_date, user.fullName AS donor
-                                      FROM donation
-                                      JOIN user ON donation.userID = user.userID
-                                      WHERE donation.receiverID = ? AND donation.isDonationCompleted = 1");
+        $stmt = $this->conn->prepare("SELECT 
+                d.DonationID, 
+                d.title, 
+                d.date_time AS requestDate, 
+                d.category, 
+                u.fullName AS donor, 
+                u.contactNumber AS donorContact,
+                ri.quantity,
+                ri.received_date
+            FROM receive_items ri
+            JOIN donation d ON ri.donationID = d.DonationID
+            JOIN user u ON ri.donorID = u.userID
+            WHERE ri.receiverID = ? 
+              AND d.isDonationCompleted = 1
+            ORDER BY ri.received_date DESC");
         $stmt->bind_param("i", $userID);
         if ($stmt->execute()) {
             $receivedHistory = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -86,14 +97,15 @@ class Profile{
                 d.category, 
                 u.fullName AS donor, 
                 u.contactNumber AS donorContact,
-                ri.quantity,
+                ri.quantity
             FROM receive_items ri
             JOIN donation d ON ri.donationID = d.DonationID
             JOIN user u ON ri.donorID = u.userID
             WHERE ri.receiverID = ? 
-              AND d.isDonationCompleted = 0");
+              AND d.isDonationCompleted = 0
+              ORDER BY ri.received_date DESC");
         $stmt->bind_param("i", $userID);
-        if ($stmt->execute()) {
+        if ($stmt->execute()) { 
             $toBeReceived = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         }
         $stmt->close();

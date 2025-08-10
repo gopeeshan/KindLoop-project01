@@ -19,7 +19,7 @@ interface ReceivedItem {
   title: string;
   donor: string;
   category: string;
-  date_time: string;
+  received_date: string;
   status: number;
 }
 
@@ -175,7 +175,7 @@ const UserDonationHistory = ({
                       <div className="flex-1">
                         <h4 className="font-medium">{item.title}</h4>
                         <p className="text-sm text-muted-foreground">
-                          From {item.donor} • {item.category} • {item.date_time}
+                          From {item.donor} • {item.category} • {item.received_date}
                         </p>
                       </div>
                       <Badge variant={item.status === 1 ? "default" : "secondary"}>

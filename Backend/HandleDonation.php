@@ -14,8 +14,9 @@ $data = json_decode(file_get_contents("php://input"), true);
 $action = $data['Action'] ?? '';
 $userID = $data['UserID'] ?? null;
 $donationID = $data['DonationID'] ?? null;
+$status=$data['status'] ?? null;
 
-if ($method === 'POST' && $data['Action'] === 'request-item') {
+if ($method === 'POST' && $action === 'request-item') {
 
     if ($handleDonation->checkrequest($donationID, $userID)) {
         echo json_encode(['success' => false, 'message' => 'You have already requested this donation.']);
@@ -26,6 +27,14 @@ if ($method === 'POST' && $data['Action'] === 'request-item') {
         exit;
     }
 }
+else if ($method ==='POST' && $action === 'accept_or_reject'){
+    if($handleDonation->requestConfirmation($userID,$donationID,$status)){
+        echo json_encode(['success' => true]);
+    }else{
+        echo json_encode(['success' => false]);
+    }
+}
+
 else if (isset($_GET['userId']) && !empty($_GET['userId'])) {
     $userId = intval($_GET['userId']);
 
