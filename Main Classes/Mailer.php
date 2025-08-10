@@ -18,13 +18,13 @@ class Mailer {
         $this->mail->isSMTP();
         $this->mail->Host       = 'smtp.gmail.com';
         $this->mail->SMTPAuth   = true;
-        $this->mail->Username   = 'madhan2001ana@gmail.com'; // SMTP email
-        $this->mail->Password   = 'ilergdrkkdycocoh'; // SMTP password
+        $this->mail->Username   = 'kindloop.org@gmail.com'; // SMTP email
+        $this->mail->Password   = 'kpqz mkzp alcg roln'; // SMTP password
         $this->mail->SMTPSecure = 'ssl';
         $this->mail->Port       = 465;
 
         
-        $this->mail->setFrom('madhan2001ana@gmail.com', 'KindLoop'); // Sender's email and name
+        $this->mail->setFrom('kindloop.org@gmail.com', 'KindLoop'); // Sender's email and name
     }
 
     // Set email subject and message
