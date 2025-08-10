@@ -10,6 +10,9 @@ import axios from "axios";
 
 const Signup = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // Form Data
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -22,6 +25,7 @@ const Signup = () => {
     confirmPassword: "",
   });
 
+  // Validation & Status
   const [isLoading, setIsLoading] = useState(false);
   const [passwordStrengthError, setPasswordStrengthError] = useState(false);
   const [emailError, setEmailError] = useState(false);
@@ -31,26 +35,39 @@ const Signup = () => {
   const [occupationError, setOccupationError] = useState(false);
   const [addressError, setAddressError] = useState(false);
 
-  const { toast } = useToast();
+  // OTP States
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [otpError, setOtpError] = useState("");
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [isOtpVerified, setIsOtpVerified] = useState(false);
 
+  // Password strength regex
   const isPasswordStrong = (password: string): boolean => {
     const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
     return regex.test(password);
   };
 
+  // Handle input change (includes otp input)
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
+
+    if (name === "otp") {
+      setOtp(value);
+      setOtpError("");
+      return;
+    }
 
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
 
+    // Validation checks
     if (name === "password") {
-      const isStrong = isPasswordStrong(value);
-      setPasswordStrengthError(!isStrong);
+      setPasswordStrengthError(!isPasswordStrong(value));
     }
     if (name === "nic") {
       const isValidNIC =
@@ -67,6 +84,7 @@ const Signup = () => {
     }
   };
 
+  // Validate other fields (like fullName, occupation, address)
   const validateOtherFields = () => {
     let valid = true;
 
@@ -91,8 +109,98 @@ const Signup = () => {
     return valid;
   };
 
+  // Send OTP Handler
+  const handleSendOTP = async () => {
+    if (!formData.email || emailError) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address before sending OTP.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await axios.post(
+        "http://localhost/KindLoop-project01/emailValidationOTP.php",
+        { email: formData.email },
+        { withCredentials: true }
+      );
+
+      if (response.data.success === true) {
+        toast({
+          title: "OTP Sent",
+          description: "Please check your email for the OTP.",
+          variant: "default",
+        });
+        setOtpSent(true);
+      } else {
+        toast({
+          title: "Failed to send OTP",
+          description: response.data.message || "Try again later.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error sending OTP:", error);
+      toast({
+        title: "Server Error",
+        description: "Could not send OTP. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Verify OTP Handler
+  const handleVerifyOTP = async () => {
+    if (otp.trim().length === 0) {
+      setOtpError("Please enter the OTP");
+      return;
+    }
+
+    try {
+      setIsVerifyingOtp(true);
+      const response = await axios.post(
+        "http://localhost/KindLoop-project01/verifyOTP.php",
+        { email: formData.email, otp },
+        { withCredentials: true }
+      );
+
+      if (response.data.success === true) {
+        toast({
+          title: "OTP Verified",
+          description: "Your email has been verified.",
+          variant: "default",
+        });
+        setIsOtpVerified(true);
+        setOtpError("");
+      } else {
+        setOtpError(response.data.message || "Invalid OTP");
+      }
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      setOtpError("Failed to verify OTP. Please try again.");
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
+  // Signup submission (only allowed after OTP verified)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isOtpVerified) {
+      toast({
+        title: "Verify Email",
+        description:
+          "Please verify your email by entering OTP before signing up.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       toast({
@@ -124,20 +232,7 @@ const Signup = () => {
     try {
       const response = await axios.post(
         "http://localhost/KindLoop-project01/Backend/Signup.php",
-        {
-          // method: "POST",
-          // headers: { "Content-Type": "application/json" },
-          // body: JSON.stringify(formData),
-          fullName: formData.fullName,
-          email: formData.email,
-          nic: formData.nic,
-          contactNumber: formData.contactNumber,
-          occupation: formData.occupation,
-          address: formData.address,
-          district: formData.district,
-          password: formData.password,
-          confirmPassword: formData.confirmPassword,
-        }
+        { ...formData }
       );
 
       const data = response.data;
@@ -160,23 +255,22 @@ const Signup = () => {
           password: "",
           confirmPassword: "",
         });
+        setOtp("");
+        setOtpSent(false);
+        setIsOtpVerified(false);
         localStorage.setItem("isLoggedIn", "true");
         setTimeout(() => navigate("/login"), 1000);
       }
     } catch (error) {
-      if (error instanceof Error) {
-        console.error("Signup error:", error.message);
-      } else {
-        console.error("Signup error:", error);
-      }
+      console.error("Signup error:", error);
       toast({
         title: "Server Error",
         description: "Something went wrong. Please try again later.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   const districtList = [
@@ -224,9 +318,7 @@ const Signup = () => {
           <CardHeader className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-4">
               <Recycle className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold text-foreground">
-                KindLoop
-              </span>
+              <span className="text-2xl font-bold text-foreground">KindLoop</span>
             </div>
             <CardTitle className="text-2xl">Create Account</CardTitle>
             <p className="text-muted-foreground">
@@ -236,66 +328,174 @@ const Signup = () => {
 
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              {[
-                { name: "fullName", label: "Full Name", type: "text" },
-                { name: "email", label: "Email Address", type: "email" },
-                { name: "nic", label: "NIC", type: "text" },
-                { name: "contactNumber", label: "Contact Number", type: "tel" },
-                { name: "occupation", label: "Occupation", type: "text" },
-                { name: "address", label: "Address", type: "text" },
-              ].map((field) => (
-                <div className="space-y-2" key={field.name}>
-                  <Label htmlFor={field.name}>{field.label}</Label>
-                  <Input
-                    id={field.name}
-                    name={field.name}
-                    type={field.type}
-                    placeholder={`Enter your ${field.label.toLowerCase()}`}
-                    value={(formData as any)[field.name]}
-                    onChange={handleInputChange}
-                    required
-                    disabled={isLoading}
-                  />
-                  {field.name === "nic" &&
-                    nicError &&
-                    formData.nic.length > 0 && (
-                      <p className="text-sm text-red-500">
-                        NIC must be 9 digits followed by 'V' or 'X', or 12
-                        digits only.
-                      </p>
-                    )}
-                  {field.name === "contactNumber" &&
-                    phoneError &&
-                    formData.contactNumber.length > 0 && (
-                      <p className="text-sm text-red-500">
-                        Contact number must be 10 digits starting with 07.
-                      </p>
-                    )}
-                  {field.name === "email" &&
-                    emailError &&
-                    formData.email.length > 0 && (
-                      <p className="text-sm text-red-500">
-                        Please enter a valid email address.
-                      </p>
-                    )}
-                  {field.name === "fullName" && fullNameError && (
-                    <p className="text-sm text-red-500">
-                      Full name must be at least 3 letters (A–Z only).
-                    </p>
-                  )}
-                  {field.name === "occupation" && occupationError && (
-                    <p className="text-sm text-red-500">
-                      Occupation must be letters only, at least 2 characters.
-                    </p>
-                  )}
-                  {field.name === "address" && addressError && (
-                    <p className="text-sm text-red-500">
-                      Address must be 5–100 characters, no &lt; or &gt; allowed.
-                    </p>
-                  )}
-                </div>
-              ))}
+              {/* Full Name */}
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input
+                  id="fullName"
+                  name="fullName"
+                  type="text"
+                  placeholder="Enter your full name"
+                  value={formData.fullName}
+                  onChange={handleInputChange}
+                  required
+                  disabled={isLoading}
+                />
+                {fullNameError && (
+                  <p className="text-sm text-red-500">
+                    Full name must be at least 3 letters (A–Z only).
+                  </p>
+                )}
+              </div>
 
+              {/* Email & OTP Section */}
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                  disabled={isLoading || isOtpVerified}
+                />
+                {emailError && (
+                  <p className="text-sm text-red-500">
+                    Please enter a valid email address.
+                  </p>
+                )}
+
+                {/* Show Send OTP button if OTP not sent yet */}
+                {!otpSent && (
+                  <Button
+                    type="button"
+                    className="mt-2 w-full"
+                    onClick={handleSendOTP}
+                    disabled={isLoading || emailError || !formData.email}
+                  >
+                    {isLoading ? "Sending OTP..." : "Send OTP"}
+                  </Button>
+                )}
+
+                {/* Show OTP input and Verify OTP button only after OTP sent and not yet verified */}
+                {otpSent && !isOtpVerified && (
+                  <>
+                    <Input
+                      id="otp"
+                      name="otp"
+                      type="text"
+                      placeholder="Enter the OTP sent to your email"
+                      value={otp}
+                      onChange={handleInputChange}
+                      disabled={isVerifyingOtp}
+                      className="mt-2"
+                    />
+                    {otpError && (
+                      <p className="text-sm text-red-500">{otpError}</p>
+                    )}
+                    <Button
+                      type="button"
+                      className="mt-2 w-full"
+                      onClick={handleVerifyOTP}
+                      disabled={isVerifyingOtp || otp.length === 0}
+                    >
+                      {isVerifyingOtp ? "Verifying OTP..." : "Verify OTP"}
+                    </Button>
+                  </>
+                )}
+
+                {/* Show verified message */}
+                {isOtpVerified && (
+                  <p className="text-sm text-green-600 mt-2">
+                    Email verified successfully.
+                  </p>
+                )}
+              </div>
+
+              {/* NIC */}
+              <div className="space-y-2">
+                <Label htmlFor="nic">NIC</Label>
+                <Input
+                  id="nic"
+                  name="nic"
+                  type="text"
+                  placeholder="Enter your NIC"
+                  value={formData.nic}
+                  onChange={handleInputChange}
+                  required
+                  disabled={isLoading}
+                />
+                {nicError && formData.nic.length > 0 && (
+                  <p className="text-sm text-red-500">
+                    NIC must be 9 digits followed by 'V' or 'X', or 12 digits
+                    only.
+                  </p>
+                )}
+              </div>
+
+              {/* Contact Number */}
+              <div className="space-y-2">
+                <Label htmlFor="contactNumber">Contact Number</Label>
+                <Input
+                  id="contactNumber"
+                  name="contactNumber"
+                  type="tel"
+                  placeholder="Enter your contact number"
+                  value={formData.contactNumber}
+                  onChange={handleInputChange}
+                  required
+                  disabled={isLoading}
+                />
+                {phoneError && formData.contactNumber.length > 0 && (
+                  <p className="text-sm text-red-500">
+                    Contact number must be 10 digits starting with 07.
+                  </p>
+                )}
+              </div>
+
+              {/* Occupation */}
+              <div className="space-y-2">
+                <Label htmlFor="occupation">Occupation</Label>
+                <Input
+                  id="occupation"
+                  name="occupation"
+                  type="text"
+                  placeholder="Enter your occupation"
+                  value={formData.occupation}
+                  onChange={handleInputChange}
+                  required
+                  disabled={isLoading}
+                />
+                {occupationError && (
+                  <p className="text-sm text-red-500">
+                    Occupation must be letters only, at least 2 characters.
+                  </p>
+                )}
+              </div>
+
+              {/* Address */}
+              <div className="space-y-2">
+                <Label htmlFor="address">Address</Label>
+                <Input
+                  id="address"
+                  name="address"
+                  type="text"
+                  placeholder="Enter your address"
+                  value={formData.address}
+                  onChange={handleInputChange}
+                  required
+                  disabled={isLoading}
+                />
+                {addressError && (
+                  <p className="text-sm text-red-500">
+                    Address must be 5–100 characters, no &lt; or &gt; allowed.
+                  </p>
+                )}
+              </div>
+
+              {/* District */}
               <div className="space-y-2">
                 <Label htmlFor="district">District</Label>
                 <select
@@ -316,6 +516,7 @@ const Signup = () => {
                 </select>
               </div>
 
+              {/* Password */}
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
@@ -336,6 +537,7 @@ const Signup = () => {
                 )}
               </div>
 
+              {/* Confirm Password */}
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
                 <Input
@@ -355,6 +557,7 @@ const Signup = () => {
                 className="w-full"
                 disabled={
                   isLoading ||
+                  !isOtpVerified || // Disable signup unless OTP verified
                   passwordStrengthError ||
                   nicError ||
                   phoneError ||
