@@ -26,7 +26,7 @@
                 donation.isVerified,
                 donation.setVisible,
                 donation.usageDuration,
-                donation.credits
+                donation.credits,
                 donation.quantity
             FROM donation
             JOIN user ON donation.userID = user.userID
