@@ -143,12 +143,20 @@ const Signup = () => {
         });
       }
     } catch (error) {
-      console.error("Error sending OTP:", error);
-      toast({
-        title: "Server Error",
-        description: "Could not send OTP. Please try again later.",
-        variant: "destructive",
-      });
+      if (axios.isAxiosError(error) && error.response) {
+        toast({
+          title: "Error",
+          description: error.response.data.message || "Failed to send OTP.",
+          variant: "destructive",
+        });
+      } else {
+        console.error("Error sending OTP:", error);
+        toast({
+          title: "Server Error",
+          description: "Could not send OTP. Please try again later.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -318,7 +326,9 @@ const Signup = () => {
           <CardHeader className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-4">
               <Recycle className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold text-foreground">KindLoop</span>
+              <span className="text-2xl font-bold text-foreground">
+                KindLoop
+              </span>
             </div>
             <CardTitle className="text-2xl">Create Account</CardTitle>
             <p className="text-muted-foreground">
