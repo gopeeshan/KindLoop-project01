@@ -24,7 +24,7 @@ const PostCreation = () => {
   const [condition, setCondition] = useState("");
   const [usageDuration, setUsageDuration] = useState<string>("");
   const [images, setImages] = useState<FileList | null>(null);
-  
+  const [quantity, setQuantity] = useState("");
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -47,7 +47,14 @@ const PostCreation = () => {
       return;
     }
 
-    if (!title || !description || !category || !location || !condition || !usageDuration) {
+    if (
+      !title ||
+      !description ||
+      !category ||
+      !location ||
+      !condition ||
+      !usageDuration
+    ) {
       toast({
         title: "Missing Fields",
         description: "Please fill all required fields.",
@@ -63,6 +70,7 @@ const PostCreation = () => {
     formData.append("location", location);
     formData.append("condition", condition);
     formData.append("usageDuration", usageDuration);
+    formData.append("quantity", quantity);
 
     if (images) {
       for (let i = 0; i < images.length; i++) {
@@ -204,21 +212,39 @@ const PostCreation = () => {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="usageDuration">Usage Duration *</Label>
-                  <Select onValueChange={(value) => setUsageDuration(value)}>
-                    <SelectTrigger id="usageDuration" className="pl-3">
-                      <SelectValue placeholder="Select usage duration" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Within 1">Within 1 year</SelectItem>
-                      <SelectItem value="2 to 4">2 – 4 years</SelectItem>
-                      <SelectItem value="5 to 7">5 – 7 years</SelectItem>
-                      <SelectItem value="8 to 10">8 – 10 years</SelectItem>
-                      <SelectItem value="More Than 10">More than 10 years</SelectItem>
-                      <SelectItem value="Not Sure">Not sure</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="usageDuration">Usage Duration *</Label>
+                    <Select onValueChange={(value) => setUsageDuration(value)}>
+                      <SelectTrigger id="usageDuration" className="pl-3">
+                        <SelectValue placeholder="Select usage duration" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Within 1">Within 1 year</SelectItem>
+                        <SelectItem value="2 to 4">2 – 4 years</SelectItem>
+                        <SelectItem value="5 to 7">5 – 7 years</SelectItem>
+                        <SelectItem value="8 to 10">8 – 10 years</SelectItem>
+                        <SelectItem value="More Than 10">
+                          More than 10 years
+                        </SelectItem>
+                        <SelectItem value="Not Sure">Not sure</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="quantity">Quantity *</Label>
+                    <div className="relative">
+                      <Input
+                        id="quantity"
+                        type="number"
+                        placeholder="Enter quantity"
+                        value={quantity}
+                        onChange={(e) => setQuantity(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -247,7 +273,7 @@ const PostCreation = () => {
                   />
                 </div>
 
-                <Button type="submit" className="w-full" size="lg" >
+                <Button type="submit" className="w-full" size="lg">
                   Post Donation
                 </Button>
               </form>
