@@ -25,22 +25,22 @@ interface RequestingUser {
 }
 
 interface RequestingUsersProps {
-  donationId: number;
+  donationID: number;
 }
 
-const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationId }) => {
+const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
   const [requestingUsers, setRequestingUsers] = useState<RequestingUser[]>([]);
   const [currentUser, setCurrentUser] = useState<RequestingUser | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchRequests();
-  }, [donationId]);
+  }, [donationID]);
 
   const fetchRequests = () => {
     axios
       .get(
-        `http://localhost/KindLoop-project01/Backend/HandleDonation.php?donationID=${donationId}`
+        `http://localhost/KindLoop-project01/Backend/HandleDonation.php?donationID=${donationID}`
       )
       .then((res) => {
         if (res.data.success) {
@@ -52,13 +52,13 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationId }) => {
       });
   };
 
-  const handleStatusChange = (userID: number, newStatus: string) => {
-    axios
-      .post("http://localhost/KindLoop-project01/Backend/HandleDonation.php", {
+  const handleStatusChange = (userID: number, donationID: number, newStatus: string) => {
+    axios.post("http://localhost/KindLoop-project01/Backend/HandleDonation.php", {
         Action: "accept_or_reject",
-        donationID: donationId,
-        userID: userID,
+        DonationID: donationID,
+        UserID: userID,
         status: newStatus,
+        DonorID: localStorage.getItem("userID"),
       })
       .then((res) => {
         if (res.data.success) {
@@ -144,8 +144,8 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationId }) => {
                       variant="default"
                       size="sm"
                       onClick={() => {
-                        console.log(donationId + " " + user.userID);
-                        handleStatusChange(user.userID, "selected");
+                        console.log(donationID + " " + user.userID);
+                        handleStatusChange(user.userID, donationID,"selected");
                       }}
                       disabled={user.status === "approved"}
                     >
@@ -156,7 +156,7 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationId }) => {
                       variant="destructive"
                       size="sm"
                       onClick={() =>
-                        handleStatusChange(user.userID, "rejected")
+                        handleStatusChange(user.userID, donationID, "rejected")
                       }
                       disabled={user.status === "rejected"}
                     >

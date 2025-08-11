@@ -90,22 +90,22 @@ class Profile{
     public function getToBeReceivedItems($userID) {
         $this->userID = $userID;
         $toBeReceived = [];
-        $stmt = $this->conn->prepare("SELECT 
-                d.DonationID, 
-                d.title, 
-                d.date_time, 
-                d.category, 
-                u.fullName AS donor, 
+        $stmt = $this->conn->prepare("SELECT
+                d.DonationID,
+                d.title,
+                d.date_time,
+                d.category,
+                u.fullName AS donor,
                 u.contactNumber AS donorContact,
                 ri.quantity
             FROM receive_items ri
             JOIN donation d ON ri.donationID = d.DonationID
             JOIN user u ON ri.donorID = u.userID
-            WHERE ri.receiverID = ? 
+            WHERE ri.receiverID = ?
               AND d.isDonationCompleted = 0
               ORDER BY ri.received_date DESC");
         $stmt->bind_param("i", $userID);
-        if ($stmt->execute()) { 
+        if ($stmt->execute()) {
             $toBeReceived = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         }
         $stmt->close();

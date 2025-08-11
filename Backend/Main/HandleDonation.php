@@ -7,6 +7,7 @@ class HandleDonation {
     protected $donationId;
     protected $userId;
     protected $status;
+    protected $donorId;
 
     public function __construct()
     {
@@ -120,17 +121,29 @@ class HandleDonation {
         return $userCredits;
     }
 
-    public function requestConfirmation($userID,$donationID,$status){
+    public function requestConfirmation($userID,$donationID,$status,$donorId){
         $this->userId = $userID;
         $this->status = $status;
         $this->donationId = $donationID;
+        $this->donorId = $donorId;
         $sql="UPDATE donation_requests SET status = ? WHERE userID = ? AND donationID = ?";
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("sii", $this->status, $this->userId, $this->donationId);
-        $a=$stmt->execute();
+        $stmt->execute();
 
-        if ($a>0) {
-            return ['success' => true];
+        if ($stmt->affected_rows > 0) {
+            $quantity = 1; // Set the quantity to 1 or any other logic you need
+           $sql2="INSERT INTO receive_items (donationID, donorID, receiverID, quantity) VALUES (?, ?, ?, ?)";
+           $stmt2 = $this->conn->prepare($sql2);
+           $stmt2->bind_param("iiii", $this->donationId, $this->donorId, $this->userId, $quantity);
+           $stmt2->execute();
+           if ($stmt2->affected_rows > 0) {
+               return ['success' => true];
+           } else {
+               return ['success' => false, 'message' => 'Failed to insert into receive_items.'];
+           }
+        } else {
+            return ['success' => false , 'message' => 'Failed to update request status.'];
         }
     }
 }

@@ -2,6 +2,7 @@
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS");
 require_once './Main/HandleDonation.php';
 require_once './Main/profile.php';
 
@@ -15,6 +16,7 @@ $action = $data['Action'] ?? '';
 $userID = $data['UserID'] ?? null;
 $donationID = $data['DonationID'] ?? null;
 $status=$data['status'] ?? null;
+$donorID = isset($data['DonorID']) ? (int) $data['DonorID'] : null;
 
 if ($method === 'POST' && $action === 'request-item') {
 
@@ -27,11 +29,11 @@ if ($method === 'POST' && $action === 'request-item') {
         exit;
     }
 }
-else if ($method ==='POST' && $action === 'accept_or_reject'){
-    if($handleDonation->requestConfirmation($userID,$donationID,$status)){
+else if ($method ==='POST' && $action === 'accept_or_reject' ){
+    if($handleDonation->requestConfirmation($userID,$donationID,$status,$donorID)){
         echo json_encode(['success' => true]);
     }else{
-        echo json_encode(['success' => false]);
+        echo json_encode(['success' => false, 'message' => 'Failed to update request status']);
     }
 }
 
