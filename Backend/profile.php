@@ -23,7 +23,7 @@ if ($method === "GET" && isset($_GET['email'])) {
     }
 
    // Step 2: Fetch Donation History (items donated by the user)
-   $donationHistory = $profile->getDonationHistory($user['userID']);
+   $donationHistory = $profile->getUserDonations($user['userID']);
 
     // Step 3: Fetch Received History (items received by the user)
    $receivedHistory = $profile->getReceivedHistory($user['userID']);

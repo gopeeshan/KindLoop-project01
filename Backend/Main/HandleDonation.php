@@ -2,7 +2,7 @@
 require_once 'dbc.php';
 require_once 'Profile.php';
 
-class HandleDonation {
+class HandleDonation extends Profile {
     private $conn;
     protected $donationId;
     protected $userId;
@@ -11,6 +11,7 @@ class HandleDonation {
 
     public function __construct()
     {
+        parent::__construct();
         $db = new DBconnector();
         $this->conn = $db->connect();
     }
@@ -61,23 +62,42 @@ class HandleDonation {
         return $requests;
     }
 
-    public function fetchDonation($userId){
-        $sqlDonations = "SELECT DonationID, title, category, date_time, isDonationCompleted AS status,credits
-                 FROM donation
-                 WHERE userID = ?
-                 ORDER BY date_time DESC";
-        $stmtDon = $this->conn->prepare($sqlDonations);
-        $stmtDon->bind_param("i", $userId);
-        $stmtDon->execute();
-        $resultDon = $stmtDon->get_result();
+    // public function fetchDonation($userId){
+    //     $sqlDonations = "SELECT DonationID, title, category, date_time, isDonationCompleted AS status,credits
+    //              FROM donation
+    //              WHERE userID = ?
+    //              ORDER BY date_time DESC";
+    //     $stmtDon = $this->conn->prepare($sqlDonations);
+    //     $stmtDon->bind_param("i", $userId);
+    //     $stmtDon->execute();
+    //     $resultDon = $stmtDon->get_result();
 
-        $donations = [];
-        while ($row = $resultDon->fetch_assoc()) {
-            $donations[] = $row;
+    //     $donations = [];
+    //     while ($row = $resultDon->fetch_assoc()) {
+    //         $donations[] = $row;
 
-        }
-        return $donations;
-    }
+    //     }
+    //     return $donations;
+    // }
+
+//     public function getUserDonations($userID) {
+//     $sql = "SELECT DonationID, title, category, date_time, credits, isDonationCompleted, isVerified
+//             FROM donation
+//             WHERE userID = ?
+//             ORDER BY date_time DESC";
+
+//     $stmt = $this->conn->prepare($sql);
+//     $stmt->bind_param("i", $userID);
+
+//     $donations = [];
+//     if ($stmt->execute()) {
+//         $donations = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+//     }
+
+//     $stmt->close();
+//     return $donations;
+// }
+
     public function fetchReceived($userId){
         $sqlReceived = "SELECT
                 d.DonationID,

@@ -33,33 +33,38 @@ class Profile{
         
     }
 
-    public function getDonationHistory($userID) {
-        $this->userID = $userID;
-        $donationHistory = [];
-        // $stmt = $this->conn->prepare("SELECT donation.DonationID, donation.title, donation.date_time, donation.category , donation.credits,
-
-        // CASE
-        //     WHEN donation.isDonationCompleted = 1 THEN 'Completed'
-        //     ELSE 'Pending'
-        // END AS status,
-
-        // CASE
-        //     WHEN donation.isVerified = 1 THEN 'Verified'
-        //     ELSE 'Not Verified'
-        // END AS verification
+    // public function getDonationHistory($userID) {
+    //     $this->userID = $userID;
+    //     $donationHistory = [];
         
-        // FROM donation
-        // WHERE donation.userID = ?");
-        $stmt= $this->conn->prepare("SELECT donation.DonationID, donation.title, donation.date_time, donation.category, donation.credits,donation.isDonationCompleted, donation.isVerified
-                                    FROM donation
-                                    WHERE donation.userID = ?");
-        $stmt->bind_param("i", $userID);
-        if ($stmt->execute()) {
-            $donationHistory = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-        }
-        $stmt->close();
-        return $donationHistory;
+    //     $stmt= $this->conn->prepare("SELECT donation.DonationID, donation.title, donation.date_time, donation.category, donation.credits,donation.isDonationCompleted, donation.isVerified
+    //                                 FROM donation
+    //                                 WHERE donation.userID = ?");
+    //     $stmt->bind_param("i", $userID);
+    //     if ($stmt->execute()) {
+    //         $donationHistory = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    //     }
+    //     $stmt->close();
+    //     return $donationHistory;
+    // }
+    public function getUserDonations($userID) {
+    $sql = "SELECT DonationID, title, category, date_time, credits, isDonationCompleted, isVerified
+            FROM donation
+            WHERE userID = ?
+            ORDER BY date_time DESC";
+
+    $stmt = $this->conn->prepare($sql);
+    $stmt->bind_param("i", $userID);
+
+    $donations = [];
+    if ($stmt->execute()) {
+        $donations = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
+
+    $stmt->close();
+    return $donations;
+}
+
     
     public function getReceivedHistory($userID) {
         $this->userID = $userID;

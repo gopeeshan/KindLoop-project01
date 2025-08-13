@@ -41,7 +41,7 @@ else if (isset($_GET['userId']) && !empty($_GET['userId'])) {
     $userId = intval($_GET['userId']);
 
 // ---------------- Fetch Donations ----------------
-$donations = $handleDonation->fetchDonation($userId);
+$donations = $handleDonation->getUserDonations($userId);
 
 // ---------------- Fetch Received Items ----------------
 $received = $handleDonation->fetchReceived($userId);
