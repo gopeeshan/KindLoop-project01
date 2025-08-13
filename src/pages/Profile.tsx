@@ -35,11 +35,21 @@ import axios from "axios";
 import {
   Dialog,
   DialogContent,
-  DialogTrigger,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
+  DialogTrigger,
 } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Notification {
   id: number;
@@ -106,6 +116,15 @@ const Profile = () => {
   const [toBeReceivedItems, setToBeReceivedItems] = useState<
     ToBeReceivedItem[]
   >([]);
+  const [complaintData, setComplaintData] = useState({
+    reason: "",
+    description: "",
+    urgency: "",
+  });
+  const [isComplaintDialogOpen, setIsComplaintDialogOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<ToBeReceivedItem | null>(
+    null
+  );
 
   useEffect(() => {
     const email = localStorage.getItem("userEmail");
@@ -209,13 +228,20 @@ const Profile = () => {
       });
   };
 
-  const handleMakeComplaint = (DonationID: number, itemTitle: string) => {
-    toast({
-      title: "Complaint Submitted",
-      description: `Your complaint about "${itemTitle}" has been submitted to our support team.`,
-      variant: "destructive",
-    });
+   const handleSubmitComplaint = () => {
+    if (selectedItem && complaintData.reason && complaintData.description) {
+      onMakeComplaint(selectedItem.id, selectedItem.title);
+      setIsComplaintDialogOpen(false);
+      setComplaintData({ reason: "", description: "", urgency: "" });
+      setSelectedItem(null);
+    }
   };
+
+  const openComplaintDialog = (item: ToBeReceivedItem) => {
+    setSelectedItem(item);
+    setIsComplaintDialogOpen(true);
+  };
+
 
   const handlePasswordChangeInput = (
     e: React.ChangeEvent<HTMLInputElement>
@@ -687,47 +713,122 @@ const Profile = () => {
                               </AlertDialogContent>
                             </AlertDialog>
 
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="flex-1"
-                                >
-                                  <AlertTriangle className="h-4 w-4 mr-2" />
-                                  Make Complaint
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Submit Complaint
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you experiencing issues with "
-                                    {item.title}"? This will notify our support
-                                    team and the donor.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() =>
-                                      handleMakeComplaint(item.id, item.title)
-                                    }
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  >
-                                    Submit Complaint
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => openComplaintDialog(item)}
+                            >
+                              <AlertTriangle className="h-4 w-4 mr-2" />
+                              Make Complaint
+                            </Button>
                           </div>
                         </div>
                       ))
                     )}
                   </div>
                 </CardContent>
+                <Dialog
+                  open={isComplaintDialogOpen}
+                  onOpenChange={setIsComplaintDialogOpen}
+                >
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Submit Complaint</DialogTitle>
+                      <DialogDescription>
+                        Please provide details about the issue with "
+                        {selectedItem?.title}" from {selectedItem?.donor}.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="reason">Reason for Complaint</Label>
+                        <Select
+                          value={complaintData.reason}
+                          onValueChange={(value) =>
+                            setComplaintData((prev) => ({
+                              ...prev,
+                              reason: value,
+                            }))
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a reason" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="not-received">
+                              Item not received
+                            </SelectItem>
+                            <SelectItem value="damaged">
+                              Item damaged/defective
+                            </SelectItem>
+                            <SelectItem value="different">
+                              Different from description
+                            </SelectItem>
+                            <SelectItem value="no-contact">
+                              Donor not responding
+                            </SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="urgency">Urgency Level</Label>
+                        <Select
+                          value={complaintData.urgency}
+                          onValueChange={(value) =>
+                            setComplaintData((prev) => ({
+                              ...prev,
+                              urgency: value,
+                            }))
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select urgency" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="low">Low</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="high">High</SelectItem>
+                            <SelectItem value="urgent">Urgent</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="description">Description</Label>
+                        <Textarea
+                          id="description"
+                          placeholder="Please describe the issue in detail..."
+                          value={complaintData.description}
+                          onChange={(e) =>
+                            setComplaintData((prev) => ({
+                              ...prev,
+                              description: e.target.value,
+                            }))
+                          }
+                          className="min-h-[100px]"
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsComplaintDialogOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleSubmitComplaint}
+                        disabled={
+                          !complaintData.reason || !complaintData.description
+                        }
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Submit Complaint
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </Card>
             </TabsContent>
 
@@ -814,3 +915,5 @@ const Profile = () => {
 };
 
 export default Profile;
+
+
