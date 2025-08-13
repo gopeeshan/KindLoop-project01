@@ -35,7 +35,7 @@ class Admin {
         // $sql = "SELECT DonationID, title, userID, category, date_time, isVerified, isDonationCompleted FROM donation";
         $sql="SELECT donation.DonationID, donation.title, donation.userID, user.fullName AS userName,donation.description, donation.`condition`, 
                 donation.category, donation.images, donation.date_time, donation.isVerified,donation.isDonationCompleted, donation.approvedBy ,
-                donation.credits,donation.receiverID,donation.location,donation.setVisible,donation.usageDuration
+                donation.credits,donation.location,donation.setVisible,donation.usageDuration
                 FROM donation JOIN user ON donation.userID = user.userID";
         $donationResult = $this->conn->query($sql);
         $donations = [];
