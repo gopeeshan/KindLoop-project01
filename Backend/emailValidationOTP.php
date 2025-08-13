@@ -12,8 +12,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit();
 }
 
-require_once './Main Classes/Mailer.php';
-require_once './Backend/Main/CheckEmailExists.php';
+require_once 'Main/Mailer.php';
+require_once 'Main/user.php';
 
 $input = file_get_contents('php://input');
 $data = json_decode($input, true);
@@ -26,7 +26,7 @@ if (!$email) {
     exit();
 }
 
-$userChecker = new CheckEmailExists();
+$userChecker = new user();
 $result = $userChecker->checkEmail($email);
 
 if ($result['status'] === 'error') {

@@ -123,7 +123,7 @@ const Signup = () => {
     try {
       setIsLoading(true);
       const response = await axios.post(
-        "http://localhost/KindLoop-project01/emailValidationOTP.php",
+        "http://localhost/KindLoop-project01/Backend/emailValidationOTP.php",
         { email: formData.email },
         { withCredentials: true }
       );
@@ -172,7 +172,7 @@ const Signup = () => {
     try {
       setIsVerifyingOtp(true);
       const response = await axios.post(
-        "http://localhost/KindLoop-project01/verifyOTP.php",
+        "http://localhost/KindLoop-project01/Backend/verifyOTP.php",
         { email: formData.email, otp },
         { withCredentials: true }
       );
