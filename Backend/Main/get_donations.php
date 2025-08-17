@@ -51,7 +51,7 @@
         public function getDonationById($donationID) {
             $this->donationID = $donationID;
             $stmt = $this->conn->prepare("
-                SELECT *, user.fullName
+                SELECT *, user.fullName, user.userID
                 FROM donation
                 JOIN user ON donation.userID = user.userID
                 WHERE donation.DonationID = ?

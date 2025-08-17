@@ -50,12 +50,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { send } from "process";
 
 interface Notification {
-  id: number;
-  message: string;
-  type: "donation_request" | "general";
-  timestamp: string;
+  notificationID: number;
+  userID: number;
+  from_UserID: number;
+  type: string;
+  created_at: string;
+  donation_title: string;
+  requester_name: string;
 }
 interface Donation {
   DonationID: number;
@@ -79,6 +83,7 @@ interface ToBeReceivedItem {
   id: number;
   title: string;
   category: string;
+  donorID: number;
   donor: string;
   donorContact: string;
   requestDate: string;
@@ -147,13 +152,59 @@ const Profile = () => {
       .catch((err) => console.log("Failed to fetch user data", err));
   }, []);
 
+  useEffect(() => {
+    const userID = user.userID;
+    if (!userID) return;
+    const fetchNotifications = () => {
+      axios
+        .get(
+          `http://localhost/KindLoop-project01/Backend/NotificationHandler.php?msg_receiver_ID=${userID}`
+        )
+        .then((res) => {
+          if (res.data.success) {
+            setNotifications(res.data.data || []);
+          }
+        })
+        .catch((err) => console.log("Error fetching notifications", err));
+    };
+    fetchNotifications();
+
+    const interval = setInterval(fetchNotifications, 60000); // Fetch every minute
+
+    return () => clearInterval(interval);
+  }, [user.userID]);
+
   function handleInputChange(e) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   }
 
-  const onDismiss = (id: number) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  const timeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = Math.floor((now.getTime() - date.getTime()) / 1000); // seconds
+
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  };
+
+  const onDismiss = (notificationID: number) => {
+    axios
+      .post(
+        "http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
+        {
+          action: "mark_as_read",
+          notificationID,
+        }
+      )
+      .then(() => {
+        setNotifications((prev) =>
+          prev.filter((n) => n.notificationID !== notificationID)
+        );
+      })
+      .catch((err) => console.log("Error marking as read", err));
   };
 
   const handleViewDetails = (DonationID: number) => {
@@ -226,22 +277,43 @@ const Profile = () => {
           description: "Thank you for confirming receipt of your item!",
         });
       });
+      const item = toBeReceivedItems.find((item) => item.DonationID === DonationID);
+      if (item) {
+        sendNotification(DonationID, item.donorID, user.userID);
+      }
   };
 
-   const handleSubmitComplaint = () => {
-    if (selectedItem && complaintData.reason && complaintData.description) {
-      onMakeComplaint(selectedItem.id, selectedItem.title);
-      setIsComplaintDialogOpen(false);
-      setComplaintData({ reason: "", description: "", urgency: "" });
-      setSelectedItem(null);
-    }
+  const sendNotification =(
+    donationID: number,
+    DonorID: number,
+    RequesterID: number
+  ) => {
+    axios.post("http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
+        {
+          donationID,
+          msg_receiver_ID: DonorID,
+          msg_sender_ID: RequesterID,
+          action: "Donation_received_Confirmation",
+        }
+      )
+      .then((res) => console.log("Notification sent", res.data))
+      .catch((err) => console.error(err));
   };
+
+
+  //  const handleSubmitComplaint = () => {
+  //   if (selectedItem && complaintData.reason && complaintData.description) {
+  //     onMakeComplaint(selectedItem.id, selectedItem.title);
+  //     setIsComplaintDialogOpen(false);
+  //     setComplaintData({ reason: "", description: "", urgency: "" });
+  //     setSelectedItem(null);
+  //   }
+  // };
 
   const openComplaintDialog = (item: ToBeReceivedItem) => {
     setSelectedItem(item);
     setIsComplaintDialogOpen(true);
   };
-
 
   const handlePasswordChangeInput = (
     e: React.ChangeEvent<HTMLInputElement>
@@ -500,36 +572,47 @@ const Profile = () => {
                 </CardHeader>
                 <CardContent>
                   {notifications.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No notifications at the moment</p>
-                    </div>
+                    <p className="text-gray-500">No new notifications</p>
                   ) : (
-                    <div className="space-y-3">
-                      {notifications.map((notification) => (
-                        <Alert
-                          key={notification.id}
-                          className="border-primary/20 bg-primary/5"
-                        >
-                          <AlertDescription className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <p className="text-sm">{notification.message}</p>
-                              <span className="text-xs text-muted-foreground">
-                                {notification.timestamp}
-                              </span>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => onDismiss(notification.id)}
-                              className="h-8 w-8 p-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </AlertDescription>
-                        </Alert>
-                      ))}
-                    </div>
+                    notifications.map((notification) => (
+                      <Card key={notification.notificationID} className="mb-2">
+                        <CardContent className="flex justify-between items-center p-4">
+                          <div>
+                            <p className="font-medium">
+                              {notification.donation_title}
+                            </p>
+                            {notification.type === "request_received" && (
+                              <p className="text-sm text-gray-600">
+                                Requested by {notification.requester_name}
+                              </p>
+                            )}
+
+                            {notification.type === "request_accepted" && (
+                              <p className="text-sm text-gray-600">
+                                Your Request Accepted by {notification.requester_name}
+                              </p>
+                            )}
+                            {notification.type === "donation_received" && (
+                              <p className="text-sm text-gray-600">
+                                Your Donation has been Received
+                              </p>
+                            )}
+                            <p className="text-xs text-gray-400">
+                              {timeAgo(notification.created_at)}
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              onDismiss(notification.notificationID)
+                            }
+                          >
+                            Dismiss
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))
                   )}
                 </CardContent>
               </Card>
@@ -818,7 +901,7 @@ const Profile = () => {
                         Cancel
                       </Button>
                       <Button
-                        onClick={handleSubmitComplaint}
+                        // onClick={handleSubmitComplaint}
                         disabled={
                           !complaintData.reason || !complaintData.description
                         }
@@ -915,5 +998,3 @@ const Profile = () => {
 };
 
 export default Profile;
-
-

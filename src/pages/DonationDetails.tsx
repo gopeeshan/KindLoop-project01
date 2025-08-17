@@ -2,25 +2,44 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, CheckCircle, Clock, MapPin, User, MessageCircle} from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  MapPin,
+  User,
+  MessageCircle,
+} from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { toast } from "@/hooks/use-toast";
 
+interface Donation {
+  DonationID: number;
+  userID: number;
+  title: string;
+  description: string;
+  image: string;
+  createdAt: string;
+  isVerified: number;
+  fullName: string;
+  location: string;
+  date_time: string;
+  category: string;
+  condition: string;
+  images: string | null;
+}
 
 const DonationDetails = () => {
   const { id } = useParams();
-  const [donation, setDonation] = useState<any>(null);
+  const [donation, setDonation] = useState<Donation | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const userID = parseInt(localStorage.getItem("userID") || "0");
 
   useEffect(() => {
     const fetchDonation = async () => {
@@ -50,25 +69,60 @@ const DonationDetails = () => {
   };
 
   const handleRequestItem = async (DonationID: number) => {
-    console.log(`Requesting item ${DonationID} from user ${localStorage.getItem("userID")}`);
-    
-    const response=await axios.post("http://localhost/KindLoop-project01/Backend/HandleDonation.php", {
-      Action: "request-item",
-      DonationID: DonationID,
-      UserID: localStorage.getItem("userID"),
-    });
-    if(response.data.success) {
-      toast({
-        title: "Request Sent ",
-        description: response.data.message || "Your request has been submitted successfully.",
-      });
-    } else {
+    if (userID !== donation.userID) {
+      console.log(
+      `Requesting item ${DonationID} from user ${localStorage.getItem(
+        "userID"
+      )} and Donor is ${donation.userID}`
+    );
+      const response = await axios.post(
+        "http://localhost/KindLoop-project01/Backend/HandleDonation.php",
+        {
+          Action: "request-item",
+          DonationID: DonationID,
+          UserID: userID,
+        }
+      );
+      if (response.data.success) {
+        sendNotification( donation.DonationID, donation.userID, userID);
+        toast({
+          title: "Request Sent ",
+          description:
+            response.data.message ||
+            "Your request has been submitted successfully.",
+        });
+      } else {
+        toast({
+          title: "Request Failed ",
+          description: response.data.message || "Unable to send request.",
+          variant: "destructive",
+        });
+      }
+    }
+    else{
       toast({
         title: "Request Failed ",
-        description: response.data.message || "Unable to send request.",
+        description: "You cannot request your own donation.",
         variant: "destructive",
       });
     }
+  };
+
+  const sendNotification =(
+    donationID: number,
+    DonorID: number,
+    RequesterID: number
+  ) => {
+    axios.post("http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
+        {
+          donationID,
+          msg_receiver_ID: DonorID,
+          msg_sender_ID: RequesterID,
+          action: "notify_request",
+        }
+      )
+      .then((res) => console.log("Notification sent", res.data))
+      .catch((err) => console.error(err));
   };
 
   return (
@@ -165,7 +219,9 @@ const DonationDetails = () => {
               <div className="flex gap-2">
                 <Button
                   className="flex-1"
-                  onClick={() => handleRequestItem(donation.DonationID)}
+                  onClick={() => {
+                    handleRequestItem(donation.DonationID);
+                  }}
                 >
                   Request Item
                 </Button>

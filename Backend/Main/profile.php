@@ -100,6 +100,7 @@ class Profile{
                 d.title,
                 d.date_time,
                 d.category,
+                u.userID AS donorID,
                 u.fullName AS donor,
                 u.contactNumber AS donorContact,
                 ri.quantity

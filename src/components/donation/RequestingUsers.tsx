@@ -73,6 +73,7 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
             description: `User has been ${newStatus} successfully.`,
             variant: "default",
           });
+          sendNotification(donationID, parseInt(localStorage.getItem("userID")), userID);
         } else {
           toast({
             title: "Error",
@@ -89,6 +90,23 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
           variant: "destructive",
         });
       });
+  };
+
+    const sendNotification =(
+    donationID: number,
+    DonorID: number,
+    RequesterID: number
+  ) => {
+    axios.post("http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
+        {
+          donationID,
+          msg_receiver_ID: RequesterID,
+          msg_sender_ID: DonorID,
+          action: "notify_request_acceptance",
+        }
+      )
+      .then((res) => console.log("Notification sent", res.data))
+      .catch((err) => console.error(err));
   };
 
   const getStatusColor = (status: string) => {
