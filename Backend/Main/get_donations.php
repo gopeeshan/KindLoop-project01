@@ -31,6 +31,7 @@
             FROM donation
             JOIN user ON donation.userID = user.userID
             WHERE donation.setVisible = 1 && donation.isVerified = 1
+            AND donation.date_time >= NOW() - INTERVAL 24 HOUR
             ORDER BY donation.date_time DESC";
 
             $result = $this->conn->query($sql);

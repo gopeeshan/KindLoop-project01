@@ -108,8 +108,8 @@ const FeaturedDonations = () => {
           <h2 className="text-4xl font-bold text-foreground mb-4">
             Featured Donations
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Discover highlighted contributions from our kindhearted donors. These items were chosen for their value and generosity.
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+            Discover highlighted contributions from our kindhearted donors posted within the last 24 hours.
           </p>
         </div>
 
