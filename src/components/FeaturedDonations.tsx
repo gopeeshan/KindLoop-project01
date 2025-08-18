@@ -63,24 +63,28 @@ const FeaturedDonations = () => {
     console.log(`Sending request for donation ${DonationID}`);
   };
 
-  const filteredDonations = donations.filter((donation) => {
-    const matchesSearch =
-      donation.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      donation.description?.toLowerCase().includes(searchTerm.toLowerCase());
+const filteredDonations = donations.filter((donation) => {
+  const donationTime = new Date(donation.date_time).getTime();
+  const now = new Date().getTime();
+  const within24Hours = now - donationTime <= 24 * 60 * 60 * 1000; // 24 hours in ms
 
-    const matchesCategory =
-      selectedCategory === "all" ||
-      donation.category?.toLowerCase() === selectedCategory.toLowerCase();
+  const matchesSearch =
+    donation.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    donation.description?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const isVerified = donation.isVerified ?? true;
+  const matchesCategory =
+    selectedCategory === "all" ||
+    donation.category?.toLowerCase() === selectedCategory.toLowerCase();
 
-    const matchesVerification =
-      verificationFilter === "all" ||
-      (verificationFilter === "verified" && isVerified) ||
-      (verificationFilter === "unverified" && !isVerified);
+  const isVerified = donation.isVerified ?? true;
 
-    return matchesSearch && matchesCategory && matchesVerification;
-  });
+  const matchesVerification =
+    verificationFilter === "all" ||
+    (verificationFilter === "verified" && isVerified) ||
+    (verificationFilter === "unverified" && !isVerified);
+
+  return within24Hours && matchesSearch && matchesCategory && matchesVerification;
+});
 
   const categories = [
     "all",
@@ -108,13 +112,14 @@ const FeaturedDonations = () => {
           <h2 className="text-4xl font-bold text-foreground mb-4">
             Featured Donations
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Discover highlighted contributions from our kindhearted donors. These items were chosen for their value and generosity.
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+            Discover highlighted contributions from our kindhearted donors posted within the last 24 hours.
           </p>
         </div>
 
         <div className="mb-6 text-sm text-muted-foreground">
-          Showing {filteredDonations.length} of {donations.length} featured donations
+          {/* Showing {filteredDonations.length} of {donations.length} featured donations */}
+          Showing featured donations
         </div>
 
         {loading ? (
