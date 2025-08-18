@@ -99,7 +99,6 @@ const Profile = () => {
     newPassword: "",
     confirmPassword: "",
   });
-
   const [passwordError, setPasswordError] = useState("");
   const [passwordStrengthError, setPasswordStrengthError] = useState("");
 
@@ -115,21 +114,27 @@ const Profile = () => {
   });
 
   const [formData, setFormData] = useState(user);
+
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [donationHistory, setDonationHistory] = useState<Donation[]>([]);
   const [receivedHistory, setReceivedHistory] = useState<ReceivedItem[]>([]);
   const [toBeReceivedItems, setToBeReceivedItems] = useState<
     ToBeReceivedItem[]
   >([]);
-  const [complaintData, setComplaintData] = useState({
+  const [complaintData, setComplaintData] = useState<{
+    reason: string;
+    description: string;
+    evidenceImages?: File[];
+  }>({
     reason: "",
     description: "",
-    urgency: "",
+    evidenceImages: undefined,
   });
   const [isComplaintDialogOpen, setIsComplaintDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ToBeReceivedItem | null>(
     null
   );
+  const [confirmCheck, setConfirmCheck] = useState(false);
 
   useEffect(() => {
     const email = localStorage.getItem("userEmail");
@@ -217,11 +222,6 @@ const Profile = () => {
       const response = await axios.put(
         "http://localhost/KindLoop-project01/Backend/profile.php",
         {
-          // method: "PUT",
-          // headers: {
-          //   "Content-Type": "application/json",
-          // },
-          // body: JSON.stringify(formData),
           action: "update_profile",
           userID: user.userID,
           fullName: formData.fullName,
@@ -240,7 +240,7 @@ const Profile = () => {
         title: "Profile Updated",
         description: "Your profile has been successfully updated.",
       });
-      //navigate("/");
+
       window.location.reload();
     } catch (error) {
       console.error("Error updating profile", error);
@@ -319,10 +319,8 @@ const Profile = () => {
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const { name, value } = e.target;
-
     setPasswordData((prev) => ({ ...prev, [name]: value }));
 
-    // Real-time strength validation for new password only
     if (name === "newPassword") {
       if (!isPasswordStrong(value)) {
         setPasswordStrengthError(
@@ -341,7 +339,6 @@ const Profile = () => {
 
   const handlePasswordChange = async () => {
     const email = localStorage.getItem("userEmail");
-
     setPasswordError("");
 
     if (
@@ -744,7 +741,7 @@ const Profile = () => {
                     ) : (
                       toBeReceivedItems.map((item) => (
                         <div
-                          key={item.id}
+                          key={item.DonationID}
                           className="border rounded-lg p-4 space-y-4"
                         >
                           <div className="flex items-start justify-between">
@@ -778,9 +775,20 @@ const Profile = () => {
                                     Confirm Receipt
                                   </AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Are you sure you have received "{item.title}
-                                    " from {item.donor}? This action cannot be
-                                    undone.
+                                    <p className="text-sm font-medium text-red-600">
+                                      <AlertTriangle className="inline mr-1" />{" "}
+                                      Once you confirm receiving this donation,
+                                      you will not be able to make any
+                                      complaints afterward. Please check the
+                                      item carefully before proceeding.
+                                    </p>
+                                    <p className="mt-3">
+                                      Are you sure you want to confirm that you
+                                      have received{" "}
+                                      <strong>"{item.title}"</strong> from{" "}
+                                      <strong>{item.donor}</strong>? This action
+                                      cannot be undone.
+                                    </p>
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -796,6 +804,7 @@ const Profile = () => {
                               </AlertDialogContent>
                             </AlertDialog>
 
+                            {/* Complaint */}
                             <Button
                               variant="outline"
                               size="sm"
@@ -815,17 +824,41 @@ const Profile = () => {
                   open={isComplaintDialogOpen}
                   onOpenChange={setIsComplaintDialogOpen}
                 >
-                  <DialogContent className="sm:max-w-[425px]">
+                  <DialogContent className="sm:max-w-[550px] rounded-2xl p-6">
                     <DialogHeader>
-                      <DialogTitle>Submit Complaint</DialogTitle>
-                      <DialogDescription>
-                        Please provide details about the issue with "
-                        {selectedItem?.title}" from {selectedItem?.donor}.
+                      <DialogTitle className="text-2xl font-bold text-gray-900 mb-1">
+                        Submit Complaint
+                      </DialogTitle>
+
+                      <p className="text-base font-semibold text-red-600 flex items-center gap-2 leading-relaxed">
+                        <span>
+                          Please use this form only for genuine issues.
+                          Submitting false or misleading complaints may result
+                          in suspension of your account.
+                        </span>
+                      </p>
+
+                      <DialogDescription className="text-gray-600 text-base">
+                        Please provide details about the issue with{" "}
+                        <span className="font-semibold text-gray-900">
+                          "{selectedItem?.title}"
+                        </span>{" "}
+                        from{" "}
+                        <span className="font-semibold text-gray-900">
+                          {selectedItem?.donor}
+                        </span>
+                        .
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="reason">Reason for Complaint</Label>
+
+                    <div className="space-y-5 py-4">
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="reason"
+                          className="text-sm font-semibold text-gray-800"
+                        >
+                          Reason for Complaint
+                        </Label>
                         <Select
                           value={complaintData.reason}
                           onValueChange={(value) =>
@@ -835,50 +868,37 @@ const Profile = () => {
                             }))
                           }
                         >
-                          <SelectTrigger>
+                          <SelectTrigger className="w-full border-gray-300 focus:ring-primary">
                             <SelectValue placeholder="Select a reason" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="not-received">
+                            <SelectItem value="Item not received">
                               Item not received
                             </SelectItem>
-                            <SelectItem value="damaged">
+                            <SelectItem value="Item damaged/defective">
                               Item damaged/defective
                             </SelectItem>
-                            <SelectItem value="different">
+                            <SelectItem value="Different from description">
                               Different from description
                             </SelectItem>
-                            <SelectItem value="no-contact">
+                            <SelectItem value="Wrong item received">
+                              Wrong item received
+                            </SelectItem>
+                            <SelectItem value="Donor not responding">
                               Donor not responding
                             </SelectItem>
                             <SelectItem value="other">Other</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="urgency">Urgency Level</Label>
-                        <Select
-                          value={complaintData.urgency}
-                          onValueChange={(value) =>
-                            setComplaintData((prev) => ({
-                              ...prev,
-                              urgency: value,
-                            }))
-                          }
+
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="description"
+                          className="text-sm font-semibold text-gray-800"
                         >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select urgency" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="low">Low</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="high">High</SelectItem>
-                            <SelectItem value="urgent">Urgent</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="description">Description</Label>
+                          Description
+                        </Label>
                         <Textarea
                           id="description"
                           placeholder="Please describe the issue in detail..."
@@ -889,23 +909,72 @@ const Profile = () => {
                               description: e.target.value,
                             }))
                           }
-                          className="min-h-[100px]"
+                          className="min-h-[120px] resize-none border-gray-300 focus:ring-primary"
                         />
                       </div>
+
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="evidenceImages"
+                          className="text-sm font-medium text-gray-700"
+                        >
+                          Upload Image Evidence (Optional)
+                        </Label>
+                        <input
+                          type="file"
+                          id="evidenceImages"
+                          name="evidenceImages[]"
+                          accept="image/*"
+                          multiple
+                          onChange={(e) =>
+                            setComplaintData((prev) => ({
+                              ...prev,
+                              evidenceImages: Array.from(e.target.files),
+                            }))
+                          }
+                          className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4
+               file:rounded-lg file:border-0
+               file:text-sm file:font-medium
+               file:bg-primary file:text-white
+               hover:file:bg-primary/90
+               cursor-pointer"
+                        />
+                      </div>
+
+                      <div className="flex items-center space-x-3">
+                        <input
+                          id="confirmCheck"
+                          type="checkbox"
+                          checked={confirmCheck}
+                          onChange={(e) => setConfirmCheck(e.target.checked)}
+                          className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                          required
+                        />
+                        <label
+                          htmlFor="confirmCheck"
+                          className="text-sm text-gray-700 leading-snug"
+                        >
+                          I confirm that the information provided is accurate.
+                        </label>
+                      </div>
                     </div>
-                    <DialogFooter>
+
+                    <DialogFooter className="flex justify-end gap-3">
                       <Button
                         variant="outline"
                         onClick={() => setIsComplaintDialogOpen(false)}
+                        className="px-5 py-2"
                       >
                         Cancel
                       </Button>
                       <Button
                         // onClick={handleSubmitComplaint}
                         disabled={
-                          !complaintData.reason || !complaintData.description
+                          !complaintData.reason ||
+                          !complaintData.description ||
+                          !confirmCheck
                         }
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        className="px-5 py-2 bg-destructive text-white hover:bg-destructive/90 disabled:opacity-50"
                       >
                         Submit Complaint
                       </Button>
