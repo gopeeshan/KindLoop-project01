@@ -240,7 +240,6 @@ const Profile = () => {
         title: "Profile Updated",
         description: "Your profile has been successfully updated.",
       });
-
       window.location.reload();
     } catch (error) {
       console.error("Error updating profile", error);
@@ -277,18 +276,22 @@ const Profile = () => {
           description: "Thank you for confirming receipt of your item!",
         });
       });
-      const item = toBeReceivedItems.find((item) => item.DonationID === DonationID);
-      if (item) {
-        sendNotification(DonationID, item.donorID, user.userID);
-      }
+    const item = toBeReceivedItems.find(
+      (item) => item.DonationID === DonationID
+    );
+    if (item) {
+      sendNotification(DonationID, item.donorID, user.userID);
+    }
   };
 
-  const sendNotification =(
+  const sendNotification = (
     donationID: number,
     DonorID: number,
     RequesterID: number
   ) => {
-    axios.post("http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
+    axios
+      .post(
+        "http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
         {
           donationID,
           msg_receiver_ID: DonorID,
@@ -300,19 +303,57 @@ const Profile = () => {
       .catch((err) => console.error(err));
   };
 
-
-  //  const handleSubmitComplaint = () => {
-  //   if (selectedItem && complaintData.reason && complaintData.description) {
-  //     onMakeComplaint(selectedItem.id, selectedItem.title);
-  //     setIsComplaintDialogOpen(false);
-  //     setComplaintData({ reason: "", description: "", urgency: "" });
-  //     setSelectedItem(null);
-  //   }
-  // };
-
   const openComplaintDialog = (item: ToBeReceivedItem) => {
     setSelectedItem(item);
     setIsComplaintDialogOpen(true);
+  };
+
+  const handleSubmitComplaint = async () => {
+    if (!selectedItem || !complaintData.reason || !complaintData.description)
+      return;
+
+    try {
+      const formDataObj = new FormData();
+      formDataObj.append("action", "submit_complaint");
+      formDataObj.append("DonationID", selectedItem.DonationID.toString());
+      formDataObj.append("reason", complaintData.reason);
+      formDataObj.append("description", complaintData.description);
+      formDataObj.append("userID", user.userID.toString());
+
+      if (complaintData.evidenceImages?.length) {
+        complaintData.evidenceImages.forEach((file) => {
+          formDataObj.append("evidenceImages[]", file);
+        });
+      }
+      const response = await axios.post(
+        "http://localhost/KindLoop-project01/Backend/complaint.php",
+        formDataObj
+      );
+
+      if (response.data.status === "success") {
+        toast({
+          title: "Complaint Submitted",
+          description: "Your complaint has been successfully submitted.",
+        });
+
+        setIsComplaintDialogOpen(false);
+        setComplaintData({ reason: "", description: "" });
+        setSelectedItem(null);
+      } else {
+        toast({
+          title: "Submission Failed",
+          description: response.data.message || "Unable to submit complaint.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Complaint submission error:", error);
+      toast({
+        title: "Error",
+        description: "An error occurred while submitting the complaint.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handlePasswordChangeInput = (
@@ -586,7 +627,8 @@ const Profile = () => {
 
                             {notification.type === "request_accepted" && (
                               <p className="text-sm text-gray-600">
-                                Your Request Accepted by {notification.requester_name}
+                                Your Request Accepted by{" "}
+                                {notification.requester_name}
                               </p>
                             )}
                             {notification.type === "donation_received" && (
@@ -968,7 +1010,7 @@ const Profile = () => {
                         Cancel
                       </Button>
                       <Button
-                        // onClick={handleSubmitComplaint}
+                        onClick={handleSubmitComplaint}
                         disabled={
                           !complaintData.reason ||
                           !complaintData.description ||
