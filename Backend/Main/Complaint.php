@@ -9,7 +9,7 @@ class Complaint {
         $this->conn = $db->connect();
     }
 
-    // Submit a complaint
+    
     public function submitComplaint($donationID, $userID, $reason, $description, $files) {
     $evidencePaths = []; // images uploaded by complainant
 
@@ -73,6 +73,60 @@ class Complaint {
             $c['proof_images'] = $c['image'] ? json_decode($c['image'], true) : []; // admin evidence
         }
 
+        return $complaints;
+    }
+
+    public function respond($id, $solution) {
+        $stmt = $this->conn->prepare("UPDATE complaints SET solution=? WHERE ComplaintID=?");
+        $stmt->bind_param("si", $solution, $id);
+        return $stmt->execute();
+    }
+
+    public function resolve($id, $solution, $files = []) {
+        $adminImages = [];
+        foreach ($files as $file) {
+            $filename = time() . "_" . basename($file['name']);
+            $target = $this->uploadDir . $filename;
+            if (move_uploaded_file($file['tmp_name'], $target)) {
+                $adminImages[] = "http://localhost/KindLoop-project01/Backend/" . $target;
+            }
+        }
+        $proofJson = json_encode($adminImages);
+        $stmt = $this->conn->prepare("UPDATE complaints SET status='resolved', solution=?, proof_images=? WHERE ComplaintID=?");
+        $stmt->bind_param("ssi", $solution, $proofJson, $id);
+        return $stmt->execute();
+    }
+
+    public function getAllComplaint() {
+        $sql = "SELECT c.ComplaintID AS id, 
+                       c.description, 
+                       c.reason, 
+                       IFNULL(c.status,'pending') AS status, 
+                       c.created_at AS submittedDate,
+                       c.solution, 
+                       c.evidence_images, 
+                       c.proof_images,
+                       u.fullName AS userName, 
+                       u.email AS userEmail, 
+                       u.userID AS userId,
+                       d.fullName AS donorName, 
+                       d.userID AS donorId,
+                       don.title AS donationTitle
+                FROM complaints c
+                JOIN donation don ON don.DonationID = c.DonationID
+                JOIN user u ON u.userID = c.userID
+                JOIN user d ON d.userID = don.userID
+                ORDER BY c.created_at DESC";
+
+        $result = $this->conn->query($sql);
+        $complaints = [];
+        if ($result && $result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                $row['evidence_images'] = !empty($row['evidence_images']) ? json_decode($row['evidence_images'], true) : [];
+                $row['proof_images']    = !empty($row['proof_images']) ? json_decode($row['proof_images'], true) : [];
+                $complaints[] = $row;
+            }
+        }
         return $complaints;
     }
 }

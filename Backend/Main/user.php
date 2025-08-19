@@ -102,5 +102,29 @@ class User {
         }
         
     }
+
+public function getUser($id) {
+        $stmt = $this->conn->prepare("SELECT userID AS id, fullName AS name, email, contactNumber, credit_points, occupation FROM user WHERE userID=?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc() ?? null;
+    }
+
+     public function getDonor($id) {
+        $stmt = $this->conn->prepare(
+            "SELECT u.userID AS id, u.fullName AS name, u.email, u.occupation, u.contactNumber AS phone, u.credit_points,
+            COUNT(d.DonationID) AS total_donations
+            FROM user u
+            LEFT JOIN donation d ON u.userID = d.userID
+            WHERE u.userID = ?
+            GROUP BY u.userID"
+        );
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc() ?? null;
+    }
+
 }
 ?>

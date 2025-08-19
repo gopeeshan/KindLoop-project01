@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 header('Content-Type: application/json');
 
-require_once 'Main/complaint.php';
+require_once 'Main/Complaint.php';
 
 $complaintObj = new Complaint();
 $method = $_SERVER['REQUEST_METHOD'];
