@@ -11,12 +11,12 @@ class Complaint {
 
     
     public function submitComplaint($donationID, $userID, $reason, $description, $files) {
-    $evidencePaths = []; // images uploaded by complainant
+    $evidencePaths = []; 
 
-    // Match input name and column name
-    if (isset($files['evidenceImages'])) { // <- matches HTML input name
-        foreach ($files['evidenceImages']['name'] as $key => $name) {
-            if ($files['evidenceImages']['error'][$key] === 0) {
+    
+    if (isset($files['evidence_images'])) { 
+        foreach ($files['evidence_images']['name'] as $key => $name) {
+            if ($files['evidence_images']['error'][$key] === 0) {
                 $targetDir = "uploads/complaints/";
                 if (!is_dir($targetDir)) mkdir($targetDir, 0755, true);
 
@@ -27,7 +27,7 @@ class Complaint {
                 $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
                 if (in_array($fileExt, $allowedExts)) {
-                    if (move_uploaded_file($files['evidenceImages']['tmp_name'][$key], $targetFilePath)) {
+                    if (move_uploaded_file($files['evidence_images']['tmp_name'][$key], $targetFilePath)) {
                         $evidencePaths[] = $targetFilePath;
                     }
                 } else {
@@ -43,7 +43,7 @@ class Complaint {
     $evidenceJson = !empty($evidencePaths) ? json_encode($evidencePaths) : null;
 
     $stmt = $this->conn->prepare("
-        INSERT INTO complaints (DonationID, userID, reason, description, evidence_images, created_at)
+        INSERT INTO complaints (DonationID, complainantID, reason, description, evidence_images, created_at)
         VALUES (?, ?, ?, ?, ?, NOW())
     ");
     $stmt->bind_param("iisss", $donationID, $userID, $reason, $description, $evidenceJson);
@@ -61,40 +61,12 @@ class Complaint {
             SELECT c.*, d.title AS donationTitle, u.fullName AS complainantName
             FROM complaints c
             LEFT JOIN donation d ON c.DonationID = d.DonationID
-            LEFT JOIN user u ON c.userID = u.userID
+            LEFT JOIN user u ON c.complainantID = u.userID
             ORDER BY c.created_at DESC
         ");
 
         $complaints = $result->fetch_all(MYSQLI_ASSOC);
-
-        // Decode JSON images
-        foreach ($complaints as &$c) {
-            $c['evidenceImages']    = $c['evidence_Images'] ? json_decode($c['evidence_Images'], true) : [];
-            $c['proof_images'] = $c['image'] ? json_decode($c['image'], true) : []; // admin evidence
-        }
-
-        return $complaints;
-    }
-
-    public function respond($id, $solution) {
-        $stmt = $this->conn->prepare("UPDATE complaints SET solution=? WHERE ComplaintID=?");
-        $stmt->bind_param("si", $solution, $id);
-        return $stmt->execute();
-    }
-
-    public function resolve($id, $solution, $files = []) {
-        $adminImages = [];
-        foreach ($files as $file) {
-            $filename = time() . "_" . basename($file['name']);
-            $target = $this->uploadDir . $filename;
-            if (move_uploaded_file($file['tmp_name'], $target)) {
-                $adminImages[] = "http://localhost/KindLoop-project01/Backend/" . $target;
-            }
-        }
-        $proofJson = json_encode($adminImages);
-        $stmt = $this->conn->prepare("UPDATE complaints SET status='resolved', solution=?, proof_images=? WHERE ComplaintID=?");
-        $stmt->bind_param("ssi", $solution, $proofJson, $id);
-        return $stmt->execute();
+       
     }
 
     public function getAllComplaint() {
@@ -114,20 +86,54 @@ class Complaint {
                        don.title AS donationTitle
                 FROM complaints c
                 JOIN donation don ON don.DonationID = c.DonationID
-                JOIN user u ON u.userID = c.userID
+                JOIN user u ON u.userID = c.complainantID
                 JOIN user d ON d.userID = don.userID
                 ORDER BY c.created_at DESC";
 
         $result = $this->conn->query($sql);
         $complaints = [];
+
         if ($result && $result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                $row['evidence_images'] = !empty($row['evidence_images']) ? json_decode($row['evidence_images'], true) : [];
-                $row['proof_images']    = !empty($row['proof_images']) ? json_decode($row['proof_images'], true) : [];
-                $complaints[] = $row;
+        while ($row = $result->fetch_assoc()) {
+            foreach (['evidence_images', 'proof_images'] as $col) {
+                $row[$col] = !empty($row[$col]) ? json_decode($row[$col], true) : [];
+            }
+            $complaints[] = $row;
+        }
+    }
+    return $complaints;
+    }
+
+
+// --- Respond ---
+    public function respond($id, $solution) {
+        $stmt = $this->conn->prepare("UPDATE complaints SET solution=?, status='responded' WHERE ComplaintID=?");
+        $stmt->bind_param("si", $solution, $id);
+        return $stmt->execute();
+    }
+
+    // --- Resolve (with proof images) ---
+    public function resolve($id, $solution, $files) {
+        $uploadDir = "uploads/complaints/";
+        $proofImages = [];
+
+        if (!empty($files['name'][0])) {
+            foreach ($files['tmp_name'] as $key => $tmpName) {
+                $filename = time() . "_" . basename($files['name'][$key]);
+                $target = $uploadDir . $filename;
+                if (move_uploaded_file($tmpName, $target)) {
+                    $proofImages[] = $target;
+                }
             }
         }
-        return $complaints;
+
+        $proofJson = json_encode($proofImages);
+        $stmt = $this->conn->prepare("UPDATE complaints SET solution=?, proof_images=?, status='resolved' WHERE ComplaintID=?");
+        $stmt->bind_param("ssi", $solution, $proofJson, $id);
+        return $stmt->execute();
     }
+
+
+
 }
 ?>

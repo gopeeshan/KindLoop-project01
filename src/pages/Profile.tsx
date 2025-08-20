@@ -124,11 +124,11 @@ const Profile = () => {
   const [complaintData, setComplaintData] = useState<{
     reason: string;
     description: string;
-    evidenceImages?: File[];
+    evidence_images?: File[];
   }>({
     reason: "",
     description: "",
-    evidenceImages: undefined,
+    evidence_images: undefined,
   });
   const [isComplaintDialogOpen, setIsComplaintDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ToBeReceivedItem | null>(
@@ -320,9 +320,9 @@ const Profile = () => {
       formDataObj.append("description", complaintData.description);
       formDataObj.append("userID", user.userID.toString());
 
-      if (complaintData.evidenceImages?.length) {
-        complaintData.evidenceImages.forEach((file) => {
-          formDataObj.append("evidenceImages[]", file);
+      if (complaintData.evidence_images?.length) {
+        complaintData.evidence_images.forEach((file) => {
+          formDataObj.append("evidence_images[]", file);
         });
       }
       const response = await axios.post(
@@ -957,21 +957,21 @@ const Profile = () => {
 
                       <div className="space-y-2">
                         <Label
-                          htmlFor="evidenceImages"
+                          htmlFor="evidence_images"
                           className="text-sm font-medium text-gray-700"
                         >
                           Upload Image Evidence (Optional)
                         </Label>
                         <input
                           type="file"
-                          id="evidenceImages"
-                          name="evidenceImages[]"
+                          id="evidence_images"
+                          name="evidence_images[]"
                           accept="image/*"
                           multiple
                           onChange={(e) =>
                             setComplaintData((prev) => ({
                               ...prev,
-                              evidenceImages: Array.from(e.target.files),
+                              evidence_images: Array.from(e.target.files),
                             }))
                           }
                           className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4

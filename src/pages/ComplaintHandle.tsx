@@ -66,10 +66,10 @@ const AdminComplaints = () => {
 
   const fetchComplaints = async () => {
     try {
-      const res = await axios.get(
+      const { data } = await axios.get(
         "http://localhost/KindLoop-project01/Backend/ComplaintController.php"
       );
-      setComplaints(Array.isArray(res.data) ? res.data : []);
+      setComplaints(Array.isArray(data) ? data : []);
     } catch {
       toast({
         title: "Error",
@@ -81,47 +81,38 @@ const AdminComplaints = () => {
 
   const fetchDonorDetails = async (donorId: number) => {
     try {
-      const res = await axios.get(
+      const { data } = await axios.get(
         `http://localhost/KindLoop-project01/Backend/ComplaintController.php?id=${donorId}&type=donor`
       );
-      if (res.data.success) {
-        setDonorDetails(res.data.donor);
+      if (data.success) {
+        setDonorDetails(data.donor);
       }
     } catch {}
   };
 
   const fetchComplainantDetails = async (userId: number) => {
     try {
-      const res = await axios.get(
+      const { data } = await axios.get(
         `http://localhost/KindLoop-project01/Backend/ComplaintController.php?id=${userId}&type=user`
       );
-      if (res.data.success) {
-        setComplainantDetails(res.data.user);
+      if (data.success) {
+        setComplainantDetails(data.user);
       }
     } catch {}
   };
 
   const fetchDonationDetails = async (donationId: number) => {
     try {
-      const res = await axios.get(
+      const { data } = await axios.get(
         `http://localhost/KindLoop-project01/Backend/ComplaintController.php?id=${donationId}&type=donation`
       );
-      if (res.data.success) {
-        setDonationDetails(res.data.donation);
+      if (data.success) {
+        setDonationDetails(data.donation);
       }
     } catch (error) {
       console.error("Error fetching donation:", error);
     }
   };
-
-  const getStatusBadge = (status: string) =>
-    status === "pending" ? (
-      <Badge className="bg-orange-100 text-orange-700">Pending</Badge>
-    ) : status === "resolved" ? (
-      <Badge className="bg-green-500">Resolved</Badge>
-    ) : (
-      <Badge variant="outline">{status}</Badge>
-    );
 
   const getReasonLabel = (reason: string) =>
     reason === "other" ? "Other" : reason;
@@ -148,17 +139,18 @@ const AdminComplaints = () => {
 
     const formData = new FormData();
     formData.append("solution", solution);
+    formData.append("id", selectedComplaint.id.toString());
+    formData.append("action", "resolve");
     proofFiles.forEach((file) => formData.append("proof_images[]", file));
 
     try {
-      const res = await axios.post(
+      const { data } = await axios.post(
         `http://localhost/KindLoop-project01/Backend/ComplaintController.php?action=resolve&id=${selectedComplaint.id}`,
         formData
       );
-      if (res.data.success) {
-        toast({ title: "Complaint Resolved", description: res.data.message });
+      if (data.success) {
+        toast({ title: "Complaint Resolved", description: data.message });
 
-        const proofImageUrls = res.data.proof_images || [];
         setComplaints((prev) =>
           prev.map((c) =>
             c.id === selectedComplaint.id
@@ -166,21 +158,12 @@ const AdminComplaints = () => {
                   ...c,
                   status: "resolved",
                   solution,
-                  proof_images: proofImageUrls,
+                  proof_images: data.proof_images || [],
                 }
               : c
           )
         );
-        setSelectedComplaint((prev: any) =>
-          prev
-            ? {
-                ...prev,
-                status: "resolved",
-                solution,
-                proof_images: proofImageUrls,
-              }
-            : null
-        );
+        setSelectedComplaint(null);
         setSolution("");
         setProofFiles([]);
       }
@@ -199,6 +182,20 @@ const AdminComplaints = () => {
     if (activeTab === "all") return true;
     return c.status === activeTab;
   });
+
+  const getStatusBadge = (status: string) => (
+    <Badge
+      className={
+        status === "pending"
+          ? "bg-orange-100 text-orange-700"
+          : status === "resolved"
+          ? "bg-green-500"
+          : ""
+      }
+    >
+      {status}
+    </Badge>
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -414,7 +411,16 @@ const AdminComplaints = () => {
                                   </h4>
 
                                   <div className="flex items-center gap-20">
-                                    <Dialog>
+                                    <Dialog
+                                      open={
+                                        !!donationDetails &&
+                                        donationDetails.id ===
+                                          selectedComplaint.donationId
+                                      }
+                                      onOpenChange={() =>
+                                        setDonationDetails(null)
+                                      }
+                                    >
                                       <DialogTrigger asChild>
                                         <button
                                           className="text-blue-600 hover:underline"

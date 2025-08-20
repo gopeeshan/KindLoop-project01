@@ -1,4 +1,3 @@
-
 <?php
 
 header("Content-Type: application/json");
@@ -33,7 +32,7 @@ $type   = $_GET['type']   ?? null;
 $id     = intval($_GET['id'] ?? 0);
 $action = $_GET['action'] ?? null;
 
-// ---------- User / Donor ----------
+
 if ($type === 'donor' && $id) {
     $donor = $userObj->getDonor($id);
     sendJson($donor ? ["success" => true, "donor" => $donor] : ["success" => false, "message" => "Donor not found"]);
@@ -44,13 +43,13 @@ if ($type === 'user' && $id) {
     sendJson($user ? ["success" => true, "user" => $user] : ["success" => false, "message" => "User not found"]);
 }
 
-// ---------- Donation ----------
+
 if ($type === 'donation' && $id) {
     $donation = $donationObj->getDonation($id);
     sendJson($donation ? ["success" => true, "donation" => $donation] : ["success" => false, "message" => "Donation not found"]);
 }
 
-// ---------- Complaint Actions ----------
+
 if ($action && $id) {
     $solution = getInput("solution") ?? "";
     $files    = $_FILES['proof_images'] ?? [];
@@ -68,6 +67,17 @@ if ($action && $id) {
     }
 }
 
-// ---------- Default: Return all complaints ----------
+
 $complaints = $complaintObj->getAllComplaint();
+
+$baseUrl = "http://localhost/KindLoop-project01/Backend/";
+
+foreach ($complaints as &$c) {
+    foreach (['evidence_images', 'proof_images'] as $key) {
+        if (!empty($c[$key])) {
+            $c[$key] = array_map(fn($img) => $baseUrl . $img, $c[$key]);
+        }
+    }
+}
+
 sendJson($complaints);
