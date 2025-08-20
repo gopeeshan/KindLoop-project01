@@ -45,7 +45,7 @@ if ($method === 'POST' && $action === 'request-item') {
     $donations = $handleDonation->getUserDonations($userId);
 
     // ---------------- Fetch Received Items ----------------
-    $received = $handleDonation->fetchReceived($userId);
+    $received = $handleDonation->getReceivedHistory($userId);
 
     $user_credits = $handleDonation->getcredits($userId);
 

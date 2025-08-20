@@ -98,34 +98,34 @@ class HandleDonation extends Profile {
 //     return $donations;
 // }
 
-    public function fetchReceived($userId){
-        $sqlReceived = "SELECT
-                d.DonationID,
-                d.title,
-                d.date_time AS requestDate,
-                d.category,
-                d.isDonationCompleted AS status,
-                u.fullName AS donor,
-                u.contactNumber AS donorContact,
-                ri.quantity,
-                ri.received_date
-            FROM receive_items ri
-            JOIN donation d ON ri.donationID = d.DonationID
-            JOIN user u ON ri.donorID = u.userID
-            WHERE ri.receiverID = ?
-              AND d.isDonationCompleted = 1
-            ORDER BY ri.received_date DESC";
-        $stmtRec = $this->conn->prepare($sqlReceived);
-        $stmtRec->bind_param("i", $userId);
-        $stmtRec->execute();
-        $resultRec = $stmtRec->get_result();
+    // public function fetchReceived($userId){
+    //     $sqlReceived = "SELECT
+    //             d.DonationID,
+    //             d.title,
+    //             d.date_time AS requestDate,
+    //             d.category,
+    //             d.isDonationCompleted AS status,
+    //             u.fullName AS donor,
+    //             u.contactNumber AS donorContact,
+    //             ri.quantity,
+    //             ri.received_date
+    //         FROM receive_items ri
+    //         JOIN donation d ON ri.donationID = d.DonationID
+    //         JOIN user u ON ri.donorID = u.userID
+    //         WHERE ri.receiverID = ?
+    //           AND d.isDonationCompleted = 1
+    //         ORDER BY ri.received_date DESC";
+    //     $stmtRec = $this->conn->prepare($sqlReceived);
+    //     $stmtRec->bind_param("i", $userId);
+    //     $stmtRec->execute();
+    //     $resultRec = $stmtRec->get_result();
 
-        $received = [];
-        while ($row = $resultRec->fetch_assoc()) {
-            $received[] = $row;
-        }
-        return $received;
-    }
+    //     $received = [];
+    //     while ($row = $resultRec->fetch_assoc()) {
+    //         $received[] = $row;
+    //     }
+    //     return $received;
+    // }
     public function getcredits($userId){
         $sqlUser = "SELECT credit_points FROM user WHERE userID = ?";
         $stmtUser = $this->conn->prepare($sqlUser);
