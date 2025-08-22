@@ -45,7 +45,7 @@ if ($type === 'user' && $id) {
 
 
 if ($type === 'donation' && $id) {
-    $donation = $donationObj->getDonation($id);
+    $donation = $donationObj->getDonationById($id);
     sendJson($donation ? ["success" => true, "donation" => $donation] : ["success" => false, "message" => "Donation not found"]);
 }
 

@@ -68,12 +68,12 @@
             }
         }
 
-         public function getDonation($id) {
-        $stmt = $this->conn->prepare("SELECT DonationID AS id, title, description, category, `condition` AS cond, usageDuration FROM donation WHERE DonationID=?");
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        return $result->fetch_assoc() ?? null;
-    }
+    //      public function getDonation($id) {
+    //     $stmt = $this->conn->prepare("SELECT DonationID AS id, title, description, category, `condition` AS cond, usageDuration FROM donation WHERE DonationID=?");
+    //     $stmt->bind_param("i", $id);
+    //     $stmt->execute();
+    //     $result = $stmt->get_result();
+    //     return $result->fetch_assoc() ?? null;
+    // }
 
     }

@@ -70,7 +70,8 @@ class Complaint {
     }
 
     public function getAllComplaint() {
-        $sql = "SELECT c.ComplaintID AS id, 
+        $sql = "SELECT c.ComplaintID AS id,
+                       c.DonationID AS donationID,
                        c.description, 
                        c.reason, 
                        IFNULL(c.status,'pending') AS status, 

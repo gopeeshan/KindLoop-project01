@@ -24,6 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   ArrowLeft,
@@ -37,22 +38,72 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import DonationDetails from "./DonationDetails";
+
+interface DonationDetails {
+  donationID: number;
+  title: string;
+  description: string;
+  category: string;
+  condition: string;
+  usageDuration: string;
+  quantity: number;
+  images: string[];
+}
+interface Complaint {
+  id: number;
+  donationID: number;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  donorId: number;
+  donorName: string;
+  donationTitle: string;
+  reason: string;
+  description: string;
+  submittedDate: string;
+  status: "pending" | "resolved";
+  solution?: string;
+  evidence_images?: string[];
+  proof_images?: string[];
+}
+interface DonorDetails {
+  name: string;
+  email: string;
+  phone: string;
+  occupation: string;
+  total_donations: number;
+  credit_points: number;
+}
+interface ComplainantDetails {
+  name: string;
+  email: string;
+  occupation: string;
+  contactNumber: string;
+  credit_points: number;
+}
 
 const AdminComplaints = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [complaints, setComplaints] = useState<any[]>([]);
-  const [selectedComplaint, setSelectedComplaint] = useState<any>(null);
+  const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(
+    null
+  );
   const [solution, setSolution] = useState("");
   const [proofFiles, setProofFiles] = useState<File[]>([]);
-  const [donorDetails, setDonorDetails] = useState<any>(null);
-  const [complainantDetails, setComplainantDetails] = useState<any>(null);
-  const [donationDetails, setDonationDetails] = useState<any>(null);
+  const [donorDetails, setDonorDetails] = useState<DonorDetails | null>(null);
+  const [complainantDetails, setComplainantDetails] =
+    useState<ComplainantDetails | null>(null);
+  const [donationDetails, setDonationDetails] =
+    useState<DonationDetails | null>(null);
   const [activeTab, setActiveTab] = useState<"all" | "pending" | "resolved">(
     "all"
   );
+  const [isDonationDialogOpen, setIsDonationDialogOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     const adminLoggedIn = localStorage.getItem("isAdminLoggedIn");
@@ -80,37 +131,34 @@ const AdminComplaints = () => {
   };
 
   const fetchDonorDetails = async (donorId: number) => {
-    try {
-      const { data } = await axios.get(
-        `http://localhost/KindLoop-project01/Backend/ComplaintController.php?id=${donorId}&type=donor`
-      );
-      if (data.success) {
-        setDonorDetails(data.donor);
-      }
-    } catch {}
+    const { data } = await axios.get(
+      `http://localhost/KindLoop-project01/Backend/ComplaintController.php?id=${donorId}&type=donor`
+    );
+    if (data.success) {
+      setDonorDetails(data.donor);
+    }
   };
 
   const fetchComplainantDetails = async (userId: number) => {
-    try {
-      const { data } = await axios.get(
-        `http://localhost/KindLoop-project01/Backend/ComplaintController.php?id=${userId}&type=user`
-      );
-      if (data.success) {
-        setComplainantDetails(data.user);
-      }
-    } catch {}
+    const { data } = await axios.get(
+      `http://localhost/KindLoop-project01/Backend/ComplaintController.php?id=${userId}&type=user`
+    );
+    if (data.success) {
+      setComplainantDetails(data.user);
+    }
   };
 
-  const fetchDonationDetails = async (donationId: number) => {
-    try {
-      const { data } = await axios.get(
-        `http://localhost/KindLoop-project01/Backend/ComplaintController.php?id=${donationId}&type=donation`
-      );
-      if (data.success) {
-        setDonationDetails(data.donation);
-      }
-    } catch (error) {
-      console.error("Error fetching donation:", error);
+  const fetchDonationDetails = async (donationID: number) => {
+    const { data } = await axios.get(
+      `http://localhost/KindLoop-project01/Backend/ComplaintController.php?id=${donationID}&type=donation`
+    );
+    if (data.success) {
+      const donationData = data.donation.data;
+      donationData.images = donationData.images
+        ? JSON.parse(donationData.images)
+        : [];
+      setDonationDetails(donationData);
+      // setDonationDetails(data.donation.data);
     }
   };
 
@@ -412,23 +460,18 @@ const AdminComplaints = () => {
 
                                   <div className="flex items-center gap-20">
                                     <Dialog
-                                      open={
-                                        !!donationDetails &&
-                                        donationDetails.id ===
-                                          selectedComplaint.donationId
-                                      }
-                                      onOpenChange={() =>
-                                        setDonationDetails(null)
-                                      }
+                                      open={isDonationDialogOpen}
+                                      onOpenChange={setIsDonationDialogOpen}
                                     >
                                       <DialogTrigger asChild>
                                         <button
                                           className="text-blue-600 hover:underline"
-                                          onClick={() =>
+                                          onClick={() => {
                                             fetchDonationDetails(
-                                              selectedComplaint.donationId
-                                            )
-                                          }
+                                              selectedComplaint.donationID
+                                            );
+                                            setIsDonationDialogOpen(true);
+                                          }}
                                         >
                                           {selectedComplaint.donationTitle}
                                         </button>
@@ -440,9 +483,11 @@ const AdminComplaints = () => {
                                           </DialogTitle>
                                         </DialogHeader>
                                         {donationDetails ? (
+                                          // (console.log(donationDetails),
+                                          // (
                                           <div className="space-y-2">
                                             <p>
-                                              <strong>Title:</strong>{" "}
+                                              <strong>Title:</strong>
                                               {donationDetails.title}
                                             </p>
                                             <p>
@@ -455,19 +500,74 @@ const AdminComplaints = () => {
                                             </p>
                                             <p>
                                               <strong>Condition:</strong>{" "}
-                                              {donationDetails.cond}
+                                              {donationDetails.condition}
                                             </p>
                                             <p>
                                               <strong>Usage Duration:</strong>{" "}
                                               {donationDetails.usageDuration}
                                             </p>
+                                            <p>
+                                              <strong>Quantity:</strong>{" "}
+                                              {donationDetails.quantity}
+                                            </p>
+
+                                            {donationDetails.images &&
+                                              donationDetails.images.length >
+                                                0 && (
+                                                <div>
+                                                  <strong>Images:</strong>
+                                                  <div className="grid grid-cols-2 gap-2 mt-2">
+                                                    {donationDetails.images.map(
+                                                      (img, idx) => (
+                                                        <img
+                                                          key={idx}
+                                                          src={`http://localhost/KindLoop-project01/Backend/${img.trim()}`}
+                                                          alt={`donation-${idx}`}
+                                                          className="w-40 h-40 object-cover rounded-lg shadow-sm"
+                                                          onClick={() =>
+                                                            setSelectedImage(
+                                                              `http://localhost/KindLoop-project01/Backend/${img}`
+                                                            )
+                                                          }
+                                                        />
+                                                      )
+                                                    )}
+                                                  </div>
+                                                </div>
+                                              )}
                                           </div>
                                         ) : (
+                                          // ))
                                           <p>Loading donation info...</p>
                                         )}
                                       </DialogContent>
                                     </Dialog>
+                                    <Dialog
+                                      open={!!selectedImage}
+                                      onOpenChange={() =>
+                                        setSelectedImage(null)
+                                      }
+                                    >
+                                      <DialogContent className="max-w-3xl p-4">
+                                        <img
+                                          src={selectedImage ?? ""}
+                                          alt="Full Size"
+                                          className="max-w-[50vw] max-h-[50vh] w-auto h-auto mx-auto rounded-lg object-contain"
+                                        />
+                                        <DialogFooter>
+                                          <Button
+                                            onClick={() =>
+                                              setSelectedImage(null)
+                                            }
+                                          >
+                                            Close
+                                          </Button>
+                                        </DialogFooter>
+                                      </DialogContent>
+                                    </Dialog>
+                                  </div>
 
+                                  <div>
                                     <Dialog>
                                       <DialogTrigger asChild>
                                         <button
@@ -552,13 +652,28 @@ const AdminComplaints = () => {
                                       Evidence Images
                                     </h4>
                                     <div className="flex flex-wrap gap-2">
-                                      {selectedComplaint.evidence_images.map(
+                                      {/* {selectedComplaint.evidence_images.map(
                                         (img, index) => (
                                           <img
                                             key={index}
                                             src={img}
                                             alt={`evidence-${index}`}
                                             className="w-32 h-32 object-cover rounded-md border border-muted p-1"
+                                          />
+                                        )
+                                      )} */}
+                                      {selectedComplaint.evidence_images.map(
+                                        (img, idx) => (
+                                          <img
+                                            key={idx}
+                                            src={img}
+                                            alt={`evidence-${idx}`}
+                                            className="w-40 h-40 object-cover rounded-lg shadow-sm"
+                                            onClick={() =>
+                                              setSelectedImage(
+                                                img
+                                              )
+                                            }
                                           />
                                         )
                                       )}
