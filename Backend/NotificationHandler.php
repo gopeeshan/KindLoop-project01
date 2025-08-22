@@ -43,6 +43,11 @@ else if ($method === 'POST' && $action === 'Donation_received_Confirmation') {
     echo json_encode(['success' => $success]);
     exit;
 }
+else if($method === 'POST' && $action ==='Complaint_registered'){
+    $success = $notificationManager->send($msg_receiver_ID, $msg_sender_ID, 'complaint_registered', $donationID);
+    echo json_encode(['success' => $success]);
+    exit;
+}
 else if ($method === 'GET') {
     $msg_receiver_ID = $_GET['msg_receiver_ID'] ?? null;
 
