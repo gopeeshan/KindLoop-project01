@@ -33,6 +33,7 @@ const Donations = () => {
   const [donations, setDonations] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     const categoryParam = searchParams.get("category");
@@ -84,7 +85,6 @@ const Donations = () => {
     return matchesSearch && matchesCategory && matchesVerification;
   });
 
-
   const categories = [
     "all",
     "Clothing & Accessories",
@@ -96,7 +96,7 @@ const Donations = () => {
     "Home & Garden",
     "Toys & Games",
     "Baby & Kids",
-    "Others"
+    "Others",
   ];
 
   return (
@@ -191,66 +191,66 @@ const Donations = () => {
                 to={`/donation/${donation.DonationID}`}
                 key={donation.DonationID}
               >
-                <Card className="group hover:shadow-lg cursor-pointer">
-                  <CardContent className="p-0">
-                    <div className="aspect-video bg-gradient-to-br from-primary/10 to-secondary/10 rounded-t-lg flex items-center justify-center relative">
-                      <div className="text-center p-6">
-                        <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <span className="text-2xl font-bold text-primary">
-                            {donation.category?.[0] || "?"}
-                          </span>
-                        </div>
-                        <span className="text-sm font-medium text-primary">
-                          {donation.category}
-                        </span>
+                <Card className="group hover:shadow-lg cursor-pointer relative">
+                  <div className="w-full h-64 bg-gray-100 rounded-t-lg flex items-center justify-center overflow-hidden">
+                    {donation.images && donation.images.length > 0 ? (
+                      <img
+                        src={`http://localhost/KindLoop-project01/Backend/${donation.images[0]}`}
+                        alt="Donation preview"
+                        className="w-full h-full object-cover object-top"
+                      />
+                    ) : (
+                      <div className="text-gray-400 text-sm">
+                        No Image Available
                       </div>
-                      <div className="absolute top-3 right-3">
-                        {donation.isVerified == 1 ? (
-                          <Badge
-                            variant="default"
-                            className="bg-green-500 text-white"
-                          >
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Verified
-                          </Badge>
-                        ) : (
-                          <Badge
-                            variant="secondary"
-                            className="bg-orange-100 text-orange-700 border-orange-200"
-                          >
-                            <AlertCircle className="h-3 w-3 mr-1" />
-                            Unverified
-                          </Badge>
-                        )}
+                    )}
+                  </div>
+
+                  <div className="absolute top-3 right-3">
+                    {donation.isVerified == 1 ? (
+                      <Badge
+                        variant="default"
+                        className="bg-green-500 text-white"
+                      >
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Verified
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="secondary"
+                        className="bg-orange-100 text-orange-700 border-orange-200"
+                      >
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        Unverified
+                      </Badge>
+                    )}
+                  </div>
+
+                  <CardContent className="p-6">
+                    <h3 className="text-xl font-semibold text-foreground mb-2">
+                      {donation.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {donation.description}
+                    </p>
+
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <User className="h-4 w-4 mr-2" />
+                        <span>{donation.fullName}</span>
+                      </div>
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <MapPin className="h-4 w-4 mr-2" />
+                        <span>{donation.location}</span>
+                      </div>
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <Clock className="h-4 w-4 mr-2" />
+                        <span>{donation.date_time}</span>
                       </div>
                     </div>
-
-                    <div className="p-6">
-                      <h3 className="text-xl font-semibold text-foreground mb-2">
-                        {donation.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        {donation.description}
-                      </p>
-
-                      <div className="space-y-2 mb-4">
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <User className="h-4 w-4 mr-2" />
-                          <span>{donation.fullName}</span>
-                        </div>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <MapPin className="h-4 w-4 mr-2" />
-                          <span>{donation.location}</span>
-                        </div>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Clock className="h-4 w-4 mr-2" />
-                          <span>{donation.date_time}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer transition-all">
-                        <Eye className="h-4 w-4" />
-                        <span>Click to view details</span>
-                      </div>
+                    <div className="flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer transition-all">
+                      <Eye className="h-4 w-4" />
+                      <span>Click to view details</span>
                     </div>
                   </CardContent>
                 </Card>
