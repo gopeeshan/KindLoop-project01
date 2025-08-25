@@ -18,6 +18,7 @@ import {
   Clock,
   Search,
   User,
+  UserCog,
   Package,
   AlertTriangle,
   LogOut,
@@ -46,6 +47,17 @@ interface User {
   donation_count: number;
 }
 
+interface Admin {
+  AdminID: number;
+  fullName: string;
+  contactNumber: string;
+  email: string;
+  nic: string;
+  address: string;
+  joined_date: string;
+  Admin_status: string;
+}
+
 interface Donation {
   DonationID: number;
   title: string;
@@ -60,7 +72,7 @@ interface Donation {
   isVerified: number;
   isDonationCompleted: number;
   receiverID: number;
-  approvedBy: string;
+  approvedBy: number;
   setVisible: number;
   usageDuration: string;
 }
@@ -79,7 +91,7 @@ interface Verification {
   isVerified: number;
   isDonationCompleted: number;
   ReceiverID: number;
-  approvedBy: string;
+  approvedBy: number;
   setVisible: number;
   usageDuration: string;
 }
@@ -91,11 +103,15 @@ const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [donations, setDonations] = useState<Donation[]>([]);
+  const [admins, setAdmins] = useState<Admin[]>([]);
   const [PendingVerifications, setPendingVerifications] = useState<
     Verification[]
   >([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [role, setRole] = useState<string | null>(null);
+
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
   const [selectedDonation, setSelectedDonation] = useState<Donation | null>(
     null
   );
@@ -109,6 +125,7 @@ const Admin = () => {
         if (data.status === "success") {
           setUsers(data.users);
           setDonations(data.donations);
+          setAdmins(data.admins);
           setPendingVerifications(data.pendingVerifications);
           console.log("Fetched data successfully");
         }
@@ -118,37 +135,63 @@ const Admin = () => {
       });
   };
 
+  const visibleTabs = [
+    {
+      value: "verification",
+      label: "Pending Verification",
+      icon: <AlertTriangle />,
+    },
+    { value: "users", label: "Users", icon: <User /> },
+    { value: "donations", label: "Donations", icon: <Package /> },
+    ...(role === "superadmin"
+      ? [{ value: "admins", label: "Admin", icon: <UserCog /> }]
+      : []),
+  ];
+
+  const statsCards = [
+    {
+      title: "Total Users",
+      value: users.length,
+      icon: <User className="h-8 w-8 text-primary" />,
+    },
+    {
+      title: "Total Donations",
+      value: donations.length,
+      icon: <Package className="h-8 w-8 text-primary" />,
+    },
+    {
+      title: "Pending Verification",
+      value: PendingVerifications.length,
+      icon: <Clock className="h-8 w-8 text-orange-600" />,
+    },
+    ...(role === "superadmin"
+      ? [
+          {
+            title: "Total Sub Admins",
+            value: admins.length,
+            icon: <UserCog className="h-8 w-8 text-primary" />,
+          },
+        ]
+      : []),
+  ];
+
   useEffect(() => {
     const adminLoggedIn = localStorage.getItem("isAdminLoggedIn");
-    if (adminLoggedIn === "true") {
+    const role = localStorage.getItem("role");
+
+    if (adminLoggedIn === "true" && role) {
       setIsAuthenticated(true);
+      setRole(role);
     } else {
       navigate("/Admin_login");
       return;
     }
-
     fetchAdminData();
   }, [navigate]);
 
-  // useEffect(() => {
-  //   axios.get("http://localhost/KindLoop-project01/Backend/Admin.php")
-  //     .then((response) => {
-  //       const data = response.data;
-  //       if (data.status === "success") {
-  //         setUsers(data.users);
-  //         setDonations(data.donations);
-  //         setPendingVerifications(data.pendingVerifications);
-  //         console.log("Fetched data successfully");
-  //       }
-  //     })
-  //     .catch((error) => {
-  //       console.error("Error fetching data:", error);
-  //     });
-  //   }, []);
-
   const handleLogout = () => {
     localStorage.removeItem("isAdminLoggedIn");
-    localStorage.removeItem("adminEmail");
+    localStorage.removeItem("AdminID");
     toast({
       title: "Logged Out",
       description: "You have been successfully logged out.",
@@ -156,18 +199,13 @@ const Admin = () => {
     navigate("/Admin_login");
   };
 
-  const handleVerifyDonation = (
+  const handleVerifyDonation = async (
     DonationID: number,
     isVerified: number,
     setVisible: number
   ) => {
-    console.log(
-      `Verifying donation ${DonationID} with status ${isVerified} and adminEmail ${localStorage.getItem(
-        "adminEmail"
-      )}`
-    );
-    console.log(`Setting visibility to ${setVisible}`);
-    const adminEmail = localStorage.getItem("adminEmail");
+    const AdminID = localStorage.getItem("AdminID");
+
     const action = isVerified === 1 ? "approved" : "rejected";
 
     axios
@@ -175,7 +213,7 @@ const Admin = () => {
         action: "verify_donation",
         DonationID,
         isVerified,
-        adminEmail,
+        AdminID,
         setVisible,
       })
       .then(() => {
@@ -183,10 +221,9 @@ const Admin = () => {
           title: `Donation ${action}`,
           description: `The donation has been ${action} successfully.`,
         });
-        // window.location.reload();
         fetchAdminData();
       })
-      .catch((error) => {
+      .catch(() => {
         toast({
           title: "Error",
           description: "Failed to verify donation.",
@@ -206,14 +243,35 @@ const Admin = () => {
           title: `User ${active_state}`,
           description: `User action completed successfully.`,
         });
-        //window.location.reload();
-        //console.log(`User ${userID} ${active_state}`);
+
         fetchAdminData();
       })
       .catch((error) => {
         toast({
           title: "Error",
           description: "Failed to perform user action.",
+        });
+      });
+  };
+
+  const handleAdminAction = async (AdminID: number, newStatus: string) => {
+    axios
+      .post("http://localhost/KindLoop-project01/Backend/Admin.php", {
+        action: "admin_action",
+        AdminID,
+        AdminActive_state: newStatus, // match backend field
+      })
+      .then(() => {
+        toast({
+          title: `Admin ${newStatus}`,
+          description: `Admin action completed successfully.`,
+        });
+        fetchAdminData();
+      })
+      .catch(() => {
+        toast({
+          title: "Error",
+          description: "Failed to perform admin action.",
         });
       });
   };
@@ -226,26 +284,14 @@ const Admin = () => {
       setIsDialogOpen(true);
     }
   };
-  // const handleDonation=(DonationID:number)=>{
-  //   console.log(`Removing donation with ID: ${DonationID}`);
-  //   axios.post("http://localhost/KindLoop-project01/Backend/Admin.php", {
-  //     action: "remove_donation",
-  //     DonationID,
-  //   })
-  //   .then(() => {
-  //     toast({
-  //       title: "Donation Removed",
-  //       description: "The donation has been removed successfully.",
-  //     });
-  //     window.location.reload();
-  //   })
-  //   .catch((error) => {
-  //     toast({
-  //       title: "Error",
-  //       description: "Failed to remove donation.",
-  //     });
-  //   });
-  // }
+
+  const handleViewAdmin = (AdminID: number) => {
+    const admin = admins.find((a) => a.AdminID === AdminID);
+    if (admin) {
+      setSelectedAdmin(admin);
+      setIsDialogOpen(true);
+    }
+  };
 
   const handleViewDonation = (DonationID: number) => {
     const donation = donations.find((d) => d.DonationID === DonationID);
@@ -263,7 +309,7 @@ const Admin = () => {
             Active
           </Badge>
         );
-      case "suspended":
+      case "suspend":
         return <Badge variant="destructive">Suspended</Badge>;
       case "verified":
         return (
@@ -311,6 +357,16 @@ const Admin = () => {
           </div>
 
           <div className="mb-6 flex gap-4">
+            {role === "superadmin" && (
+              <Button
+                onClick={() => navigate("/admin/Admin_SignUp")}
+                className="flex items-center gap-2"
+                variant="outline"
+              >
+                Add Admin
+              </Button>
+            )}
+
             <Button
               onClick={() => navigate("/admin/complaints")}
               className="flex items-center gap-2"
@@ -331,7 +387,7 @@ const Admin = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -373,25 +429,56 @@ const Admin = () => {
               </div>
             </CardContent>
           </Card>
+
+          {role === "superadmin" && (
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      Total Sub Admins
+                    </p>
+                    <p className="text-2xl font-bold">{admins.length}</p>
+                  </div>
+                  <UserCog className="h-8 w-8 text-primary" />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div> */}
+
+        <div
+          className={`grid grid-cols-1 md:grid-cols-${statsCards.length} gap-6 mb-8`}
+        >
+          {statsCards.map((card, index) => (
+            <Card key={card.title}>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      {card.title}
+                    </p>
+                    <p className="text-2xl font-bold">{card.value}</p>
+                  </div>
+                  {card.icon}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         <Tabs defaultValue="verification" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger
-              value="verification"
-              className="flex items-center gap-2"
-            >
-              <AlertTriangle className="h-4 w-4" />
-              Pending Verification
-            </TabsTrigger>
-            <TabsTrigger value="users" className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              Users
-            </TabsTrigger>
-            <TabsTrigger value="donations" className="flex items-center gap-2">
-              <Package className="h-4 w-4" />
-              Donations
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
+            {visibleTabs.map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="flex items-center justify-center gap-2"
+              >
+                {tab.icon}
+                {tab.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <TabsContent value="verification" className="space-y-6">
@@ -512,7 +599,9 @@ const Admin = () => {
                           <TableCell>{user.occupation}</TableCell>
                           <TableCell>{user.district}</TableCell>
                           <TableCell>{user.credit_points}</TableCell>
-                          <TableCell>{user.active_state}</TableCell>
+                          <TableCell>
+                            {getStatusBadge(user.active_state)}
+                          </TableCell>
                           <TableCell>{user.donation_count}</TableCell>
                           <TableCell>
                             <div className="flex gap-2">
@@ -547,6 +636,76 @@ const Admin = () => {
                           </TableCell>
                         </TableRow>
                       ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="admins" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Admin Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Full Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Contact Number</TableHead>
+                      <TableHead>Address</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {admins.map((admin, index) => (
+                      <TableRow
+                        key={admin.AdminID ?? index}
+                        className="hover:bg-muted"
+                      >
+                        <TableCell className="font-medium">
+                          {admin.fullName}
+                        </TableCell>
+                        <TableCell>{admin.email}</TableCell>
+                        <TableCell>{admin.contactNumber}</TableCell>
+                        <TableCell>{admin.address}</TableCell>
+                        <TableCell>
+                          {getStatusBadge(admin.Admin_status)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleViewAdmin(admin.AdminID)}
+                            >
+                              View
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={
+                                admin.Admin_status === "suspend"
+                                  ? "default"
+                                  : "destructive"
+                              }
+                              onClick={() => {
+                                const newStatus =
+                                  admin.Admin_status === "suspend"
+                                    ? "active"
+                                    : "suspend";
+                                handleAdminAction(admin.AdminID, newStatus);
+                              }}
+                            >
+                              {admin.Admin_status === "suspend"
+                                ? "active"
+                                : "suspend"}
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -617,6 +776,8 @@ const Admin = () => {
                 <DialogTitle>
                   {selectedUser
                     ? "User Details"
+                    : selectedAdmin
+                    ? "Admin Details"
                     : selectedDonation
                     ? "Donation Details"
                     : "Details"}
@@ -624,6 +785,8 @@ const Admin = () => {
                 <DialogDescription>
                   {selectedUser
                     ? "Read-only user information"
+                    : selectedAdmin
+                    ? "Read-only admin information"
                     : selectedDonation
                     ? "Donation item details"
                     : ""}
@@ -725,11 +888,11 @@ const Admin = () => {
                       <div>
                         <strong>Images:</strong>
                         <div className="grid grid-cols-2 gap-2 mt-2">
-                          {selectedDonation.images.map((img, idx) => (
+                          {selectedDonation.images.map((img, index) => (
                             <img
-                              key={idx}
+                              key={`${img}-${index}`}
                               src={`http://localhost/KindLoop-project01/Backend/${img.trim()}`}
-                              alt={`donation-${idx}`}
+                              alt={`donation-${img}`}
                               className="w-40 h-40 object-cover rounded-lg shadow-sm"
                               onClick={() =>
                                 setSelectedImage(
@@ -741,6 +904,32 @@ const Admin = () => {
                         </div>
                       </div>
                     )}
+                </div>
+              )}
+
+              {selectedAdmin && (
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <p>
+                    <strong>Full Name: </strong> {selectedAdmin.fullName}
+                  </p>
+                  <p>
+                    <strong>Email: </strong> {selectedAdmin.email}
+                  </p>
+                  <p>
+                    <strong>NIC: </strong> {selectedAdmin.nic}
+                  </p>
+                  <p>
+                    <strong>Contact No: </strong> {selectedAdmin.contactNumber}
+                  </p>
+                  <p>
+                    <strong>Address: </strong> {selectedAdmin.address}
+                  </p>
+                  <p>
+                    <strong>Joined Date: </strong> {selectedAdmin.joined_date}
+                  </p>
+                  <p>
+                    <strong>Status: </strong> {selectedAdmin?.Admin_status}
+                  </p>
                 </div>
               )}
 

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -14,32 +13,33 @@ import Admin from "./pages/Admin";
 import AdminLogin from "./pages/Admin_login";
 import DonationDetails from "./pages/DonationDetails";
 import Profiledd from "./pages/ProfileDD";
-import ComplaintHandle from "./pages/ComplaintHandle"
-
+import ComplaintHandle from "./pages/ComplaintHandle";
+import AdminSignUp from "./pages/AdminSignUp";
 
 const App = () => {
   return (
-      <BrowserRouter>
-        <TooltipProvider>
-          <div className="min-h-screen">
-            <Toaster />
-            <Sonner />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/post-creation" element={<PostCreation />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/donations" element={<Donations />} />
-              <Route path="/donation/:id" element={<DonationDetails />} />
-              <Route path="/profiledonation/:id" element={<Profiledd />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/Admin_login" element={<AdminLogin />} />
-              <Route path="/admin/complaints" element={<ComplaintHandle />} />
-            </Routes>
-          </div>
-        </TooltipProvider>
-      </BrowserRouter>
+    <BrowserRouter>
+      <TooltipProvider>
+        <div className="min-h-screen">
+          <Toaster />
+          <Sonner />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/post-creation" element={<PostCreation />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/donations" element={<Donations />} />
+            <Route path="/donation/:id" element={<DonationDetails />} />
+            <Route path="/profiledonation/:id" element={<Profiledd />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/Admin_login" element={<AdminLogin />} />
+            <Route path="/admin/complaints" element={<ComplaintHandle />} />
+            <Route path="/admin/Admin_SignUp" element={<AdminSignUp />} />
+          </Routes>
+        </div>
+      </TooltipProvider>
+    </BrowserRouter>
   );
 };
 

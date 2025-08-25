@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Link } from "react-router-dom";
 import {
   MapPin,
   Clock,
@@ -11,6 +12,7 @@ import {
   CheckCircle,
   AlertCircle,
   Search,
+  Eye,
   Filter,
   MessageCircle,
 } from "lucide-react";
@@ -40,7 +42,9 @@ const FeaturedDonations = () => {
     setError("");
 
     try {
-      const res = await fetch("http://localhost/KindLoop-project01/Backend/get-donations.php");
+      const res = await fetch(
+        "http://localhost/KindLoop-project01/Backend/get-donations.php"
+      );
       const json = await res.json();
 
       if (json.status === "success") {
@@ -63,28 +67,30 @@ const FeaturedDonations = () => {
     console.log(`Sending request for donation ${DonationID}`);
   };
 
-const filteredDonations = donations.filter((donation) => {
-  const donationTime = new Date(donation.date_time).getTime();
-  const now = new Date().getTime();
-  const within24Hours = now - donationTime <= 24 * 60 * 60 * 1000; // 24 hours in ms
+  const filteredDonations = donations.filter((donation) => {
+    const donationTime = new Date(donation.date_time).getTime();
+    const now = new Date().getTime();
+    const within24Hours = now - donationTime <= 24 * 60 * 60 * 1000; // 24 hours in ms
 
-  const matchesSearch =
-    donation.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    donation.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      donation.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      donation.description?.toLowerCase().includes(searchTerm.toLowerCase());
 
-  const matchesCategory =
-    selectedCategory === "all" ||
-    donation.category?.toLowerCase() === selectedCategory.toLowerCase();
+    const matchesCategory =
+      selectedCategory === "all" ||
+      donation.category?.toLowerCase() === selectedCategory.toLowerCase();
 
-  const isVerified = donation.isVerified ?? true;
+    const isVerified = donation.isVerified ?? true;
 
-  const matchesVerification =
-    verificationFilter === "all" ||
-    (verificationFilter === "verified" && isVerified) ||
-    (verificationFilter === "unverified" && !isVerified);
+    const matchesVerification =
+      verificationFilter === "all" ||
+      (verificationFilter === "verified" && isVerified) ||
+      (verificationFilter === "unverified" && !isVerified);
 
-  return within24Hours && matchesSearch && matchesCategory && matchesVerification;
-});
+    return (
+      within24Hours && matchesSearch && matchesCategory && matchesVerification
+    );
+  });
 
   const categories = [
     "all",
@@ -97,10 +103,12 @@ const filteredDonations = donations.filter((donation) => {
     "Home & Garden",
     "Toys & Games",
     "Baby & Kids",
-    "Others"
+    "Others",
   ];
 
-  function handleViewAllDonations(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
+  function handleViewAllDonations(
+    event: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ): void {
     // Redirect to the main donations page
     window.location.href = "/donations";
   }
@@ -113,7 +121,8 @@ const filteredDonations = donations.filter((donation) => {
             Featured Donations
           </h2>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            Discover highlighted contributions from our kindhearted donors posted within the last 24 hours.
+            Discover highlighted contributions from our kindhearted donors
+            posted within the last 24 hours.
           </p>
         </div>
 
@@ -146,32 +155,43 @@ const filteredDonations = donations.filter((donation) => {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredDonations.map((donation) => (
-              <Card key={donation.DonationID} className="group hover:shadow-lg transition-shadow">
-                <CardContent className="p-0">
-                  <div className="aspect-video bg-gradient-to-br from-primary/10 to-secondary/10 rounded-t-lg flex items-center justify-center relative">
-                    <div className="text-center p-6">
-                      <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-2xl font-bold text-primary">
-                          {donation.category?.[0] || "?"}
-                        </span>
+              <Card
+                key={donation.DonationID}
+                className="group hover:shadow-lg transition-shadow"
+              >
+                <Card className="group hover:shadow-lg cursor-pointer relative">
+                  <div className="w-full h-64 bg-gray-100 rounded-t-lg flex items-center justify-center overflow-hidden">
+                    {donation.images && donation.images.length > 0 ? (
+                      <img
+                        src={`http://localhost/KindLoop-project01/Backend/${donation.images[0]}`}
+                        alt="Donation preview"
+                        className="w-full h-full object-cover object-top"
+                      />
+                    ) : (
+                      <div className="text-gray-400 text-sm">
+                        No Image Available
                       </div>
-                      <span className="text-sm font-medium text-primary">
-                        {donation.category}
-                      </span>
-                    </div>
-                    <div className="absolute top-3 right-3">
-                      {donation.isVerified ? (
-                        <Badge variant="default" className="bg-green-500 text-white">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Verified
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="bg-orange-100 text-orange-700 border-orange-200">
-                          <AlertCircle className="h-3 w-3 mr-1" />
-                          Unverified
-                        </Badge>
-                      )}
-                    </div>
+                    )}
+                  </div>
+
+                  <div className="absolute top-3 right-3">
+                    {donation.isVerified ? (
+                      <Badge
+                        variant="default"
+                        className="bg-green-500 text-white"
+                      >
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Verified
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="secondary"
+                        className="bg-orange-100 text-orange-700 border-orange-200"
+                      >
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        Unverified
+                      </Badge>
+                    )}
                   </div>
 
                   <div className="p-6">
@@ -195,29 +215,25 @@ const filteredDonations = donations.filter((donation) => {
                         <Clock className="h-4 w-4 mr-2" />
                         <span>{donation.date_time}</span>
                       </div>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button
-                        className="flex-1"
-                        onClick={() => handleRequestItem(donation.DonationID)}
-                      >
-                        Request Item
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleChat(donation.DonationID)}
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                      </Button>
+                      <div>
+                        <Link
+                          to={`/donation/${donation.DonationID}`}
+                          key={donation.DonationID}
+                        >
+                          <div className="flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer transition-all">
+                            <Eye className="h-4 w-4" />
+                            <span>Click to view details</span>
+                          </div>
+                        </Link>
+                      </div>
                     </div>
                   </div>
-                </CardContent>
+                </Card>
               </Card>
             ))}
           </div>
         )}
+
         <div className="text-center mt-12">
           <Button variant="outline" size="lg" onClick={handleViewAllDonations}>
             View All Donations
