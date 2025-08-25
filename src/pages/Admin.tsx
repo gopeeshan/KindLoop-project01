@@ -281,6 +281,7 @@ const Admin = () => {
     if (user) {
       setSelectedUser(user);
       setSelectedDonation(null);
+      setSelectedAdmin(null);
       setIsDialogOpen(true);
     }
   };
@@ -289,6 +290,8 @@ const Admin = () => {
     const admin = admins.find((a) => a.AdminID === AdminID);
     if (admin) {
       setSelectedAdmin(admin);
+      setSelectedUser(null);
+      setSelectedDonation(null);
       setIsDialogOpen(true);
     }
   };
@@ -297,6 +300,7 @@ const Admin = () => {
     const donation = donations.find((d) => d.DonationID === DonationID);
     if (donation) {
       setSelectedDonation(donation);
+      setSelectedAdmin(null);
       setSelectedUser(null);
       setIsDialogOpen(true);
     }
