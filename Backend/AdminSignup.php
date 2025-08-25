@@ -33,7 +33,6 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit;
 }
 
-$passwordHash = password_hash($password, PASSWORD_BCRYPT);
 
 $admin = new Admin();
 
@@ -44,7 +43,7 @@ if ($checkResult && isset($checkResult['status']) && $checkResult['status'] === 
     exit;
 }
 
-$signupResult = $admin->signup($fullName, $email, $nic, $contactNumber, $address, $passwordHash);
+$signupResult = $admin->signup($fullName, $email, $nic, $contactNumber, $address, $password);
 
 if (is_array($signupResult) && isset($signupResult['status'])) {
     echo json_encode($signupResult);
