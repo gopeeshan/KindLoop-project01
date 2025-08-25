@@ -68,6 +68,7 @@ interface Complaint {
   proof_images?: string[];
 }
 interface DonorDetails {
+  id: number;
   name: string;
   email: string;
   phone: string;
@@ -198,6 +199,7 @@ const AdminComplaints = () => {
       );
       if (data.success) {
         toast({ title: "Complaint Resolved", description: data.message });
+        
 
         setComplaints((prev) =>
           prev.map((c) =>
@@ -211,6 +213,8 @@ const AdminComplaints = () => {
               : c
           )
         );
+        sendNotification(selectedComplaint.donationID, selectedComplaint.donorId, selectedComplaint.userId);
+        sendNotification(selectedComplaint.donationID, selectedComplaint.userId, selectedComplaint.donorId);
         setSelectedComplaint(null);
         setSolution("");
         setProofFiles([]);
@@ -222,6 +226,23 @@ const AdminComplaints = () => {
         variant: "destructive",
       });
     }
+  };
+
+    const sendNotification =(
+    donationID: number,
+    DonorID: number,
+    RequesterID: number
+  ) => {
+    axios.post("http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
+        {
+          donationID,
+          msg_receiver_ID: DonorID,
+          msg_sender_ID: RequesterID,
+          action: "complaint_resolved",
+        }
+      )
+      .then((res) => console.log("Notification sent", res.data))
+      .catch((err) => console.error(err));
   };
 
   if (!isAuthenticated) return null;

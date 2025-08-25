@@ -18,6 +18,15 @@ class NotificationManager {
         return $stmt->execute();
     }
 
+    public function send_complaint($userId, $fromUserId, $type, $donationId, $complaintId) {
+        $sql = "INSERT INTO notifications 
+                (userID, from_userID, type, donationID, complaintID) 
+                VALUES (?, ?, ?, ?, ?)";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("iisii", $userId, $fromUserId, $type, $donationId, $complaintId);
+        return $stmt->execute();
+    }
+
     public function getUserNotifications($userId) {
         $sql = "SELECT
                     n.notificationID,
@@ -26,9 +35,11 @@ class NotificationManager {
                     n.is_read,
                     d.Title AS donation_title,
                     u.fullName AS requester_name
+                    c.solution AS complaint_solution
                 FROM notifications n
                 LEFT JOIN donation d ON n.donationID = d.DonationID
                 LEFT JOIN user u ON n.from_userID = u.userID
+                LEFT JOIN complaints c ON n.complaintID = c.ComplaintID
                 WHERE n.userID = ? && n.is_read = 0
                 ORDER BY n.created_at DESC";
 

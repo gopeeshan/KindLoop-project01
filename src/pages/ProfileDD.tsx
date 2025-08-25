@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Gift, User, Calendar, MapPin } from "lucide-react";
 import RequestingUsers from "@/components/donation/RequestingUsers";
 import axios from "axios";
+import AdminComplaints from "./ComplaintHandle";
 
 interface Donation {
   DonationID: number;
@@ -33,7 +34,7 @@ const Profiledd = () => {
   // console.log("Route param id:", id);
   const [donation, setDonation] = useState<Donation | null>(null);
   const [loading, setLoading] = useState(true);
-  const [requestingUsers, setRequestingUsers] = useState<any[]>([]); // fetch later if needed
+  const [requestingUsers, setRequestingUsers] = useState<any[]>([]); 
 
   useEffect(() => {
     const fetchDonation = async () => {
@@ -174,10 +175,13 @@ const Profiledd = () => {
           </Card>
 
           {/* Requesting Users */}
-          <RequestingUsers
-            users={requestingUsers}
-            donationID={parseInt(id || "0")}
-          />
+          {donation.isDonationCompleted === 0 && (
+            <RequestingUsers
+              users={requestingUsers}
+              donationID={parseInt(id || "0")}
+            />
+          )}
+          {/* <AdminComplaints donationID={parseInt(id || "0")} /> */}
         </div>
       </div>
     </div>

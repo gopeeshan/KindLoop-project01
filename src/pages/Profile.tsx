@@ -280,16 +280,18 @@ const Profile = () => {
       (item) => item.DonationID === DonationID
     );
     if (item) {
-      sendNotification(DonationID, item.donorID, user.userID);
+      sendNotification(DonationID, item.donorID, user.userID,"Item Received");
     }
   };
 
   const sendNotification = (
     donationID: number,
     DonorID: number,
-    RequesterID: number
+    RequesterID: number,
+    Reason: string,
   ) => {
-    axios
+    if(Reason === "Item Received"){
+      axios
       .post(
         "http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
         {
@@ -301,6 +303,23 @@ const Profile = () => {
       )
       .then((res) => console.log("Notification sent", res.data))
       .catch((err) => console.error(err));
+    }else if (Reason === "Complaint Submitted"){
+      axios
+      .post(
+        "http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
+        {
+          donationID,
+          msg_receiver_ID: DonorID,
+          msg_sender_ID: RequesterID,
+          action: "Complaint_registered",
+        }
+      )
+      .then((res) => console.log("Notification sent", res.data))
+      .catch((err) => console.error(err));
+    }else{
+      console.log("Notification reason not recognized, no notification sent.");
+    }
+    
   };
 
   const openComplaintDialog = (item: ToBeReceivedItem) => {
@@ -331,11 +350,12 @@ const Profile = () => {
       );
 
       if (response.data.status === "success") {
+        
         toast({
           title: "Complaint Submitted",
           description: "Your complaint has been successfully submitted.",
         });
-
+        sendNotification(selectedItem.DonationID, selectedItem.donorID, user.userID,"Complaint Submitted");
         setIsComplaintDialogOpen(false);
         setComplaintData({ reason: "", description: "" });
         setSelectedItem(null);
@@ -355,6 +375,8 @@ const Profile = () => {
       });
     }
   };
+
+  
 
   const handlePasswordChangeInput = (
     e: React.ChangeEvent<HTMLInputElement>
@@ -636,6 +658,12 @@ const Profile = () => {
                                 Your Donation has been Received
                               </p>
                             )}
+                            {notification.type === "complaint_registered" && (
+                              <p className="text-sm text-gray-600">
+                                Complaint Registered for{" "}
+                                {notification.donation_title} By {notification.requester_name}
+                              </p>
+                            )}
                             <p className="text-xs text-gray-400">
                               {timeAgo(notification.created_at)}
                             </p>
@@ -874,9 +902,10 @@ const Profile = () => {
 
                       <p className="text-base font-semibold text-red-600 flex items-center gap-2 leading-relaxed">
                         <span>
+                          "Important" => Please Do not confirm the receipt until you have received the item OR Made a Solution.
                           Please use this form only for genuine issues.
                           Submitting false or misleading complaints may result
-                          in suspension of your account.
+                          in suspension of your account.  
                         </span>
                       </p>
 
