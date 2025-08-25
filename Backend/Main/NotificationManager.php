@@ -34,7 +34,7 @@ class NotificationManager {
                     n.created_at,
                     n.is_read,
                     d.Title AS donation_title,
-                    u.fullName AS requester_name
+                    u.fullName AS requester_name,
                     c.solution AS complaint_solution
                 FROM notifications n
                 LEFT JOIN donation d ON n.donationID = d.DonationID

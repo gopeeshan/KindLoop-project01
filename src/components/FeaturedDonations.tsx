@@ -158,6 +158,7 @@ const FeaturedDonations = () => {
               <Card
                 key={donation.DonationID}
                 className="group hover:shadow-lg transition-shadow"
+                onClick={() => (window.location.href = "/donation/" + donation.DonationID)}
               >
                 <Card className="group hover:shadow-lg cursor-pointer relative">
                   <div className="w-full h-64 bg-gray-100 rounded-t-lg flex items-center justify-center overflow-hidden">

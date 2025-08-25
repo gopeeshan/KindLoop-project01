@@ -12,6 +12,7 @@ $action = $data['action'] ?? '';
 $donationID = $data['donationID'] ?? null;
 $msg_sender_ID = $data['msg_sender_ID'] ?? null;
 $msg_receiver_ID = $data['msg_receiver_ID'] ?? null;
+$complaintID = $data['complaintID'] ?? null;
 $method = $_SERVER['REQUEST_METHOD'];
 
 $notificationManager = new NotificationManager();
@@ -45,6 +46,11 @@ else if ($method === 'POST' && $action === 'Donation_received_Confirmation') {
 }
 else if($method === 'POST' && $action ==='Complaint_registered'){
     $success = $notificationManager->send($msg_receiver_ID, $msg_sender_ID, 'complaint_registered', $donationID);
+    echo json_encode(['success' => $success]);
+    exit;
+}
+else if($method=== 'POST' && $action ==='complaint_resolved'){
+    $success = $notificationManager->send_complaint($msg_receiver_ID, $msg_sender_ID, 'complaint_resolved', $donationID, $complaintID);
     echo json_encode(['success' => $success]);
     exit;
 }

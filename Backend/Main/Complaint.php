@@ -11,7 +11,7 @@ class Complaint {
 
     
     public function submitComplaint($donationID, $userID, $reason, $description, $files) {
-    $evidencePaths = []; 
+    $evidencePaths = [];
 
     
     if (isset($files['evidence_images'])) { 

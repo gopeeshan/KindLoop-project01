@@ -213,8 +213,19 @@ const AdminComplaints = () => {
               : c
           )
         );
-        sendNotification(selectedComplaint.donationID, selectedComplaint.donorId, selectedComplaint.userId);
-        sendNotification(selectedComplaint.donationID, selectedComplaint.userId, selectedComplaint.donorId);
+        sendNotification(
+          selectedComplaint.donationID,
+          selectedComplaint.donorId,
+          selectedComplaint.userId,
+          selectedComplaint.id
+        );
+        sendNotification(
+          selectedComplaint.donationID,
+          selectedComplaint.userId,
+          selectedComplaint.donorId,
+          selectedComplaint.id
+        );
+        
         setSelectedComplaint(null);
         setSolution("");
         setProofFiles([]);
@@ -231,13 +242,15 @@ const AdminComplaints = () => {
     const sendNotification =(
     donationID: number,
     DonorID: number,
-    RequesterID: number
+    RequesterID: number,
+    complaintID: number
   ) => {
     axios.post("http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
         {
           donationID,
           msg_receiver_ID: DonorID,
           msg_sender_ID: RequesterID,
+          complaintID,
           action: "complaint_resolved",
         }
       )

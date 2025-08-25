@@ -13,13 +13,14 @@
         protected $usageDuration;
         protected $credits;
         protected $quantity;
+        protected $available_quantity;
 
         public function __construct() {
             $db = new DBconnector();
             $this->conn = $db->connect();
         }
 
-        public function createNewPost($userID, $title, $description, $category, $location, $condition, $images, $usageDuration, $credits, $quantity) {
+        public function createNewPost($userID, $title, $description, $category, $location, $condition, $images, $usageDuration, $credits, $quantity,$available_quantity) {
             $this->userID = $userID;
             $this->title = $title;
             $this->description = $description;
@@ -30,13 +31,14 @@
             $this->usageDuration = $usageDuration;
             $this->credits = $credits;
             $this->quantity = $quantity;
+            $this->available_quantity = $available_quantity;
             // $imagesJson = json_encode($this->images);
 
-            $sql = "INSERT INTO donation (userID, title, description, category, location, `condition`, images, usageDuration, credits, quantity)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO donation (userID, title, description, category, location, `condition`, images, usageDuration, credits, quantity, available_quantity)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $this->conn->prepare($sql);
             $stmt->bind_param(
-                "isssssssii",
+                "isssssssiii",
                 $userID,
                 $title,
                 $description,
@@ -46,7 +48,8 @@
                 $images,
                 $usageDuration,
                 $credits,
-                $quantity
+                $quantity,
+                $available_quantity
             );
 
         if ($stmt->execute()) {

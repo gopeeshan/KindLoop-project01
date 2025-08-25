@@ -15,6 +15,7 @@ import axios from "axios";
 import UserDonationHistory from "./UserDonationHistory";
 import { Action } from "@radix-ui/react-toast";
 import { useToast } from "../ui/use-toast";
+import ProfileDD from "@/pages/ProfileDD";
 
 interface RequestingUser {
   userID: number;
@@ -22,6 +23,7 @@ interface RequestingUser {
   email: string;
   request_date: string;
   status: string;
+  allocatedQuantity?: number;
 }
 
 interface RequestingUsersProps {
@@ -30,11 +32,14 @@ interface RequestingUsersProps {
 
 const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
   const [requestingUsers, setRequestingUsers] = useState<RequestingUser[]>([]);
+  const [donationQuantity, setDonationQuantity] = useState<number>(0); // total donation qty
+  const [availableQuantity, setAvailableQuantity] = useState<number>(0); // track remaining
   const [currentUser, setCurrentUser] = useState<RequestingUser | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchRequests();
+    fetchDonationQuantity();
   }, [donationID]);
 
   const fetchRequests = () => {
@@ -50,6 +55,18 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
       .catch((err) => {
         console.error("Error fetching requests", err);
       });
+  };
+
+  const fetchDonationQuantity = () => {
+    axios
+      .get(`http://localhost/KindLoop-project01/Backend/HandleDonation.php=${donationID}`)
+      .then((res) => {
+        if (res.data.success) {
+          setDonationQuantity(res.data.data.quantity);
+          setAvailableQuantity(res.data.data.availableQuantity);
+        }
+      })
+      .catch((err) => console.error("Error fetching donation quantity", err));
   };
 
   const handleStatusChange = (userID: number, donationID: number, newStatus: string) => {

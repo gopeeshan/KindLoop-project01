@@ -60,6 +60,7 @@ interface Notification {
   created_at: string;
   donation_title: string;
   requester_name: string;
+  complaint_solution?: string;
 }
 interface Donation {
   DonationID: number;
@@ -661,7 +662,13 @@ const Profile = () => {
                             {notification.type === "complaint_registered" && (
                               <p className="text-sm text-gray-600">
                                 Complaint Registered for{" "}
-                                {notification.donation_title} By {notification.requester_name}
+                                {notification.donation_title} <br />By {notification.requester_name}
+                              </p>
+                            )}
+                            {notification.type === "complaint_resolved" && (
+                              <p className="text-sm text-gray-600">
+                                Your Complaint for{" "}
+                                {notification.donation_title} has been Resolved <br /> Solution :: "{notification.complaint_solution}"
                               </p>
                             )}
                             <p className="text-xs text-gray-400">
@@ -902,8 +909,8 @@ const Profile = () => {
 
                       <p className="text-base font-semibold text-red-600 flex items-center gap-2 leading-relaxed">
                         <span>
-                          "Important" => Please Do not confirm the receipt until you have received the item OR Made a Solution.
-                          Please use this form only for genuine issues.
+                          <strong>Important </strong><br />Please Do not confirm the receipt until you have received the item <br />OR Made a Solution.<br/>
+                          Please use this form only for genuine issues. <br />
                           Submitting false or misleading complaints may result
                           in suspension of your account.  
                         </span>

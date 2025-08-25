@@ -47,5 +47,5 @@ if (!empty($_FILES['images'])) {
 $imagesJson = json_encode($imagePaths);
 $credits = calculateNormalizedCreditPoints($category, $condition, $usageDuration);
 $createPost = new CreatePost();
-$response = $createPost->createNewPost($userID, $title, $description, $category, $location, $condition, $imagesJson, $usageDuration, $credits, $quantity);
+$response = $createPost->createNewPost($userID, $title, $description, $category, $location, $condition, $imagesJson, $usageDuration, $credits, $quantity, $quantity); // Set available_quantity = quantity initially
 echo json_encode($response);
