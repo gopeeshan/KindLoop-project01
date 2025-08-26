@@ -69,7 +69,7 @@ const DonationDetails = () => {
   // When user clicks the Message icon, navigate to /chat with donor user id as query param.
   const handleChat = (DonationID: number) => {
     if (!donation) return;
-    // Don't let user message themselves — optional UI guard
+    // Guard: don't let user message themselves
     if (userID === donation.userID) {
       toast({
         title: "Cannot message yourself",
@@ -78,13 +78,43 @@ const DonationDetails = () => {
       });
       return;
     }
-    // Navigate to chat page and include donor's userID as query param
     navigate(`/chat?user=${donation.userID}`);
   };
 
   const handleRequestItem = async (DonationID: number) => {
-    if (userID !== donation?.userID) {
-      // ... existing logic ...
+    if (!donation) return;
+    if (userID !== donation.userID) {
+      try {
+        const response = await axios.post(
+          "http://localhost/KindLoop-project01/Backend/HandleDonation.php",
+          {
+            Action: "request-item",
+            DonationID: DonationID,
+            UserID: userID,
+          }
+        );
+        if (response.data.success) {
+          sendNotification(donation.DonationID, donation.userID, userID);
+          toast({
+            title: "Request Sent ",
+            description:
+              response.data.message ||
+              "Your request has been submitted successfully.",
+          });
+        } else {
+          toast({
+            title: "Request Failed ",
+            description: response.data.message || "Unable to send request.",
+            variant: "destructive",
+          });
+        }
+      } catch (err) {
+        toast({
+          title: "Request Failed ",
+          description: "Server error while sending request.",
+          variant: "destructive",
+        });
+      }
     } else {
       toast({
         title: "Request Failed ",
@@ -94,7 +124,21 @@ const DonationDetails = () => {
     }
   };
 
-  // ... rest of component unchanged (rendering, images, dialog, etc.) ...
+  const sendNotification = (
+    donationID: number,
+    DonorID: number,
+    RequesterID: number
+  ) => {
+    axios
+      .post("http://localhost/KindLoop-project01/Backend/NotificationHandler.php", {
+        donationID,
+        msg_receiver_ID: DonorID,
+        msg_sender_ID: RequesterID,
+        action: "notify_request",
+      })
+      .then((res) => console.log("Notification sent", res.data))
+      .catch((err) => console.error(err));
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -143,13 +187,6 @@ const DonationDetails = () => {
                 <span>{donation.fullName}</span>
               </div>
 
-              <div className="pt-4">
-                <h3 className="text-lg font-medium mb-1">Category:</h3>
-                <p className="text-muted-foreground">
-                  {donation.category || "N/A"}
-                </p>
-              </div>
-
               <div className="flex gap-2 mt-4">
                 <Button
                   className="flex-1"
@@ -172,10 +209,7 @@ const DonationDetails = () => {
         ) : null}
       </div>
 
-      <Dialog
-        open={!!selectedImage}
-        onOpenChange={() => setSelectedImage(null)}
-      >
+      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
         <DialogContent className="max-w-3xl p-4">
           <img
             src={selectedImage ?? ""}
@@ -187,7 +221,6 @@ const DonationDetails = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
       <Footer />
     </div>
   );

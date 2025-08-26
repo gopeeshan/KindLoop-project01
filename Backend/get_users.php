@@ -2,7 +2,7 @@
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=utf-8");
 
-require_once 'Main/dbc.php'; // adjust path if needed
+require_once 'Main/dbc.php'; // adjust path if your dbc is somewhere else
 
 $db = new DBconnector();
 $conn = $db->connect();

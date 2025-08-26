@@ -47,12 +47,12 @@ const ChatPage: React.FC = () => {
       if (found) {
         handleSelectUser(found);
       } else {
-        // fallback: try fetching the user details by id (some apps have an endpoint for this)
+        // fallback: try fetching the user details by id
         fetchUserById(preselectUserId).then((user) => {
           if (user) {
             handleSelectUser(user);
           } else {
-            // If not found, still set a minimal selectedUser so messages can be fetched by id
+            // fallback minimal selection so chat can still use ID
             setSelectedUser({ userID: preselectUserId, fullName: "User", avatar: null });
           }
         });
@@ -85,7 +85,7 @@ const ChatPage: React.FC = () => {
     }
   };
 
-  // Optional: fetch a single user's details by ID (adjust endpoint as needed)
+  // fetch a single user's details by ID
   const fetchUserById = async (id: number): Promise<User | null> => {
     try {
       const res = await axios.get(
@@ -117,7 +117,6 @@ const ChatPage: React.FC = () => {
 
   const startPolling = () => {
     stopPolling();
-    // poll every 2 seconds
     pollingRef.current = window.setInterval(() => {
       fetchMessages();
     }, 2000);
