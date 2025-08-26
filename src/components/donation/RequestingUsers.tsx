@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Users, Eye, Calendar, User } from "lucide-react";
+import { Users, Eye, Calendar, AlertCircle, User } from "lucide-react";
 import axios from "axios";
 import UserDonationHistory from "./UserDonationHistory";
 import { Action } from "@radix-ui/react-toast";
@@ -22,6 +22,14 @@ interface RequestingUser {
   email: string;
   request_date: string;
   status: string;
+  complaintCount: number;
+}
+
+interface Complaint {
+  ComplaintID: number;
+  Description: string;
+  Title: string;
+  created_at: string;
 }
 
 interface RequestingUsersProps {
@@ -31,6 +39,8 @@ interface RequestingUsersProps {
 const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
   const [requestingUsers, setRequestingUsers] = useState<RequestingUser[]>([]);
   const [currentUser, setCurrentUser] = useState<RequestingUser | null>(null);
+  const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [isComplaintDialogOpen, setIsComplaintDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -52,8 +62,40 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
       });
   };
 
-  const handleStatusChange = (userID: number, donationID: number, newStatus: string) => {
-    axios.post("http://localhost/KindLoop-project01/Backend/HandleDonation.php", {
+  const handleViewComplaints = (complainantID: number, donationID: number) => {
+    axios
+      .get(
+        `http://localhost/KindLoop-project01/Backend/GetComplaints.php?complainantID=${complainantID}&DonationID=${donationID}`
+      )
+      .then((res) => {
+        if (res.data.success) {
+          setComplaints(res.data.complaints);
+          setIsComplaintDialogOpen(true);
+        } else {
+          toast({
+            title: "No Complaints",
+            description: "No complaints for this donation.",
+            variant: "default",
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching complaints", err);
+        toast({
+          title: "Error",
+          description: "Failed to fetch complaints.",
+          variant: "destructive",
+        });
+      });
+  };
+
+  const handleStatusChange = (
+    userID: number,
+    donationID: number,
+    newStatus: string
+  ) => {
+    axios
+      .post("http://localhost/KindLoop-project01/Backend/HandleDonation.php", {
         Action: "accept_or_reject",
         DonationID: donationID,
         UserID: userID,
@@ -73,7 +115,11 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
             description: `User has been ${newStatus} successfully.`,
             variant: "default",
           });
-          sendNotification(donationID, parseInt(localStorage.getItem("userID")), userID);
+          sendNotification(
+            donationID,
+            parseInt(localStorage.getItem("userID")),
+            userID
+          );
         } else {
           toast({
             title: "Error",
@@ -92,12 +138,14 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
       });
   };
 
-    const sendNotification =(
+  const sendNotification = (
     donationID: number,
     DonorID: number,
     RequesterID: number
   ) => {
-    axios.post("http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
+    axios
+      .post(
+        "http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
         {
           donationID,
           msg_receiver_ID: RequesterID,
@@ -163,7 +211,7 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
                       size="sm"
                       onClick={() => {
                         console.log(donationID + " " + user.userID);
-                        handleStatusChange(user.userID, donationID,"selected");
+                        handleStatusChange(user.userID, donationID, "selected");
                       }}
                       disabled={user.status === "approved"}
                     >
@@ -182,11 +230,27 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
                     </Button>
                   </div>
                 </div>
+                <div className="flex flex-col space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4 mr-1" />
+                      Requested on {user.request_date}
+                    </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    Requested on {user.request_date}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center space-x-1 w-max mt-2"
+                      onClick={() =>
+                        handleViewComplaints(user.userID, donationID)
+                      }
+                    >
+                      <AlertCircle className="h-4 w-4" />
+                      <span>Complaints</span>
+                      {user.complaintCount > 0 && (
+                        <Badge variant="secondary">{user.complaintCount}</Badge>
+                      )}
+                    </Button>
                   </div>
 
                   <Dialog>
@@ -225,6 +289,38 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
           </div>
         )}
       </CardContent>
+      
+      <Dialog
+        open={isComplaintDialogOpen}
+        onOpenChange={setIsComplaintDialogOpen}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>User Complaints</DialogTitle>
+          </DialogHeader>
+
+          {complaints.length > 0 ? (
+            <ul className="space-y-3">
+              {complaints.map((c) => (
+                <li
+                  key={c.ComplaintID}
+                  className="p-4 border rounded-lg bg-gray-50 hover:bg-gray-100 transition"
+                >
+                  <h4 className="font-semibold text-primary">{c.Title}</h4>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {c.Description}
+                  </p>
+                  <div className="text-xs text-gray-500 mt-2">
+                    Reported on {new Date(c.created_at).toLocaleString()}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-muted-foreground">No complaints available.</p>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

@@ -5,6 +5,7 @@ header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS");
 require_once './Main/HandleDonation.php';
 require_once './Main/profile.php';
+require_once './Main/Complaint.php';
 
 $handleDonation = new HandleDonation();
 
@@ -57,7 +58,13 @@ if ($method === 'POST' && $action === 'request-item') {
 } else if ($method == 'GET' && isset($_GET['donationID'])) {
     $donationID = intval($_GET['donationID']);
     $requests = $handleDonation->requestingUser($donationID);
+
+    
+ $complaintObj = new Complaint();
+    foreach ($requests as &$user) {
+        // userID is from requestingUser function
+        $user['complaintCount'] = $complaintObj->getComplaints($user['userID'], $donationID)['count'];
+    }
+
     echo json_encode(['success' => true, 'data' => $requests]);
-} else {
-    echo json_encode(['success' => false, 'message' => 'Invalid request']);
 }
