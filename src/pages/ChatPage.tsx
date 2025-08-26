@@ -1,30 +1,148 @@
-// ✅ Coordinates Components
-// It imports and renders components like:
+import React, { useEffect, useState, useRef } from "react";
+import axios from "axios";
+import UserList from "./UserList";
+import ChatWindow from "./ChatWindow";
+import MessageInput from "./MessageInput";
 
-// UserList (to choose who to chat with)
+interface User {
+  userID: number;
+  fullName: string;
+  email?: string;
+  avatar?: string | null;
+}
 
-// ChatWindow (to display messages)
+interface Message {
+  id: number;
+  sender_id: number;
+  receiver_id: number;
+  content: string;
+  timestamp: string;
+}
 
-// MessageInput (to send messages)
+const ChatPage: React.FC = () => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-// ✅ Manages State
-// It holds the shared state:
+  const pollingRef = useRef<number | null>(null);
 
-// Current user
+  const currentUserId = parseInt(localStorage.getItem("userID") || "0");
 
-// Selected chat partner
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
-// Message history
+  useEffect(() => {
+    if (selectedUser) {
+      fetchMessages();
+      startPolling();
+    } else {
+      stopPolling();
+    }
 
-// Loading/error states
+    return () => stopPolling();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedUser]);
 
-// ✅ Handles Logic
-// It defines functions like:
+  const fetchUsers = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost/KindLoop-project01/Backend/get_users.php?currentUser=${currentUserId}`
+      );
+      setUsers(res.data.users || []);
+    } catch (err) {
+      console.error("Error fetching users", err);
+      setError("Failed to load users");
+    }
+  };
 
-// fetchMessages()
+  const fetchMessages = async () => {
+    if (!selectedUser) return;
+    setLoading(true);
+    try {
+      const res = await axios.get(
+        `http://localhost/KindLoop-project01/Backend/get_messages.php?sender_id=${currentUserId}&receiver_id=${selectedUser.userID}`
+      );
+      setMessages(res.data.messages || []);
+    } catch (err) {
+      console.error("Error fetching messages", err);
+      setError("Failed to load messages");
+    }
+    setLoading(false);
+  };
 
-// sendMessage()
+  const startPolling = () => {
+    stopPolling();
+    // poll every 2 seconds
+    pollingRef.current = window.setInterval(() => {
+      fetchMessages();
+    }, 2000);
+  };
 
-// selectUser(userId)
+  const stopPolling = () => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+  };
 
-// And passes them down as props to child components.
+  const handleSelectUser = (user: User) => {
+    setSelectedUser(user);
+    setMessages([]);
+  };
+
+  const handleSendMessage = async (content: string) => {
+    if (!selectedUser) return;
+    try {
+      const res = await axios.post(
+        `http://localhost/KindLoop-project01/Backend/send_message.php`,
+        {
+          sender_id: currentUserId,
+          receiver_id: selectedUser.userID,
+          content,
+        }
+      );
+
+      if (res.data.success) {
+        // Append returned message (if available) or refetch
+        if (res.data.message) {
+          setMessages((m) => [...m, res.data.message]);
+        } else {
+          fetchMessages();
+        }
+      }
+    } catch (err) {
+      console.error("Error sending message", err);
+      setError("Failed to send message");
+    }
+  };
+
+  return (
+    <div className="flex h-full">
+      <div className="w-1/4 border-r">
+        <UserList
+          users={users}
+          selectedUserId={selectedUser?.userID || null}
+          onSelect={handleSelectUser}
+        />
+      </div>
+
+      <div className="flex-1 flex flex-col">
+        <ChatWindow
+          messages={messages}
+          currentUserId={currentUserId}
+          loading={loading}
+          selectedUser={selectedUser}
+        />
+
+        <div className="border-t p-4">
+          <MessageInput onSend={handleSendMessage} disabled={!selectedUser} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ChatPage;
