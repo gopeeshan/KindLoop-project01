@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -35,12 +35,10 @@ interface Donation {
 
 const DonationDetails = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [donation, setDonation] = useState<Donation | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-
   const userID = parseInt(localStorage.getItem("userID") || "0");
 
   useEffect(() => {
@@ -66,56 +64,42 @@ const DonationDetails = () => {
     fetchDonation();
   }, [id]);
 
-  // When user clicks the Message icon, navigate to /chat with donor user id as query param.
   const handleChat = (DonationID: number) => {
-    if (!donation) return;
-    // Guard: don't let user message themselves
-    if (userID === donation.userID) {
-      toast({
-        title: "Cannot message yourself",
-        description: "This donation was posted by you.",
-        variant: "destructive",
-      });
-      return;
-    }
-    navigate(`/chat?user=${donation.userID}`);
+    console.log(`Chat with donor of donation ${DonationID}`);
   };
 
   const handleRequestItem = async (DonationID: number) => {
-    if (!donation) return;
     if (userID !== donation.userID) {
-      try {
-        const response = await axios.post(
-          "http://localhost/KindLoop-project01/Backend/HandleDonation.php",
-          {
-            Action: "request-item",
-            DonationID: DonationID,
-            UserID: userID,
-          }
-        );
-        if (response.data.success) {
-          sendNotification(donation.DonationID, donation.userID, userID);
-          toast({
-            title: "Request Sent ",
-            description:
-              response.data.message ||
-              "Your request has been submitted successfully.",
-          });
-        } else {
-          toast({
-            title: "Request Failed ",
-            description: response.data.message || "Unable to send request.",
-            variant: "destructive",
-          });
+      console.log(
+      `Requesting item ${DonationID} from user ${localStorage.getItem(
+        "userID"
+      )} and Donor is ${donation.userID}`
+    );
+      const response = await axios.post(
+        "http://localhost/KindLoop-project01/Backend/HandleDonation.php",
+        {
+          Action: "request-item",
+          DonationID: DonationID,
+          UserID: userID,
         }
-      } catch (err) {
+      );
+      if (response.data.success) {
+        sendNotification( donation.DonationID, donation.userID, userID);
+        toast({
+          title: "Request Sent ",
+          description:
+            response.data.message ||
+            "Your request has been submitted successfully.",
+        });
+      } else {
         toast({
           title: "Request Failed ",
-          description: "Server error while sending request.",
+          description: response.data.message || "Unable to send request.",
           variant: "destructive",
         });
       }
-    } else {
+    }
+    else{
       toast({
         title: "Request Failed ",
         description: "You cannot request your own donation.",
@@ -124,18 +108,19 @@ const DonationDetails = () => {
     }
   };
 
-  const sendNotification = (
+  const sendNotification =(
     donationID: number,
     DonorID: number,
     RequesterID: number
   ) => {
-    axios
-      .post("http://localhost/KindLoop-project01/Backend/NotificationHandler.php", {
-        donationID,
-        msg_receiver_ID: DonorID,
-        msg_sender_ID: RequesterID,
-        action: "notify_request",
-      })
+    axios.post("http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
+        {
+          donationID,
+          msg_receiver_ID: DonorID,
+          msg_sender_ID: RequesterID,
+          action: "notify_request",
+        }
+      )
       .then((res) => console.log("Notification sent", res.data))
       .catch((err) => console.error(err));
   };
@@ -186,8 +171,52 @@ const DonationDetails = () => {
                 <User className="w-4 h-4 mr-2" />
                 <span>{donation.fullName}</span>
               </div>
+              <div className="flex items-center text-sm text-muted-foreground">
+                <MapPin className="w-4 h-4 mr-2" />
+                <span>{donation.location || "Location not provided"}</span>
+              </div>
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Clock className="w-4 h-4 mr-2" />
+                <span>{donation.date_time}</span>
+              </div>
 
-              <div className="flex gap-2 mt-4">
+              <div className="pt-4">
+                <h3 className="text-lg font-medium mb-1">Category:</h3>
+                <p className="text-muted-foreground">
+                  {donation.category || "N/A"}
+                </p>
+              </div>
+
+              <div className="pt-4">
+                <h3 className="text-lg font-medium mb-1">Condition:</h3>
+                <p className="text-muted-foreground">
+                  {donation.condition || "N/A"}
+                </p>
+              </div>
+
+              {donation.images && (
+                <div className="pt-4">
+                  <h3 className="text-lg font-medium mb-1">Images:</h3>
+                  <div className="flex flex-wrap gap-4">
+                    {JSON.parse(donation.images).map(
+                      (img: string, idx: number) => (
+                        <img
+                          key={idx}
+                          src={`http://localhost/KindLoop-project01/Backend/${img}`}
+                          alt={`Donation ${idx}`}
+                          className="w-full h-32 object-cover rounded-md cursor-pointer transition-transform hover:scale-105"
+                          onClick={() =>
+                            setSelectedImage(
+                              `http://localhost/KindLoop-project01/Backend/${img}`
+                            )
+                          }
+                        />
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
+              <div className="flex gap-2">
                 <Button
                   className="flex-1"
                   onClick={() => {
@@ -208,8 +237,10 @@ const DonationDetails = () => {
           </Card>
         ) : null}
       </div>
-
-      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+      <Dialog
+        open={!!selectedImage}
+        onOpenChange={() => setSelectedImage(null)}
+      >
         <DialogContent className="max-w-3xl p-4">
           <img
             src={selectedImage ?? ""}
