@@ -26,8 +26,12 @@ const UserList: React.FC<Props> = ({ users, selectedUserId, onSelect }) => {
             onClick={() => onSelect(u)}
           >
             <div className="flex items-center">
-              <div className="w-10 h-10 bg-gray-300 rounded-full mr-3 flex items-center justify-center">
-                {u.avatar ? <img src={u.avatar} alt="" className="w-full h-full rounded-full" /> : u.fullName.charAt(0)}
+              <div className="w-10 h-10 bg-gray-300 rounded-full mr-3 flex items-center justify-center overflow-hidden">
+                {u.avatar ? (
+                  <img src={u.avatar} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-lg">{u.fullName.charAt(0)}</span>
+                )}
               </div>
               <div>{u.fullName}</div>
             </div>

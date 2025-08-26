@@ -1,37 +1,57 @@
 <?php
 header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json");
+header("Content-Type: application/json; charset=utf-8");
 
-require_once 'Main/dbc.php';
-
-$input = json_decode(file_get_contents("php://input"), true);
-
-if (!isset($input['sender_id'], $input['receiver_id'], $input['content'])) {
-    echo json_encode(['success' => false, 'message' => 'Missing fields']);
+// Allow OPTIONS preflight if needed
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
     exit;
 }
 
-$sender = intval($input['sender_id']);
-$receiver = intval($input['receiver_id']);
-$content = $input['content'];
+require_once 'Main/dbc.php'; // adjust path if needed
+
+$input = json_decode(file_get_contents('php://input'), true);
+if (!is_array($input)) {
+    echo json_encode(['success' => false, 'message' => 'Invalid JSON body']);
+    exit;
+}
+
+$sender = isset($input['sender_id']) ? intval($input['sender_id']) : null;
+$receiver = isset($input['receiver_id']) ? intval($input['receiver_id']) : null;
+$content = isset($input['content']) ? trim($input['content']) : '';
+
+if ($sender === null || $receiver === null || $content === '') {
+    echo json_encode(['success' => false, 'message' => 'sender_id, receiver_id and non-empty content are required']);
+    exit;
+}
+
+if (mb_strlen($content) > 2000) {
+    echo json_encode(['success' => false, 'message' => 'Message too long']);
+    exit;
+}
 
 $db = new DBconnector();
 $conn = $db->connect();
 
 $sql = "INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("iis", $sender, $receiver, $content);
+if (!$stmt) {
+    echo json_encode(['success' => false, 'message' => 'DB prepare failed: ' . $conn->error]);
+    exit;
+}
+$stmt->bind_param('iis', $sender, $receiver, $content);
 
 if ($stmt->execute()) {
     $insertedId = $stmt->insert_id;
-    // fetch created row (to return timestamp etc.)
     $sel = $conn->prepare("SELECT id, sender_id, receiver_id, content, timestamp FROM messages WHERE id = ?");
-    $sel->bind_param("i", $insertedId);
+    $sel->bind_param('i', $insertedId);
     $sel->execute();
-    $res = $sel->get_result();
-    $message = $res->fetch_assoc();
+    $result = $sel->get_result();
+    $message = $result->fetch_assoc();
 
     echo json_encode(['success' => true, 'message' => $message]);
+    exit;
 } else {
-    echo json_encode(['success' => false, 'message' => 'Insert failed']);
+    echo json_encode(['success' => false, 'message' => 'Failed to save message: ' . $stmt->error]);
+    exit;
 }
