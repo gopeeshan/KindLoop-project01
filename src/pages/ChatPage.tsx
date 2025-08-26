@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import axios from "axios";
 import UserList from "./UserList";
 import ChatWindow from "./ChatWindow";
@@ -27,12 +28,38 @@ const ChatPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const pollingRef = useRef<number | null>(null);
-
+  const location = useLocation();
   const currentUserId = parseInt(localStorage.getItem("userID") || "0");
+
+  // Parse ?user=... query param (donor user id)
+  const urlParams = new URLSearchParams(location.search);
+  const preselectUserId = parseInt(urlParams.get("user") || "0");
 
   useEffect(() => {
     fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // When users are fetched, try to auto-select the preselected user if present
+  useEffect(() => {
+    if (preselectUserId && users.length > 0) {
+      const found = users.find((u) => u.userID === preselectUserId);
+      if (found) {
+        handleSelectUser(found);
+      } else {
+        // fallback: try fetching the user details by id (some apps have an endpoint for this)
+        fetchUserById(preselectUserId).then((user) => {
+          if (user) {
+            handleSelectUser(user);
+          } else {
+            // If not found, still set a minimal selectedUser so messages can be fetched by id
+            setSelectedUser({ userID: preselectUserId, fullName: "User", avatar: null });
+          }
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [users, preselectUserId]);
 
   useEffect(() => {
     if (selectedUser) {
@@ -56,6 +83,21 @@ const ChatPage: React.FC = () => {
       console.error("Error fetching users", err);
       setError("Failed to load users");
     }
+  };
+
+  // Optional: fetch a single user's details by ID (adjust endpoint as needed)
+  const fetchUserById = async (id: number): Promise<User | null> => {
+    try {
+      const res = await axios.get(
+        `http://localhost/KindLoop-project01/Backend/get_user_by_id.php?userID=${id}`
+      );
+      if (res.data && res.data.success) {
+        return res.data.user as User;
+      }
+    } catch (err) {
+      // ignore
+    }
+    return null;
   };
 
   const fetchMessages = async () => {
@@ -106,7 +148,6 @@ const ChatPage: React.FC = () => {
       );
 
       if (res.data.success) {
-        // Append returned message (if available) or refetch
         if (res.data.message) {
           setMessages((m) => [...m, res.data.message]);
         } else {

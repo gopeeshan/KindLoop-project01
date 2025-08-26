@@ -15,6 +15,7 @@ import DonationDetails from "./pages/DonationDetails";
 import Profiledd from "./pages/ProfileDD";
 import ComplaintHandle from "./pages/ComplaintHandle";
 import AdminSignUp from "./pages/AdminSignUp";
+import ChatPage from "./pages/ChatPage";
 
 const App = () => {
   return (
@@ -36,6 +37,7 @@ const App = () => {
             <Route path="/Admin_login" element={<AdminLogin />} />
             <Route path="/admin/complaints" element={<ComplaintHandle />} />
             <Route path="/admin/Admin_SignUp" element={<AdminSignUp />} />
+            <Route path="/chat" element={<ChatPage/>} />
           </Routes>
         </div>
       </TooltipProvider>
