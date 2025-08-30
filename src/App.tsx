@@ -15,6 +15,7 @@ import DonationDetails from "./pages/DonationDetails";
 import Profiledd from "./pages/ProfileDD";
 import ComplaintHandle from "./pages/ComplaintHandle";
 import AdminSignUp from "./pages/AdminSignUp";
+import ScrollToHash from "@/components/ScrollToHash";
 
 const App = () => {
   return (
@@ -36,7 +37,10 @@ const App = () => {
             <Route path="/Admin_login" element={<AdminLogin />} />
             <Route path="/admin/complaints" element={<ComplaintHandle />} />
             <Route path="/admin/Admin_SignUp" element={<AdminSignUp />} />
+            
           </Routes>
+
+          <ScrollToHash />
         </div>
       </TooltipProvider>
     </BrowserRouter>
