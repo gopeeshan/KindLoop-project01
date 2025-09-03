@@ -476,7 +476,7 @@ const Profile = () => {
       formData.fullName &&
       !/^[A-Za-z\s]{3,}$/.test(formData.fullName.trim())
     ) {
-      newErrors.fullName = "Enter a valid Name (min 3 letters)";
+      newErrors.fullName = "Name must be at least 3 characters";
       isValid = false;
     }
 
@@ -484,15 +484,17 @@ const Profile = () => {
       formData.contactNumber &&
       !/^07[0-9]{8}$/.test(formData.contactNumber)
     ) {
-      newErrors.contactNumber = "Enter a valid 10-digit phone number";
+      newErrors.contactNumber =
+        "Contact number must be 10 digits starting with 07.";
       isValid = false;
     }
 
     if (
       formData.occupation &&
-      !/^[A-Za-z\s]+$/.test(formData.occupation.trim())
+      !/^[A-Za-z\s]{3,}$/.test(formData.occupation.trim())
     ) {
-      newErrors.occupation = "Occupation can only contain letters";
+      newErrors.occupation =
+        "Occupation can only contain letters, at least 3 characters.";
       isValid = false;
     }
 
@@ -1138,7 +1140,7 @@ const Profile = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-2">
-                        Phone
+                        Contact Number
                       </label>
                       <input
                         type="tel"
