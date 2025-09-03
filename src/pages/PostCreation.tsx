@@ -29,8 +29,23 @@ const PostCreation = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const MAX_IMAGES = 5;
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setImages(e.target.files);
+    const files = e.target.files;
+    if (!files) return;
+
+    if (files.length > MAX_IMAGES) {
+      toast({
+        title: "Upload limit reached",
+        description: `You can only upload up to ${MAX_IMAGES} images.`,
+        variant: "destructive",
+      });
+
+      e.target.value = "";
+      return;
+    }
+
+    setImages(files);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
