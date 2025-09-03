@@ -71,10 +71,10 @@ const DonationDetails = () => {
   const handleRequestItem = async (DonationID: number) => {
     if (userID !== donation.userID) {
       console.log(
-      `Requesting item ${DonationID} from user ${localStorage.getItem(
-        "userID"
-      )} and Donor is ${donation.userID}`
-    );
+        `Requesting item ${DonationID} from user ${localStorage.getItem(
+          "userID"
+        )} and Donor is ${donation.userID}`
+      );
       const response = await axios.post(
         "http://localhost/KindLoop-project01/Backend/HandleDonation.php",
         {
@@ -84,7 +84,7 @@ const DonationDetails = () => {
         }
       );
       if (response.data.success) {
-        sendNotification( donation.DonationID, donation.userID, userID);
+        sendNotification(donation.DonationID, donation.userID, userID);
         toast({
           title: "Request Sent ",
           description:
@@ -98,8 +98,7 @@ const DonationDetails = () => {
           variant: "destructive",
         });
       }
-    }
-    else{
+    } else {
       toast({
         title: "Request Failed ",
         description: "You cannot request your own donation.",
@@ -108,12 +107,14 @@ const DonationDetails = () => {
     }
   };
 
-  const sendNotification =(
+  const sendNotification = (
     donationID: number,
     DonorID: number,
     RequesterID: number
   ) => {
-    axios.post("http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
+    axios
+      .post(
+        "http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
         {
           donationID,
           msg_receiver_ID: DonorID,
@@ -219,6 +220,7 @@ const DonationDetails = () => {
               <div className="flex gap-2">
                 <Button
                   className="flex-1"
+                  disabled={!userID}
                   onClick={() => {
                     handleRequestItem(donation.DonationID);
                   }}

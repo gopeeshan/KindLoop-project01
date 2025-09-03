@@ -269,6 +269,7 @@ const Profile = () => {
   const handleLogout = () => {
     localStorage.removeItem("isUserLoggedIn");
     localStorage.removeItem("userEmail");
+    localStorage.removeItem("userID");
     toast({
       title: "Logged Out",
       description: "You have been successfully logged out.",

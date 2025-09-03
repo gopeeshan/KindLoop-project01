@@ -19,6 +19,15 @@ $status = $data['status'] ?? null;
 $donorID = isset($data['DonorID']) ? (int) $data['DonorID'] : null;
 
 if ($method === 'POST' && $action === 'request-item') {
+
+ if (empty($userID)) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'You need to login to request an item.'
+            ]);
+            exit;
+        }
+
     if ($userID !== $donorID) {
         if ($handleDonation->checkrequest($donationID, $userID)) {
             echo json_encode(['success' => false, 'message' => 'You have already requested this donation.']);
