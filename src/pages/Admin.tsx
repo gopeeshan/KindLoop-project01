@@ -844,7 +844,7 @@ const Admin = () => {
               )}
 
               {selectedDonation && (
-                <div className="space-y-2 text-sm text-muted-foreground">
+                <div className="space-y-2 text-sm text-muted-foreground max-h-[70vh] overflow-y-auto pr-2">
                   <p>
                     <strong>Title:</strong> {selectedDonation.title}
                   </p>
