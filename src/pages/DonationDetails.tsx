@@ -65,7 +65,7 @@ const DonationDetails = () => {
   }, [id]);
 
   const handleChat = (DonationID: number) => {
-    console.log(`Chat with donor of donation ${DonationID}`);
+    console.log(`Chat with donor of donation ${DonationID} with the userID ${donation.userID}`);
   };
 
   const handleRequestItem = async (DonationID: number) => {
