@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { toast } from "@/hooks/use-toast";
+import ChatBox from "../components/ChatBox";
 
 interface Donation {
   DonationID: number;
@@ -40,6 +41,7 @@ const DonationDetails = () => {
   const [loading, setLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const userID = parseInt(localStorage.getItem("userID") || "0");
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     const fetchDonation = async () => {
@@ -64,8 +66,11 @@ const DonationDetails = () => {
     fetchDonation();
   }, [id]);
 
-  const handleChat = (DonationID: number) => {
-    console.log(`Chat with donor of donation ${DonationID} with the userID ${donation.userID}`);
+  const handleChat = () => {
+    setChatOpen(true);
+    console.log(
+      `Chat with donor of donation ${donation.DonationID} with the userID ${donation.userID}`
+    );
   };
 
   const handleRequestItem = async (DonationID: number) => {
@@ -230,7 +235,7 @@ const DonationDetails = () => {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => handleChat(donation.DonationID)}
+                  onClick={() => handleChat()}
                 >
                   <MessageCircle className="h-4 w-4" />
                 </Button>
@@ -254,6 +259,17 @@ const DonationDetails = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+            {/* 🔹 Chat Popup goes here */}
+      {donation && (
+        <ChatBox
+          open={chatOpen}
+          onClose={() => setChatOpen(false)}
+          currentUserID={userID}
+          otherUserID={donation.userID}
+          donationID={donation.DonationID}
+        />
+      )}
       <Footer />
     </div>
   );
