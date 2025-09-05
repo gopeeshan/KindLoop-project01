@@ -902,7 +902,7 @@ const Profile = () => {
 
                       <p className="text-base font-semibold text-red-600 flex items-center gap-2 leading-relaxed">
                         <span>
-                          "Important" = Please Do not confirm the receipt until you have received the item OR Made a Solution.
+                          "Important" ={">"} Please Do not confirm the receipt until you have received the item OR Made a Solution.
                           Please use this form only for genuine issues.
                           Submitting false or misleading complaints may result
                           in suspension of your account.  
