@@ -51,6 +51,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { send } from "process";
+import MessagesBar from "@/components/MessagesBar";
 
 interface Notification {
   notificationID: number;
@@ -545,7 +546,8 @@ const Profile = () => {
                       <Star className="h-4 w-4 mr-2" />
                       {user.credit_points} Credits
                     </Badge>
-
+                    <MessagesBar currentUserID={user.userID} />
+                    
                     <Dialog
                       open={isPasswordDialogOpen}
                       onOpenChange={setPasswordDialogOpen}
