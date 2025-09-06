@@ -132,12 +132,15 @@ const DonationDetails = () => {
     RequesterID: number
   ) => {
     axios
-      .post("http://localhost/KindLoop-project01/Backend/NotificationHandler.php", {
-        donationID,
-        msg_receiver_ID: DonorID,
-        msg_sender_ID: RequesterID,
-        action: "notify_request",
-      })
+      .post(
+        "http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
+        {
+          donationID,
+          msg_receiver_ID: DonorID,
+          msg_sender_ID: RequesterID,
+          action: "notify_request",
+        }
+      )
       .then((res) => console.log("Notification sent", res.data))
       .catch((err) => console.error(err));
   };
@@ -227,7 +230,6 @@ const DonationDetails = () => {
                   </div>
                 </div>
               )}
-
               <div className="flex gap-2">
                 <Button
                   className="flex-1"
@@ -236,7 +238,13 @@ const DonationDetails = () => {
                 >
                   Request Item
                 </Button>
-                <Button variant="outline" size="icon" onClick={handleChat}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleChat}
+                  aria-label="Open chat with donor"
+                  title="Open chat with donor"
+                >
                   <MessageCircle className="h-4 w-4" />
                 </Button>
               </div>
@@ -246,7 +254,10 @@ const DonationDetails = () => {
       </div>
 
       {/* Image Preview Dialog */}
-      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+      <Dialog
+        open={!!selectedImage}
+        onOpenChange={() => setSelectedImage(null)}
+      >
         <DialogContent className="max-w-3xl p-4">
           <DialogTitle>Preview</DialogTitle>
           <DialogDescription>Full-size donation image</DialogDescription>
@@ -269,6 +280,7 @@ const DonationDetails = () => {
           currentUserID={userID}
           otherUserID={donation.userID}
           donationID={donation.DonationID}
+          otherUserName={donation.fullName}
         />
       )}
 
