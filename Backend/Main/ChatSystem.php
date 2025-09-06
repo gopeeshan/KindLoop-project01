@@ -154,42 +154,58 @@ public function markAsRead($receiverID, $senderID, $donationID = null) {
         return $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
     }
 
-    // Get latest chats (inbox list)
 // Get latest chats (one chat per user pair, ignoring multiple donations)
-public function getLatestChats($userID) {
-    $sql = "SELECT m.*
-            FROM messages m
-            INNER JOIN (
-                SELECT 
-                    CASE WHEN senderID = ? THEN receiverID ELSE senderID END AS chatUser,
-                    MAX(timestamp) AS lastMsgTime
-                FROM messages
-                WHERE senderID = ? OR receiverID = ?
-                GROUP BY chatUser
-            ) t ON ((m.senderID = ? AND m.receiverID = t.chatUser) 
-                    OR (m.senderID = t.chatUser AND m.receiverID = ?))
-               AND m.timestamp = t.lastMsgTime
-            ORDER BY m.timestamp DESC";
+    public function getLatestChats($userID) {
+        $sql = "SELECT
+                    m.*,
+                    CASE WHEN m.senderID = ? THEN m.receiverID ELSE m.senderID END AS otherUserID,
+                    u.fullName AS otherUserName,
+                    COALESCE(uc.unread, 0) AS unread
+                FROM messages m
+                INNER JOIN (
+                    SELECT 
+                        CASE WHEN senderID = ? THEN receiverID ELSE senderID END AS chatUser,
+                        MAX(timestamp) AS lastMsgTime
+                    FROM messages
+                    WHERE senderID = ? OR receiverID = ?
+                    GROUP BY chatUser
+                ) t ON (
+                        (m.senderID = ? AND m.receiverID = t.chatUser)
+                        OR
+                        (m.senderID = t.chatUser AND m.receiverID = ?)
+                    )
+                    AND m.timestamp = t.lastMsgTime
+                LEFT JOIN (
+                    SELECT 
+                        CASE WHEN senderID = ? THEN receiverID ELSE senderID END AS chatUser,
+                        COUNT(*) AS unread
+                    FROM messages
+                    WHERE receiverID = ? AND is_read = 0
+                    GROUP BY chatUser
+                ) uc ON uc.chatUser = CASE WHEN m.senderID = ? THEN m.receiverID ELSE m.senderID END
+                LEFT JOIN user u ON u.userID = CASE WHEN m.senderID = ? THEN m.receiverID ELSE m.senderID END
+                ORDER BY m.timestamp DESC";
 
-    $stmt = $this->conn->prepare($sql);
-    if (!$stmt) {
-        $this->setError("Prepare failed: " . $this->conn->error);
-        return [];
-    }
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            $this->setError("Prepare failed: " . $this->conn->error);
+            return [];
+        }
 
-    $uid = (int)$userID;
-    if (!$stmt->bind_param("iiiii", $uid, $uid, $uid, $uid, $uid)) {
-        $this->setError("Bind failed: " . $stmt->error);
-        return [];
-    }
+        $u = (int)$userID;
+        // 10 ints, all $u
+        if (!$stmt->bind_param("iiiiiiiiii", $u, $u, $u, $u, $u, $u, $u, $u, $u, $u)) {
+            $this->setError("Bind failed: " . $stmt->error);
+            return [];
+        }
 
-    if (!$stmt->execute()) {
-        $this->setError("Execute failed: " . $stmt->error);
-        return [];
-    }
+        if (!$stmt->execute()) {
+            $this->setError("Execute failed: " . $stmt->error);
+            return [];
+        }
 
-    $res = $stmt->get_result();
-    return $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
+        $res = $stmt->get_result();
+        return $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
     }
 
     // Search messages
