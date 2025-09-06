@@ -87,7 +87,8 @@ interface ToBeReceivedItem {
   donorID: number;
   donor: string;
   donorContact: string;
-  requestDate: string;
+  received_date: string;
+  quantity: number;
 }
 
 const Profile = () => {
@@ -830,7 +831,10 @@ const Profile = () => {
                                 {item.category} • From {item.donor}
                               </p>
                               <p className="text-sm text-muted-foreground">
-                                Requested: {item.requestDate}
+                                Quantity: {item.quantity}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                Approved on: {item.received_date}
                               </p>
                               <p className="text-sm text-muted-foreground">
                                 Contact: {item.donorContact}

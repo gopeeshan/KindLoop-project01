@@ -18,6 +18,7 @@ interface Donation {
   category: string;
   condition: string;
   quantity: number;
+  availableQuantity: number;
   location: string;
   images: string[];
   isVerified: number;
@@ -126,7 +127,7 @@ const Profiledd = () => {
                         Quantity
                       </span>
                       <p className="font-semibold">
-                        {donation.quantity || 1}
+                        {donation.quantity} (Available: {donation.availableQuantity})
                       </p>
                     </div>
                     <div>

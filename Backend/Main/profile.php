@@ -2,18 +2,21 @@
 
 require_once 'dbc.php';
 
-class Profile{
+class Profile
+{
     private $conn;
     protected $email;
     protected $userID;
     protected $DonationID;
 
-    public function __construct() {
+    public function __construct()
+    {
         $db = new DBconnector();
         $this->conn = $db->connect();
     }
 
-    public function getUserDetails($email) {
+    public function getUserDetails($email)
+    {
         $this->email = $email;
         $stmt = $this->conn->prepare("SELECT userID, fullName, email, contactNumber, occupation, address, credit_points FROM user WHERE email = ?");
         $stmt->bind_param("s", $email);
@@ -30,13 +33,12 @@ class Profile{
         }
 
         return $user;
-        
     }
 
     // public function getDonationHistory($userID) {
     //     $this->userID = $userID;
     //     $donationHistory = [];
-        
+
     //     $stmt= $this->conn->prepare("SELECT donation.DonationID, donation.title, donation.date_time, donation.category, donation.credits,donation.isDonationCompleted, donation.isVerified
     //                                 FROM donation
     //                                 WHERE donation.userID = ?");
@@ -47,26 +49,28 @@ class Profile{
     //     $stmt->close();
     //     return $donationHistory;
     // }
-    public function getUserDonations($userID) {
-    $sql = "SELECT DonationID, title, category, date_time, credits, isDonationCompleted, isVerified
+    public function getUserDonations($userID)
+    {
+        $sql = "SELECT DonationID, title, category, date_time, credits, isDonationCompleted, isVerified
             FROM donation
             WHERE userID = ?
             ORDER BY date_time DESC";
 
-    $stmt = $this->conn->prepare($sql);
-    $stmt->bind_param("i", $userID);
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $userID);
 
-    $donations = [];
-    if ($stmt->execute()) {
-        $donations = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $donations = [];
+        if ($stmt->execute()) {
+            $donations = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        }
+
+        $stmt->close();
+        return $donations;
     }
 
-    $stmt->close();
-    return $donations;
-}
 
-    
-    public function getReceivedHistory($userID) {
+    public function getReceivedHistory($userID)
+    {
         $this->userID = $userID;
         $receivedHistory = [];
         $stmt = $this->conn->prepare("SELECT 
@@ -92,32 +96,46 @@ class Profile{
         return $receivedHistory;
     }
 
-    public function getToBeReceivedItems($userID) {
+    public function getToBeReceivedItems($userID)
+    {
         $this->userID = $userID;
         $toBeReceived = [];
-        $stmt = $this->conn->prepare("SELECT
+
+        $query = "SELECT 
                 d.DonationID,
                 d.title,
-                d.date_time,
                 d.category,
                 u.userID AS donorID,
                 u.fullName AS donor,
                 u.contactNumber AS donorContact,
-                ri.quantity
-            FROM receive_items ri
-            JOIN donation d ON ri.donationID = d.DonationID
-            JOIN user u ON ri.donorID = u.userID
-            WHERE ri.receiverID = ?
-              AND d.isDonationCompleted = 0
-              ORDER BY ri.received_date DESC");
+                ri.quantity,
+                ri.received_date,
+                dr.status AS request_status
+              FROM receive_items ri
+              JOIN donation d ON ri.donationID = d.DonationID
+              JOIN user u ON ri.donorID = u.userID
+              JOIN donation_requests dr 
+                   ON dr.donationID = d.DonationID
+                  AND dr.userID = ri.receiverID
+              WHERE ri.receiverID = ?
+                AND d.isDonationCompleted = 0 
+                AND dr.status = 'selected'
+              ORDER BY ri.received_date DESC";
+
+        $stmt = $this->conn->prepare($query);
         $stmt->bind_param("i", $userID);
+
         if ($stmt->execute()) {
             $toBeReceived = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         }
+
         $stmt->close();
         return $toBeReceived;
     }
-    public function confirmReceived($DonationID) {
+
+
+    public function confirmReceived($DonationID)
+    {
         $this->DonationID = $DonationID;
         $stmt = $this->conn->prepare("UPDATE donation SET isDonationCompleted = 1 WHERE DonationID = ?");
         $stmt->bind_param("i", $this->DonationID);
@@ -128,7 +146,8 @@ class Profile{
         }
     }
 
-    public function updateUserInfo($userID, $fullName, $contactNumber, $occupation, $address) {
+    public function updateUserInfo($userID, $fullName, $contactNumber, $occupation, $address)
+    {
         $stmt = $this->conn->prepare("UPDATE user SET fullName = ?, contactNumber = ?, occupation = ?, address = ? WHERE userID = ?");
         $stmt->bind_param("ssssi", $fullName, $contactNumber, $occupation, $address, $userID);
 
@@ -139,7 +158,8 @@ class Profile{
         }
     }
 
-    public function changePassword($email, $currentPassword, $newPassword) {
+    public function changePassword($email, $currentPassword, $newPassword)
+    {
         $stmt = $this->conn->prepare("SELECT password FROM user WHERE email = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
@@ -169,7 +189,8 @@ class Profile{
         }
     }
 
-    public function viewDonationDetails($donationId) {
+    public function viewDonationDetails($donationId)
+    {
         $stmt = $this->conn->prepare("SELECT d.*, u.fullName as donor 
                                         FROM donation d 
                                         JOIN user u ON d.userID = u.userID 
@@ -179,9 +200,9 @@ class Profile{
 
         $result = $stmt->get_result();
         if ($result->num_rows > 0) {
-        $donation = $result->fetch_assoc();
-        $donation['images'] = json_decode($donation['images'] ?? '[]');
-        return $donation;
+            $donation = $result->fetch_assoc();
+            $donation['images'] = json_decode($donation['images'] ?? '[]');
+            return $donation;
         } else {
             $stmt->close();
             return ["error" => "Donation not found"];

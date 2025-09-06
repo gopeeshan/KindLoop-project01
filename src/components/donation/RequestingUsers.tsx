@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -45,7 +46,12 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
   const fetchRequests = () => {
     axios
       .get(
-        `http://localhost/KindLoop-project01/Backend/HandleDonation.php?donationID=${donationID}`
+        `http://localhost/KindLoop-project01/Backend/HandleDonation.php?donationID=${donationID}`,
+        {
+          params: {
+            Action: "get_requests",
+          },
+        }
       )
       .then((res) => {
         if (res.data.success) {
@@ -59,7 +65,14 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
 
   const fetchDonationQuantity = () => {
     axios
-      .get(`http://localhost/KindLoop-project01/Backend/HandleDonation.php=${donationID}`)
+      .get(
+        `http://localhost/KindLoop-project01/Backend/HandleDonation.php?donationID=${donationID}`,
+        {
+          params: {
+            Action: "get_donation_quantity",
+          },
+        }
+      )
       .then((res) => {
         if (res.data.success) {
           setDonationQuantity(res.data.data.quantity);
@@ -69,13 +82,20 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
       .catch((err) => console.error("Error fetching donation quantity", err));
   };
 
-  const handleStatusChange = (userID: number, donationID: number, newStatus: string) => {
-    axios.post("http://localhost/KindLoop-project01/Backend/HandleDonation.php", {
+  const handleStatusChange = (
+    userID: number,
+    donationID: number,
+    newStatus: string,
+    quantity: number
+  ) => {
+    axios
+      .post("http://localhost/KindLoop-project01/Backend/HandleDonation.php", {
         Action: "accept_or_reject",
         DonationID: donationID,
         UserID: userID,
         status: newStatus,
         DonorID: localStorage.getItem("userID"),
+        quantity: quantity,
       })
       .then((res) => {
         if (res.data.success) {
@@ -90,7 +110,11 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
             description: `User has been ${newStatus} successfully.`,
             variant: "default",
           });
-          sendNotification(donationID, parseInt(localStorage.getItem("userID")), userID);
+          sendNotification(
+            donationID,
+            parseInt(localStorage.getItem("userID")),
+            userID
+          );
         } else {
           toast({
             title: "Error",
@@ -109,12 +133,14 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
       });
   };
 
-    const sendNotification =(
+  const sendNotification = (
     donationID: number,
     DonorID: number,
     RequesterID: number
   ) => {
-    axios.post("http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
+    axios
+      .post(
+        "http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
         {
           donationID,
           msg_receiver_ID: RequesterID,
@@ -137,6 +163,16 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
       default:
         return "outline";
     }
+  };
+
+   const handleQuantityChange = (userID: number, value: number) => {
+    setRequestingUsers((prev) =>
+      prev.map((u) =>
+        u.userID === userID
+          ? { ...u, allocatedQuantity: Math.min(value, availableQuantity) }
+          : u
+      )
+    );
   };
 
   return (
@@ -172,17 +208,34 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
                   </div>
 
                   <div className="flex items-center space-x-2">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={donationQuantity}
+                      value={user.allocatedQuantity || ""}
+                      onChange={(e) =>
+                        handleQuantityChange(
+                          user.userID,
+                          parseInt(e.target.value) || 0
+                        )
+                      }
+                      className="w-20"
+                      placeholder="Qty"
+                    />
+
                     <Badge variant={getStatusColor(user.status)}>
                       {user.status}
                     </Badge>
+
                     <Button
                       variant="default"
                       size="sm"
-                      onClick={() => {
-                        console.log(donationID + " " + user.userID);
-                        handleStatusChange(user.userID, donationID,"selected");
-                      }}
-                      disabled={user.status === "approved"}
+                      onClick={() =>
+                        handleStatusChange(user.userID, donationID, "selected",user.allocatedQuantity)
+                      }
+                      disabled={
+                        user.status === "selected " || availableQuantity <= 0 || !user.allocatedQuantity
+                      }
                     >
                       Accept
                     </Button>
@@ -191,9 +244,9 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
                       variant="destructive"
                       size="sm"
                       onClick={() =>
-                        handleStatusChange(user.userID, donationID, "rejected")
+                        handleStatusChange(user.userID, donationID, "rejected", user.allocatedQuantity)
                       }
-                      disabled={user.status === "rejected"}
+                      disabled={user.status === "rejected" }
                     >
                       Reject
                     </Button>
