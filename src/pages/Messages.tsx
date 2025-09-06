@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import ChatBox from "../components/ChatBox";
+import { useSearchParams } from "react-router-dom";
 
 type Conversation = {
   messageID: number;
@@ -23,6 +24,8 @@ const MessagesPage: React.FC = () => {
   const [selectedPeer, setSelectedPeer] = useState<number | null>(null);
   const [selectedDonationId, setSelectedDonationId] = useState<number | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
+
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     if (!currentUserID) return;
@@ -51,6 +54,16 @@ const MessagesPage: React.FC = () => {
     return () => clearInterval(id);
   }, [currentUserID]);
 
+  useEffect(() => {
+    const peerId = searchParams.get("peerId");
+    const donationId = searchParams.get("donationId");
+    if (peerId) {
+      setSelectedPeer(Number(peerId));
+      setSelectedDonationId(donationId ? Number(donationId) : null);
+      setChatOpen(true);
+    }
+  }, [searchParams]);
+
   const totalUnread = useMemo(
     () => conversations.reduce((sum, c) => sum + (Number(c.unread) || 0), 0),
     [conversations]
@@ -58,8 +71,6 @@ const MessagesPage: React.FC = () => {
 
   const openChat = (peerId: number, donationId: number | null) => {
     setSelectedPeer(peerId);
-    // If you want the chat filtered by the last donation thread, keep donationId.
-    // Or set to null to show the full history across donations with this peer.
     setSelectedDonationId(donationId);
     setChatOpen(true);
   };
@@ -114,7 +125,7 @@ const MessagesPage: React.FC = () => {
                   ) : null}
                 </div>
                 {c.unread > 0 ? (
-                  <span className="ml-2 inline-flex items-center justify-center min-w-6 h-6 px-2 rounded-full bg-blue-600 text-white text-xs font-semibold">
+                  <span className="ml-2 inline-flex items-center justify-center min-w-6 h-6 px-2 rounded-full bg-violet-600 text-white text-xs font-semibold">
                     {c.unread}
                   </span>
                 ) : null}

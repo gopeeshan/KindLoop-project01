@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { MessageCircle, X } from "lucide-react";
 import ChatBox from "@/components/ChatBox";
+import { useNavigate } from "react-router-dom";
 
 type ConversationItem = {
   otherUserID: number;
@@ -15,15 +16,22 @@ type ConversationItem = {
 interface MessagesBarProps {
   currentUserID: number | undefined;
   className?: string;
+  openAsPage?: boolean; // new
 }
 
-const MessagesBar: React.FC<MessagesBarProps> = ({ currentUserID, className }) => {
+const MessagesBar: React.FC<MessagesBarProps> = ({
+  currentUserID,
+  className,
+  openAsPage = false,
+}) => {
+  const navigate = useNavigate();
+
   const [openPanel, setOpenPanel] = useState(false);
   const [loading, setLoading] = useState(false);
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [error, setError] = useState<string>("");
 
-  // ChatBox state
+  // ChatBox state (only used when not opening as a page)
   const [chatOpen, setChatOpen] = useState(false);
   const [selectedPeer, setSelectedPeer] = useState<number | null>(null);
   const [selectedDonationId, setSelectedDonationId] = useState<number | null>(null);
@@ -69,6 +77,15 @@ const MessagesBar: React.FC<MessagesBarProps> = ({ currentUserID, className }) =
   }, [currentUserID]);
 
   const openChat = async (peerId: number, donationId: number | null, peerName?: string) => {
+    if (openAsPage) {
+      const params = new URLSearchParams();
+      params.set("peerId", String(peerId));
+      if (donationId !== null) params.set("donationId", String(donationId));
+      if (peerName) params.set("name", peerName);
+      navigate(`/messages?${params.toString()}`);
+      return;
+    }
+
     setSelectedPeer(peerId);
     setSelectedDonationId(donationId);
     setSelectedPeerName(peerName);
@@ -92,20 +109,26 @@ const MessagesBar: React.FC<MessagesBarProps> = ({ currentUserID, className }) =
     <div className={`relative ${className || ""}`}>
       <button
         type="button"
-        onClick={() => setOpenPanel((o) => !o)}
+        onClick={() => {
+          if (openAsPage) {
+            navigate("/messages");
+          } else {
+            setOpenPanel((o) => !o);
+          }
+        }}
         className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-gray-300 bg-white hover:bg-gray-50"
         aria-label="Open messages"
       >
         <MessageCircle className="h-4 w-4 text-primary" />
         <span className="text-sm font-medium">Messages</span>
         {totalUnread > 0 && (
-          <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-blue-600 text-white">
+          <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-violet-500 text-white">
             {totalUnread}
           </span>
         )}
       </button>
 
-      {openPanel && (
+      {openPanel && !openAsPage && (
         <div className="absolute right-0 mt-2 w-96 max-w-[90vw] bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden z-50">
           <div className="flex items-center justify-between px-3 py-2 border-b">
             <div className="text-sm font-semibold">Recent Conversations</div>
@@ -150,7 +173,7 @@ const MessagesBar: React.FC<MessagesBarProps> = ({ currentUserID, className }) =
                     <div className="text-xs text-gray-600 truncate">{last}</div>
                   </div>
                   {unread > 0 && (
-                    <span className="ml-2 shrink-0 bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full">
+                    <span className="ml-2 shrink-0 bg-violet-600 text-white text-[10px] px-2 py-0.5 rounded-full">
                       {unread}
                     </span>
                   )}
@@ -161,14 +184,16 @@ const MessagesBar: React.FC<MessagesBarProps> = ({ currentUserID, className }) =
         </div>
       )}
 
-      <ChatBox
-        open={chatOpen}
-        onClose={() => setChatOpen(false)}
-        currentUserID={currentUserID}
-        otherUserID={selectedPeer ?? 0}
-        donationID={selectedDonationId ?? 0}
-        otherUserName={selectedPeerName}
-      />
+      {!openAsPage && (
+        <ChatBox
+          open={chatOpen}
+          onClose={() => setChatOpen(false)}
+          currentUserID={currentUserID}
+          otherUserID={selectedPeer ?? 0}
+          donationID={selectedDonationId ?? 0}
+          otherUserName={selectedPeerName}
+        />
+      )}
     </div>
   );
 };

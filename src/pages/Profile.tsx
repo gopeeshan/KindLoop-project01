@@ -546,8 +546,7 @@ const Profile = () => {
                       <Star className="h-4 w-4 mr-2" />
                       {user.credit_points} Credits
                     </Badge>
-                    <MessagesBar currentUserID={user.userID} />
-                    
+                    <MessagesBar currentUserID={user.userID} openAsPage />
                     <Dialog
                       open={isPasswordDialogOpen}
                       onOpenChange={setPasswordDialogOpen}
