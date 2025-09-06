@@ -16,6 +16,7 @@ import Profiledd from "./pages/ProfileDD";
 import ComplaintHandle from "./pages/ComplaintHandle";
 import AdminSignUp from "./pages/AdminSignUp";
 import ScrollToHash from "@/components/ScrollToHash";
+import MessagesPage from "@/pages/Messages";
 
 const App = () => {
   return (
@@ -37,7 +38,7 @@ const App = () => {
             <Route path="/Admin_login" element={<AdminLogin />} />
             <Route path="/admin/complaints" element={<ComplaintHandle />} />
             <Route path="/admin/Admin_SignUp" element={<AdminSignUp />} />
-            
+            <Route path="/messages" element={<MessagesPage />} />
           </Routes>
 
           <ScrollToHash />
