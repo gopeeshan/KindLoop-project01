@@ -4,7 +4,7 @@ session_start();
 require_once '../Main/dbc.php';
 require_once '../Main/ChatSystem.php';
 
-header("Content-Type: application/json");
+header("Content-Type: application/json; charset=utf-8");
 
 // CORS: allow common local dev origins and handle preflight
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
@@ -37,7 +37,7 @@ if (!$userID) {
 }
 
 $chat = new ChatSystem();
-$conversations = $chat->getLatestChats($userID);
+$conversations = $chat->getLatestChats((int)$userID);
 
 echo json_encode([
     "success" => true,

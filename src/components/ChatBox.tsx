@@ -17,7 +17,6 @@ interface ChatBoxProps {
   currentUserID: number;
   otherUserID: number;
   donationID: number;
-  // New: pass the display name of the chat partner (e.g., donor or requester)
   otherUserName?: string;
 }
 
@@ -52,7 +51,10 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   useEffect(() => {
     if (open) {
       fetchMessages();
+      // mark as read for messages from otherUserID to currentUserID
+      markAsRead();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   // Polling while dialog is open
@@ -70,18 +72,14 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
   const fetchMessages = async () => {
     try {
-      const res = await axios.get(
-        `http://localhost/KindLoop-project01/Backend/Chat-System/get-conversation.php`,
-        {
-          params: {
-            user1: currentUserID,
-            user2: otherUserID,
-            donationID: donationID,
-          },
-          // withCredentials true only if your PHP relies on cookies/sessions
-          withCredentials: true,
-        }
-      );
+      const res = await axios.get(`http://localhost/KindLoop-project01/Backend/Chat-System/get-conversation.php`, {
+        params: {
+          user1: currentUserID,
+          user2: otherUserID,
+          donationID: donationID,
+        },
+        withCredentials: true,
+      });
       if (res.data?.success && Array.isArray(res.data.messages)) {
         setMessages(res.data.messages);
       }
@@ -90,7 +88,24 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     }
   };
 
+  const markAsRead = async () => {
+    try {
+      await axios.post(
+        `http://localhost/KindLoop-project01/Backend/Chat-System/mark-read.php`,
+        {
+          receiverID: currentUserID,
+          senderID: otherUserID,
+        },
+        { withCredentials: true }
+      );
+    } catch (e) {
+      // non-fatal for UI
+      console.warn("Failed to mark as read", e);
+    }
+  };
+
   const sendMessage = async () => {
+    
     if (!newMessage.trim()) return;
 
     setLoading(true);
@@ -108,7 +123,6 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
       if (res.data?.success) {
         setNewMessage("");
-        // Optimistic update could be added; for now re-fetch to keep consistent with server
         fetchMessages();
       }
     } catch (error) {
@@ -127,7 +141,6 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     }
   };
 
-  // Important: use onOpenChange to close properly
   const handleDialogOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) onClose();
   };
@@ -153,14 +166,12 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                   className={`flex ${isMine ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`p-2 rounded-md max-w-[70%] text-sm ${
-                      isMine ? "bg-blue-600 text-white" : "bg-white text-black"
+                    className={`p-2 rounded-md max-w-[70%] text-l ${
+                      isMine ? "bg-violet-700 text-white" : "bg-white text-black"
                     }`}
                   >
-                    <div className="whitespace-pre-wrap break-words">
-                      {msg.message}
-                    </div>
-                    <div className={`text-[10px] mt-1 opacity-70 ${isMine ? "text-white" : "text-gray-600"}`}>
+                    <div>{msg.message}</div>
+                    <div className="text-[10px] opacity-70 mt-1">
                       {new Date(msg.timestamp).toLocaleString()}
                     </div>
                   </div>
@@ -168,27 +179,22 @@ const ChatBox: React.FC<ChatBoxProps> = ({
               );
             })
           ) : (
-            <div className="text-sm text-muted-foreground text-center">
-              No messages yet. Say hello!
-            </div>
+            <div className="text-sm text-gray-500">No messages yet.</div>
           )}
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input */}
-        <DialogFooter className="pt-2">
-          <div className="flex w-full gap-2">
-            <Input
-              placeholder="Type your message..."
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyDown={onKeyDown}
-              disabled={loading}
-            />
-            <Button onClick={sendMessage} disabled={loading || !newMessage.trim()}>
-              {loading ? "Sending..." : "Send"}
-            </Button>
-          </div>
+        <DialogFooter className="flex gap-2">
+          <Input
+            placeholder="Type your message..."
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyDown={onKeyDown}
+            disabled={loading}
+          />
+          <Button onClick={sendMessage} disabled={loading || !newMessage.trim()}>
+            Send
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

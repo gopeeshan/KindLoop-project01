@@ -4,7 +4,7 @@ session_start();
 require_once '../Main/dbc.php';
 require_once '../Main/ChatSystem.php';
 
-header("Content-Type: application/json");
+header("Content-Type: application/json; charset=utf-8");
 
 // CORS: allow common local dev origins and handle preflight
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
@@ -27,9 +27,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $user1 = $_GET['user1'] ?? null;
-    $user2 = $_GET['user2'] ?? null;
-    $donationID = $_GET['donationID'] ?? null;
+    $user1 = isset($_GET['user1']) ? (int)$_GET['user1'] : null;
+    $user2 = isset($_GET['user2']) ? (int)$_GET['user2'] : null;
+    $donationID = isset($_GET['donationID']) && $_GET['donationID'] !== '' ? (int)$_GET['donationID'] : null;
 
     if (!$user1 || !$user2) {
         echo json_encode(["success" => false, "message" => "Missing user IDs"]);
@@ -37,8 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
 
     $chat = new ChatSystem();
-    // Existing ChatSystem::getConversation likely ignores donationID; leaving call as-is to avoid breaking
-    $messages = $chat->getConversation($user1, $user2);
+    $messages = $chat->getConversation($user1, $user2, $donationID);
 
     echo json_encode([
         "success" => true,
