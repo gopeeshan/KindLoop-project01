@@ -1,38 +1,30 @@
 <?php
-require_once __DIR__ . '/../Main/dbc.php';
+session_start(); // important for reading stored OTP
 
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $db = new DBconnector();
-    $conn = $db->connect();
+$frontendOrigin = 'http://localhost:2025'; // your React dev server
+header("Access-Control-Allow-Origin: $frontendOrigin");
+header("Access-Control-Allow-Credentials: true");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+require_once '../Main/dbc.php';
+require_once '../Main/ChatSystem.php';
 
-    $userID = intval($_GET['userID']);
+header("Content-Type: application/json");
 
-    $query = "SELECT m1.*
-              FROM messages m1
-              INNER JOIN (
-                  SELECT 
-                      LEAST(senderID, receiverID) as userA,
-                      GREATEST(senderID, receiverID) as userB,
-                      MAX(timestamp) as maxTime
-                  FROM messages
-                  WHERE senderID = ? OR receiverID = ?
-                  GROUP BY userA, userB
-              ) m2
-              ON LEAST(m1.senderID, m1.receiverID) = m2.userA
-              AND GREATEST(m1.senderID, m1.receiverID) = m2.userB
-              AND m1.timestamp = m2.maxTime
-              ORDER BY m1.timestamp DESC";
+$userID = $_GET['userID'] ?? null;
 
-    $stmt = $conn->prepare($query);
-    $stmt->bind_param("ii", $userID, $userID);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    $conversations = [];
-    while ($row = $result->fetch_assoc()) {
-        $conversations[] = $row;
-    }
-
-    echo json_encode($conversations);
+if (!$userID) {
+    echo json_encode([
+        "success" => false,
+        "message" => "Missing userID"
+    ]);
+    exit;
 }
-?>
+
+$chat = new ChatSystem();
+$conversations = $chat->getLatestChats($userID);
+
+echo json_encode([
+    "success" => true,
+    "conversations" => $conversations
+]);

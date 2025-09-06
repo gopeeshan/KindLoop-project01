@@ -1,27 +1,30 @@
 <?php
-require_once __DIR__ . '/../Main/dbc.php';
+session_start(); // important for reading stored OTP
+
+$frontendOrigin = 'http://localhost:2025'; // your React dev server
+header("Access-Control-Allow-Origin: $frontendOrigin");
+header("Access-Control-Allow-Credentials: true");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+require_once '../Main/dbc.php';
+require_once '../Main/ChatSystem.php';
+
+header("Content-Type: application/json");
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $db = new DBconnector();
-    $conn = $db->connect();
+    $data = json_decode(file_get_contents("php://input"), true);
 
-    $senderID   = intval($_POST['senderID']);
-    $receiverID = intval($_POST['receiverID']);
-    $donationID = isset($_POST['donationID']) ? intval($_POST['donationID']) : null;
-    $message    = trim($_POST['message']);
+    $chat = new ChatSystem();
+    $result = $chat->sendMessage(
+        $data['senderID'],
+        $data['receiverID'],
+        $data['message'],
+        $data['donationID'] ?? null
+    );
 
-    if (!empty($message)) {
-        $stmt = $conn->prepare("INSERT INTO messages (senderID, receiverID, donationID, message) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("iiis", $senderID, $receiverID, $donationID, $message);
-
-        if ($stmt->execute()) {
-            echo json_encode(["status" => "success", "messageID" => $stmt->insert_id]);
-        } else {
-            echo json_encode(["status" => "error", "error" => $stmt->error]);
-        }
-        $stmt->close();
+    if ($result) {
+        echo json_encode(["success" => true, "message" => "Message sent"]);
     } else {
-        echo json_encode(["status" => "error", "error" => "Message cannot be empty"]);
+        echo json_encode(["success" => false, "message" => "Failed to send message"]);
     }
 }
-?>
