@@ -12,7 +12,13 @@ import {
 } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { toast } from "@/hooks/use-toast";
@@ -40,8 +46,9 @@ const DonationDetails = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const userID = parseInt(localStorage.getItem("userID") || "0");
   const [chatOpen, setChatOpen] = useState(false);
+
+  const userID = parseInt(localStorage.getItem("userID") || "0");
 
   useEffect(() => {
     const fetchDonation = async () => {
@@ -67,45 +74,52 @@ const DonationDetails = () => {
   }, [id]);
 
   const handleChat = () => {
+    if (!donation) return;
     setChatOpen(true);
     console.log(
-      `Chat with donor of donation ${donation.DonationID} with the userID ${donation.userID}`
+      `Chat with donor of donation ${donation.DonationID} (donorID: ${donation.userID})`
     );
   };
 
   const handleRequestItem = async (DonationID: number) => {
+    if (!donation) return;
+
     if (userID !== donation.userID) {
-      console.log(
-        `Requesting item ${DonationID} from user ${localStorage.getItem(
-          "userID"
-        )} and Donor is ${donation.userID}`
-      );
-      const response = await axios.post(
-        "http://localhost/KindLoop-project01/Backend/HandleDonation.php",
-        {
-          Action: "request-item",
-          DonationID: DonationID,
-          UserID: userID,
+      try {
+        const response = await axios.post(
+          "http://localhost/KindLoop-project01/Backend/HandleDonation.php",
+          {
+            Action: "request-item",
+            DonationID: DonationID,
+            UserID: userID,
+          }
+        );
+
+        if (response.data.success) {
+          sendNotification(donation.DonationID, donation.userID, userID);
+          toast({
+            title: "Request Sent",
+            description:
+              response.data.message ||
+              "Your request has been submitted successfully.",
+          });
+        } else {
+          toast({
+            title: "Request Failed",
+            description: response.data.message || "Unable to send request.",
+            variant: "destructive",
+          });
         }
-      );
-      if (response.data.success) {
-        sendNotification(donation.DonationID, donation.userID, userID);
+      } catch (err) {
         toast({
-          title: "Request Sent ",
-          description:
-            response.data.message ||
-            "Your request has been submitted successfully.",
-        });
-      } else {
-        toast({
-          title: "Request Failed ",
-          description: response.data.message || "Unable to send request.",
+          title: "Request Failed",
+          description: "Server error. Please try again later.",
           variant: "destructive",
         });
       }
     } else {
       toast({
-        title: "Request Failed ",
+        title: "Request Failed",
         description: "You cannot request your own donation.",
         variant: "destructive",
       });
@@ -118,15 +132,12 @@ const DonationDetails = () => {
     RequesterID: number
   ) => {
     axios
-      .post(
-        "http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
-        {
-          donationID,
-          msg_receiver_ID: DonorID,
-          msg_sender_ID: RequesterID,
-          action: "notify_request",
-        }
-      )
+      .post("http://localhost/KindLoop-project01/Backend/NotificationHandler.php", {
+        donationID,
+        msg_receiver_ID: DonorID,
+        msg_sender_ID: RequesterID,
+        action: "notify_request",
+      })
       .then((res) => console.log("Notification sent", res.data))
       .catch((err) => console.error(err));
   };
@@ -149,19 +160,13 @@ const DonationDetails = () => {
                 <CardTitle className="text-3xl font-bold">
                   {donation.title}
                 </CardTitle>
-                {donation.isVerified == 1 ? (
-                  <Badge
-                    variant="default"
-                    className="bg-green-500 text-white flex items-center"
-                  >
+                {donation.isVerified === 1 ? (
+                  <Badge className="bg-green-500 text-white flex items-center">
                     <CheckCircle className="w-4 h-4 mr-1" />
                     Verified
                   </Badge>
                 ) : (
-                  <Badge
-                    variant="secondary"
-                    className="bg-orange-100 text-orange-700 border-orange-200 flex items-center"
-                  >
+                  <Badge className="bg-orange-100 text-orange-700 border-orange-200 flex items-center">
                     <AlertCircle className="w-4 h-4 mr-1" />
                     Unverified
                   </Badge>
@@ -222,21 +227,16 @@ const DonationDetails = () => {
                   </div>
                 </div>
               )}
+
               <div className="flex gap-2">
                 <Button
                   className="flex-1"
                   disabled={!userID}
-                  onClick={() => {
-                    handleRequestItem(donation.DonationID);
-                  }}
+                  onClick={() => handleRequestItem(donation.DonationID)}
                 >
                   Request Item
                 </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handleChat()}
-                >
+                <Button variant="outline" size="icon" onClick={handleChat}>
                   <MessageCircle className="h-4 w-4" />
                 </Button>
               </div>
@@ -244,11 +244,12 @@ const DonationDetails = () => {
           </Card>
         ) : null}
       </div>
-      <Dialog
-        open={!!selectedImage}
-        onOpenChange={() => setSelectedImage(null)}
-      >
+
+      {/* Image Preview Dialog */}
+      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
         <DialogContent className="max-w-3xl p-4">
+          <DialogTitle>Preview</DialogTitle>
+          <DialogDescription>Full-size donation image</DialogDescription>
           <img
             src={selectedImage ?? ""}
             alt="Full Size"
@@ -260,7 +261,7 @@ const DonationDetails = () => {
         </DialogContent>
       </Dialog>
 
-            {/* 🔹 Chat Popup goes here */}
+      {/* Chat Popup */}
       {donation && (
         <ChatBox
           open={chatOpen}
@@ -270,6 +271,7 @@ const DonationDetails = () => {
           donationID={donation.DonationID}
         />
       )}
+
       <Footer />
     </div>
   );
