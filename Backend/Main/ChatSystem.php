@@ -30,12 +30,8 @@ class ChatSystem {
 
         $senderID   = (int)$senderID;
         $receiverID = (int)$receiverID;
-        if ($donationID === '' || $donationID === null) {
-            $donationID = null;
-        } else {
-            $donationID = (int)$donationID;
-        }
-        $message = (string)$message;
+        $donationID = ($donationID === '' || $donationID === null) ? null : (int)$donationID;
+        $message    = (string)$message;
 
         if (!$stmt->bind_param("iiis", $senderID, $receiverID, $donationID, $message)) {
             $this->setError("Bind failed: " . $stmt->error);
@@ -49,52 +45,90 @@ class ChatSystem {
     }
 
     // Get all messages between two users (chat history)
-    public function getConversation($user1, $user2) {
+    public function getConversation($user1, $user2, $donationID = null) {
         $sql = "SELECT * FROM `messages`
-                WHERE (`senderID` = ? AND `receiverID` = ?)
-                   OR (`senderID` = ? AND `receiverID` = ?)
-                ORDER BY `timestamp` ASC";
+                WHERE (
+                    (`senderID` = ? AND `receiverID` = ?)
+                    OR (`senderID` = ? AND `receiverID` = ?)
+                )";
+
+        if ($donationID !== null) {
+            $sql .= " AND `donationID` = ?";
+        }
+
+        $sql .= " ORDER BY `timestamp` ASC";
+
         $stmt = $this->conn->prepare($sql);
         if (!$stmt) {
             $this->setError("Prepare failed: " . $this->conn->error);
             return [];
         }
+
         $u1 = (int)$user1;
         $u2 = (int)$user2;
-        if (!$stmt->bind_param("iiii", $u1, $u2, $u2, $u1)) {
-            $this->setError("Bind failed: " . $stmt->error);
-            return [];
+
+        if ($donationID !== null) {
+            if (!$stmt->bind_param("iiiii", $u1, $u2, $u2, $u1, $donationID)) {
+                $this->setError("Bind failed: " . $stmt->error);
+                return [];
+            }
+        } else {
+            if (!$stmt->bind_param("iiii", $u1, $u2, $u2, $u1)) {
+                $this->setError("Bind failed: " . $stmt->error);
+                return [];
+            }
         }
+
         if (!$stmt->execute()) {
             $this->setError("Execute failed: " . $stmt->error);
             return [];
         }
+
         $res = $stmt->get_result();
         return $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
     }
 
     // Mark messages as read
-    public function markAsRead($receiverID, $senderID) {
-        $sql = "UPDATE `messages`
-                SET `is_read` = 1
-                WHERE `receiverID` = ? AND `senderID` = ? AND `is_read` = 0";
-        $stmt = $this->conn->prepare($sql);
-        if (!$stmt) {
-            $this->setError("Prepare failed: " . $this->conn->error);
+// Mark messages as read (for a specific donation or all donations between users)
+public function markAsRead($receiverID, $senderID, $donationID = null) {
+    $sql = "UPDATE `messages`
+            SET `is_read` = 1
+            WHERE `receiverID` = ? AND `senderID` = ? AND `is_read` = 0";
+
+    if ($donationID !== null) {
+        $sql .= " AND `donationID` = ?";
+    }
+
+    $stmt = $this->conn->prepare($sql);
+    if (!$stmt) {
+        $this->setError("Prepare failed: " . $this->conn->error);
+        return false;
+    }
+
+    $r = (int)$receiverID;
+    $s = (int)$senderID;
+
+    if ($donationID !== null) {
+        $d = (int)$donationID;
+        if (!$stmt->bind_param("iii", $r, $s, $d)) {
+            $this->setError("Bind failed: " . $stmt->error);
             return false;
         }
-        $r = (int)$receiverID;
-        $s = (int)$senderID;
+    } else {
         if (!$stmt->bind_param("ii", $r, $s)) {
             $this->setError("Bind failed: " . $stmt->error);
             return false;
         }
-        if (!$stmt->execute()) {
-            $this->setError("Execute failed: " . $stmt->error);
-            return false;
-        }
-        return true;
     }
+
+    if (!$stmt->execute()) {
+        $this->setError("Execute failed: " . $stmt->error);
+        return false;
+    }
+
+    return true;
+    }
+
 
     // Get unread messages count for a user
     public function getUnreadCount($userID) {
@@ -121,37 +155,41 @@ class ChatSystem {
     }
 
     // Get latest chats (inbox list)
-    public function getLatestChats($userID) {
-        $sql = "SELECT m.*
-                FROM `messages` m
-                INNER JOIN (
-                    SELECT 
-                        CASE WHEN `senderID` = ? THEN `receiverID` ELSE `senderID` END as chatUser,
-                        MAX(`timestamp`) as lastMsgTime
-                    FROM `messages`
-                    WHERE `senderID` = ? OR `receiverID` = ?
-                    GROUP BY chatUser
-                ) t ON (
-                    (m.`senderID` = ? AND m.`receiverID` = t.chatUser) 
-                    OR (m.`senderID` = t.chatUser AND m.`receiverID` = ?)
-                ) AND m.`timestamp` = t.lastMsgTime
-                ORDER BY m.`timestamp` DESC";
-        $stmt = $this->conn->prepare($sql);
-        if (!$stmt) {
-            $this->setError("Prepare failed: " . $this->conn->error);
-            return [];
-        }
-        $uid = (int)$userID;
-        if (!$stmt->bind_param("iiiii", $uid, $uid, $uid, $uid, $uid)) {
-            $this->setError("Bind failed: " . $stmt->error);
-            return [];
-        }
-        if (!$stmt->execute()) {
-            $this->setError("Execute failed: " . $stmt->error);
-            return [];
-        }
-        $res = $stmt->get_result();
-        return $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
+// Get latest chats (one chat per user pair, ignoring multiple donations)
+public function getLatestChats($userID) {
+    $sql = "SELECT m.*
+            FROM messages m
+            INNER JOIN (
+                SELECT 
+                    CASE WHEN senderID = ? THEN receiverID ELSE senderID END AS chatUser,
+                    MAX(timestamp) AS lastMsgTime
+                FROM messages
+                WHERE senderID = ? OR receiverID = ?
+                GROUP BY chatUser
+            ) t ON ((m.senderID = ? AND m.receiverID = t.chatUser) 
+                    OR (m.senderID = t.chatUser AND m.receiverID = ?))
+               AND m.timestamp = t.lastMsgTime
+            ORDER BY m.timestamp DESC";
+
+    $stmt = $this->conn->prepare($sql);
+    if (!$stmt) {
+        $this->setError("Prepare failed: " . $this->conn->error);
+        return [];
+    }
+
+    $uid = (int)$userID;
+    if (!$stmt->bind_param("iiiii", $uid, $uid, $uid, $uid, $uid)) {
+        $this->setError("Bind failed: " . $stmt->error);
+        return [];
+    }
+
+    if (!$stmt->execute()) {
+        $this->setError("Execute failed: " . $stmt->error);
+        return [];
+    }
+
+    $res = $stmt->get_result();
+    return $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
     }
 
     // Search messages
