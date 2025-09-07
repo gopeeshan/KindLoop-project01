@@ -12,10 +12,17 @@ import {
 } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { toast } from "@/hooks/use-toast";
+import ChatBox from "../components/ChatBox";
 
 interface Donation {
   DonationID: number;
@@ -39,6 +46,8 @@ const DonationDetails = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
+
   const userID = parseInt(localStorage.getItem("userID") || "0");
 
   useEffect(() => {
@@ -64,56 +73,67 @@ const DonationDetails = () => {
     fetchDonation();
   }, [id]);
 
-  const handleChat = (DonationID: number) => {
-    console.log(`Chat with donor of donation ${DonationID}`);
+  const handleChat = () => {
+    if (!donation) return;
+    setChatOpen(true);
+    console.log(
+      `Chat with donor of donation ${donation.DonationID} (donorID: ${donation.userID})`
+    );
   };
 
   const handleRequestItem = async (DonationID: number) => {
+    if (!donation) return;
+
     if (userID !== donation.userID) {
-      console.log(
-      `Requesting item ${DonationID} from user ${localStorage.getItem(
-        "userID"
-      )} and Donor is ${donation.userID}`
-    );
-      const response = await axios.post(
-        "http://localhost/KindLoop-project01/Backend/HandleDonation.php",
-        {
-          Action: "request-item",
-          DonationID: DonationID,
-          UserID: userID,
+      try {
+        const response = await axios.post(
+          "http://localhost/KindLoop-project01/Backend/HandleDonation.php",
+          {
+            Action: "request-item",
+            DonationID: DonationID,
+            UserID: userID,
+          }
+        );
+
+        if (response.data.success) {
+          sendNotification(donation.DonationID, donation.userID, userID);
+          toast({
+            title: "Request Sent",
+            description:
+              response.data.message ||
+              "Your request has been submitted successfully.",
+          });
+        } else {
+          toast({
+            title: "Request Failed",
+            description: response.data.message || "Unable to send request.",
+            variant: "destructive",
+          });
         }
-      );
-      if (response.data.success) {
-        sendNotification( donation.DonationID, donation.userID, userID);
+      } catch (err) {
         toast({
-          title: "Request Sent ",
-          description:
-            response.data.message ||
-            "Your request has been submitted successfully.",
-        });
-      } else {
-        toast({
-          title: "Request Failed ",
-          description: response.data.message || "Unable to send request.",
+          title: "Request Failed",
+          description: "Server error. Please try again later.",
           variant: "destructive",
         });
       }
-    }
-    else{
+    } else {
       toast({
-        title: "Request Failed ",
+        title: "Request Failed",
         description: "You cannot request your own donation.",
         variant: "destructive",
       });
     }
   };
 
-  const sendNotification =(
+  const sendNotification = (
     donationID: number,
     DonorID: number,
     RequesterID: number
   ) => {
-    axios.post("http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
+    axios
+      .post(
+        "http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
         {
           donationID,
           msg_receiver_ID: DonorID,
@@ -143,19 +163,13 @@ const DonationDetails = () => {
                 <CardTitle className="text-3xl font-bold">
                   {donation.title}
                 </CardTitle>
-                {donation.isVerified == 1 ? (
-                  <Badge
-                    variant="default"
-                    className="bg-green-500 text-white flex items-center"
-                  >
+                {donation.isVerified === 1 ? (
+                  <Badge className="bg-green-500 text-white flex items-center">
                     <CheckCircle className="w-4 h-4 mr-1" />
                     Verified
                   </Badge>
                 ) : (
-                  <Badge
-                    variant="secondary"
-                    className="bg-orange-100 text-orange-700 border-orange-200 flex items-center"
-                  >
+                  <Badge className="bg-orange-100 text-orange-700 border-orange-200 flex items-center">
                     <AlertCircle className="w-4 h-4 mr-1" />
                     Unverified
                   </Badge>
@@ -219,16 +233,17 @@ const DonationDetails = () => {
               <div className="flex gap-2">
                 <Button
                   className="flex-1"
-                  onClick={() => {
-                    handleRequestItem(donation.DonationID);
-                  }}
+                  disabled={!userID}
+                  onClick={() => handleRequestItem(donation.DonationID)}
                 >
                   Request Item
                 </Button>
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => handleChat(donation.DonationID)}
+                  onClick={handleChat}
+                  aria-label="Open chat with donor"
+                  title="Open chat with donor"
                 >
                   <MessageCircle className="h-4 w-4" />
                 </Button>
@@ -237,11 +252,15 @@ const DonationDetails = () => {
           </Card>
         ) : null}
       </div>
+
+      {/* Image Preview Dialog */}
       <Dialog
         open={!!selectedImage}
         onOpenChange={() => setSelectedImage(null)}
       >
         <DialogContent className="max-w-3xl p-4">
+          <DialogTitle>Preview</DialogTitle>
+          <DialogDescription>Full-size donation image</DialogDescription>
           <img
             src={selectedImage ?? ""}
             alt="Full Size"
@@ -252,6 +271,19 @@ const DonationDetails = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Chat Popup */}
+      {donation && (
+        <ChatBox
+          open={chatOpen}
+          onClose={() => setChatOpen(false)}
+          currentUserID={userID}
+          otherUserID={donation.userID}
+          donationID={donation.DonationID}
+          otherUserName={donation.fullName}
+        />
+      )}
+
       <Footer />
     </div>
   );

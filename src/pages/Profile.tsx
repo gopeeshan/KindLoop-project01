@@ -51,6 +51,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { send } from "process";
+import MessagesBar from "@/components/MessagesBar";
 
 interface Notification {
   notificationID: number;
@@ -104,6 +105,13 @@ const Profile = () => {
   const [passwordError, setPasswordError] = useState("");
   const [passwordStrengthError, setPasswordStrengthError] = useState("");
 
+  const [errors, setErrors] = useState({
+    fullName: "",
+    contactNumber: "",
+    occupation: "",
+    address: "",
+  });
+
   const [user, setUser] = useState({
     fullName: "",
     email: "",
@@ -132,6 +140,7 @@ const Profile = () => {
     description: "",
     evidence_images: undefined,
   });
+
   const [isComplaintDialogOpen, setIsComplaintDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ToBeReceivedItem | null>(
     null
@@ -220,6 +229,12 @@ const Profile = () => {
   };
 
   const handleSave = async () => {
+    if (!validateForm()) {
+      console.log("Validation failed");
+      return;
+    }
+    console.log("Form is valid:", formData);
+
     try {
       const response = await axios.put(
         "http://localhost/KindLoop-project01/Backend/profile.php",
@@ -242,12 +257,13 @@ const Profile = () => {
         title: "Profile Updated",
         description: "Your profile has been successfully updated.",
       });
+
       window.location.reload();
     } catch (error) {
       console.error("Error updating profile", error);
       toast({
-        title: "Update Failed",
-        description: "There was a problem updating your profile.",
+        title: "Profile Update Failed",
+        description: "Please provide all required information to save changes.",
         variant: "destructive",
       });
     }
@@ -256,6 +272,7 @@ const Profile = () => {
   const handleLogout = () => {
     localStorage.removeItem("isUserLoggedIn");
     localStorage.removeItem("userEmail");
+    localStorage.removeItem("userID");
     toast({
       title: "Logged Out",
       description: "You have been successfully logged out.",
@@ -282,7 +299,7 @@ const Profile = () => {
       (item) => item.DonationID === DonationID
     );
     if (item) {
-      sendNotification(DonationID, item.donorID, user.userID,"Item Received");
+      sendNotification(DonationID, item.donorID, user.userID, "Item Received");
     }
   };
 
@@ -290,38 +307,37 @@ const Profile = () => {
     donationID: number,
     DonorID: number,
     RequesterID: number,
-    Reason: string,
+    Reason: string
   ) => {
-    if(Reason === "Item Received"){
+    if (Reason === "Item Received") {
       axios
-      .post(
-        "http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
-        {
-          donationID,
-          msg_receiver_ID: DonorID,
-          msg_sender_ID: RequesterID,
-          action: "Donation_received_Confirmation",
-        }
-      )
-      .then((res) => console.log("Notification sent", res.data))
-      .catch((err) => console.error(err));
-    }else if (Reason === "Complaint Submitted"){
+        .post(
+          "http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
+          {
+            donationID,
+            msg_receiver_ID: DonorID,
+            msg_sender_ID: RequesterID,
+            action: "Donation_received_Confirmation",
+          }
+        )
+        .then((res) => console.log("Notification sent", res.data))
+        .catch((err) => console.error(err));
+    } else if (Reason === "Complaint Submitted") {
       axios
-      .post(
-        "http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
-        {
-          donationID,
-          msg_receiver_ID: DonorID,
-          msg_sender_ID: RequesterID,
-          action: "Complaint_registered",
-        }
-      )
-      .then((res) => console.log("Notification sent", res.data))
-      .catch((err) => console.error(err));
-    }else{
+        .post(
+          "http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
+          {
+            donationID,
+            msg_receiver_ID: DonorID,
+            msg_sender_ID: RequesterID,
+            action: "Complaint_registered",
+          }
+        )
+        .then((res) => console.log("Notification sent", res.data))
+        .catch((err) => console.error(err));
+    } else {
       console.log("Notification reason not recognized, no notification sent.");
     }
-    
   };
 
   const openComplaintDialog = (item: ToBeReceivedItem) => {
@@ -352,12 +368,16 @@ const Profile = () => {
       );
 
       if (response.data.status === "success") {
-        
         toast({
           title: "Complaint Submitted",
           description: "Your complaint has been successfully submitted.",
         });
-        sendNotification(selectedItem.DonationID, selectedItem.donorID, user.userID,"Complaint Submitted");
+        sendNotification(
+          selectedItem.DonationID,
+          selectedItem.donorID,
+          user.userID,
+          "Complaint Submitted"
+        );
         setIsComplaintDialogOpen(false);
         setComplaintData({ reason: "", description: "" });
         setSelectedItem(null);
@@ -377,8 +397,6 @@ const Profile = () => {
       });
     }
   };
-
-  
 
   const handlePasswordChangeInput = (
     e: React.ChangeEvent<HTMLInputElement>
@@ -453,6 +471,45 @@ const Profile = () => {
     }
   };
 
+  const validateForm = () => {
+    let newErrors: any = {};
+    let isValid = true;
+
+    if (
+      formData.fullName &&
+      !/^[A-Za-z\s]{3,}$/.test(formData.fullName.trim())
+    ) {
+      newErrors.fullName = "Name must be at least 3 characters";
+      isValid = false;
+    }
+
+    if (
+      formData.contactNumber &&
+      !/^07[0-9]{8}$/.test(formData.contactNumber)
+    ) {
+      newErrors.contactNumber =
+        "Contact number must be 10 digits starting with 07.";
+      isValid = false;
+    }
+
+    if (
+      formData.occupation &&
+      !/^[A-Za-z\s]{3,}$/.test(formData.occupation.trim())
+    ) {
+      newErrors.occupation =
+        "Occupation can only contain letters, at least 3 characters.";
+      isValid = false;
+    }
+
+    if (formData.address && formData.address.length < 5) {
+      newErrors.address = "Address must be at least 5 characters long";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
@@ -491,7 +548,7 @@ const Profile = () => {
                       <Star className="h-4 w-4 mr-2" />
                       {user.credit_points} Credits
                     </Badge>
-
+                    <MessagesBar currentUserID={user.userID} openAsPage />
                     <Dialog
                       open={isPasswordDialogOpen}
                       onOpenChange={setPasswordDialogOpen}
@@ -670,6 +727,8 @@ const Profile = () => {
                               <p className="text-sm text-gray-600">
                                 Your Complaint for{" "}
                                 {notification.donation_title} has been Resolved <br /> Solution :: "{notification.complaint_solution}"
+                                {notification.donation_title} By{" "}
+                                {notification.requester_name}
                               </p>
                             )}
                             <p className="text-xs text-gray-400">
@@ -916,7 +975,7 @@ const Profile = () => {
                           <strong>Important </strong><br />Please Do not confirm the receipt until you have received the item <br />OR Made a Solution.<br/>
                           Please use this form only for genuine issues. <br />
                           Submitting false or misleading complaints may result
-                          in suspension of your account.  
+                          in suspension of your account.
                         </span>
                       </p>
 
@@ -1085,22 +1144,15 @@ const Profile = () => {
                         onChange={handleInputChange}
                         className="w-full p-2 border rounded-md"
                       />
+                      {errors.fullName && (
+                        <p className="text-red-500 text-sm">
+                          {errors.fullName}
+                        </p>
+                      )}
                     </div>
-                    {/* <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        className="w-full p-2 border rounded-md"
-                      />
-                    </div> */}
                     <div>
                       <label className="block text-sm font-medium mb-2">
-                        Phone
+                        Contact Number
                       </label>
                       <input
                         type="tel"
@@ -1109,6 +1161,11 @@ const Profile = () => {
                         onChange={handleInputChange}
                         className="w-full p-2 border rounded-md"
                       />
+                      {errors.contactNumber && (
+                        <p className="text-red-500 text-sm">
+                          {errors.contactNumber}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-2">
@@ -1121,6 +1178,11 @@ const Profile = () => {
                         onChange={handleInputChange}
                         className="w-full p-2 border rounded-md"
                       />
+                      {errors.occupation && (
+                        <p className="text-red-500 text-sm">
+                          {errors.occupation}
+                        </p>
+                      )}
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium mb-2">
@@ -1133,6 +1195,9 @@ const Profile = () => {
                         onChange={handleInputChange}
                         className="w-full p-2 border rounded-md"
                       />
+                      {errors.address && (
+                        <p className="text-red-500 text-sm">{errors.address}</p>
+                      )}
                     </div>
                   </div>
                   <div className="mt-6">

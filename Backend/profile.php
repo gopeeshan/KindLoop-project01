@@ -92,8 +92,8 @@ elseif ($method === "PUT") {
     $userID = $input['userID'] ?? null;
 
     if (
-        !isset($input["userID"]) || !isset($input["fullName"]) ||
-        !isset($input["contactNumber"]) || !isset($input["occupation"]) || !isset($input["address"])
+        empty($input["userID"]) || empty($input["fullName"]) ||
+        empty($input["contactNumber"]) || empty($input["occupation"]) || empty($input["address"])
     ) {
         echo json_encode(["error" => "Missing required fields."]);
         exit;

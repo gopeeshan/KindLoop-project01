@@ -134,7 +134,33 @@ class Complaint {
         return $stmt->execute();
     }
 
+public function getComplaints($userID, $donationID) {
+    $sql = "SELECT 
+                ComplaintID,
+                DonationID,
+                complainantID,
+                reason AS Title,
+                description AS Description,
+                created_at
+            FROM complaints
+            WHERE complainantID = ? AND DonationID = ?
+            ORDER BY created_at DESC";
+    
+    $stmt = $this->conn->prepare($sql);
+    $stmt->bind_param("ii", $userID, $donationID);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $complaints = [];
+    while ($row = $result->fetch_assoc()) {
+        $complaints[] = $row;
+    }
+    return [
+        "complaints" => $complaints,
+        "count" => count($complaints)
+    ];
 
 
+}
 }
 ?>

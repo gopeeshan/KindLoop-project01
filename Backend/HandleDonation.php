@@ -5,6 +5,7 @@ header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS");
 require_once './Main/HandleDonation.php';
 require_once './Main/profile.php';
+require_once './Main/Complaint.php';
 
 $handleDonation = new HandleDonation();
 
@@ -19,6 +20,15 @@ $donorID = isset($data['DonorID']) ? (int) $data['DonorID'] : null;
 $quantity = isset($data['quantity']) ? (int) $data['quantity'] : 0;
 
 if ($method === 'POST' && $action === 'request-item') {
+
+ if (empty($userID)) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'You need to login to request an item.'
+            ]);
+            exit;
+        }
+
     if ($userID !== $donorID) {
         if ($handleDonation->checkrequest($donationID, $userID)) {
             echo json_encode(['success' => false, 'message' => 'You have already requested this donation.']);
@@ -69,19 +79,29 @@ if ($method === 'POST' && $action === 'request-item') {
     $action = $_GET['Action'] ?? '';
     $donationID = intval($_GET['donationID']);
     
-    if ($action === 'get_requests') {
-        $requests = $handleDonation->requestingUser($donationID);
-        echo json_encode(['success' => true, 'data' => $requests]);
+//     if ($action === 'get_requests') {
+//         $requests = $handleDonation->requestingUser($donationID);
+//         echo json_encode(['success' => true, 'data' => $requests]);
 
-    } else if ($action === 'get_donation_quantity') {
-        $quantity = $handleDonation->getDonationQuantity($donationID);
-        echo json_encode(['success' => true, 'data' => $quantity]);
+//     } else if ($action === 'get_donation_quantity') {
+//         $quantity = $handleDonation->getDonationQuantity($donationID);
+//         echo json_encode(['success' => true, 'data' => $quantity]);
 
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Invalid action in get'
-    ]);
-    }
-} else {
+//     } else {
+//         echo json_encode(['success' => false, 'message' => 'Invalid action in get'
+//     ]);
+//     }
+// } else {
     
-    echo json_encode(['success' => false, 'message' => 'Invalid request']);
+//     echo json_encode(['success' => false, 'message' => 'Invalid request']);
+//     $requests = $handleDonation->requestingUser($donationID);
+
+    
+ $complaintObj = new Complaint();
+    foreach ($requests as &$user) {
+        // userID is from requestingUser function
+        $user['complaintCount'] = $complaintObj->getComplaints($user['userID'], $donationID)['count'];
+    }
+
+    echo json_encode(['success' => true, 'data' => $requests]);
 }
