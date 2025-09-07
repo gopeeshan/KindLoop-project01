@@ -23,22 +23,15 @@ class Complaint {
                 $fileName = time() . "_" . basename($name);
                 $targetFilePath = $targetDir . $fileName;
 
-                $allowedExts = ['jpg','jpeg','png','gif','webp'];
-                $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-
-                if (in_array($fileExt, $allowedExts)) {
+             
                     if (move_uploaded_file($files['evidence_images']['tmp_name'][$key], $targetFilePath)) {
                         $evidencePaths[] = $targetFilePath;
                     }
-                } else {
-                    return [
-                        "status"=>"error",
-                        "message"=>"Invalid image format for $name. Allowed: jpg, jpeg, png, gif, webp"
-                    ];
+            }
                 }
             }
-        }
-    }
+        
+    
 
     $evidenceJson = !empty($evidencePaths) ? json_encode($evidencePaths) : null;
 
@@ -53,8 +46,9 @@ class Complaint {
     } else {
         return ["status"=>"error","message"=>$stmt->error];
     }
-}
 
+    }
+    
     // Fetch all complaints
     public function getAllComplaints() {
         $result = $this->conn->query("
