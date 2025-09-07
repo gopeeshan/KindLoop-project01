@@ -90,6 +90,7 @@ interface ToBeReceivedItem {
   donorContact: string;
   received_date: string;
   quantity: number;
+  credits: number;
 }
 
 const Profile = () => {
@@ -280,7 +281,7 @@ const Profile = () => {
     navigate("/");
   };
 
-  const handleConfirmReceived = (DonationID: number) => {
+  const handleConfirmReceived = (DonationID: number, credits: number) => {
     setToBeReceivedItems((items) =>
       items.filter((item) => item.DonationID !== DonationID)
     );
@@ -288,6 +289,7 @@ const Profile = () => {
       .post("http://localhost/KindLoop-project01/Backend/profile.php", {
         action: "confirm_received",
         DonationID: DonationID,
+        credits: credits,
       })
       .then(() => {
         toast({
@@ -890,7 +892,7 @@ const Profile = () => {
                                 {item.category} • From {item.donor}
                               </p>
                               <p className="text-sm text-muted-foreground">
-                                Quantity: {item.quantity}
+                                Quantity: {item.quantity} • Credits: {item.credits}
                               </p>
                               <p className="text-sm text-muted-foreground">
                                 Approved on: {item.received_date}
@@ -935,7 +937,7 @@ const Profile = () => {
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() =>
-                                      handleConfirmReceived(item.DonationID)
+                                      handleConfirmReceived(item.DonationID,item.credits)
                                     }
                                   >
                                     Confirm Receipt

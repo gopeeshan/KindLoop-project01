@@ -105,6 +105,7 @@ class Profile
                 d.DonationID,
                 d.title,
                 d.category,
+                d.credits,
                 u.userID AS donorID,
                 u.fullName AS donor,
                 u.contactNumber AS donorContact,
