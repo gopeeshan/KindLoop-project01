@@ -1,126 +1,97 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import ChatBox from "../components/ChatBox";
-import { useSearchParams } from "react-router-dom";
+import ChatBox from "@/components/ChatBox";
+import { useToast } from "@/components/ui/use-toast";
 
 type Conversation = {
-  messageID: number;
-  senderID: number;
-  receiverID: number;
+  otherUserID: number;
+  otherUserName: string;
   donationID: number | null;
   message: string;
   timestamp: string;
-  is_read: number;
-  otherUserID: number;
-  otherUserName?: string;
-  unread: number;
+  unread: number | string;
 };
 
-const MessagesPage: React.FC = () => {
-  const currentUserID = parseInt(localStorage.getItem("userID") || "0", 10);
-  const [loading, setLoading] = useState(false);
+const Messages = () => {
+  const { toast } = useToast();
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [error, setError] = useState<string>("");
+  const [donationTitles, setDonationTitles] = useState<Record<number, string>>({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Resolve donation titles for any donationIDs shown in conversations
-  const [donationTitles, setDonationTitles] = useState<Record<number, string>>(
-    {}
-  );
-
-  // Chat popup state
   const [selectedPeer, setSelectedPeer] = useState<number | null>(null);
-  const [selectedDonationId, setSelectedDonationId] = useState<number | null>(
-    null
-  );
+  const [selectedDonationId, setSelectedDonationId] = useState<number | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
 
-  const [searchParams] = useSearchParams();
+  const currentUserID = useMemo(
+    () => Number(localStorage.getItem("userID") || "0"),
+    []
+  );
 
+  // Load conversations
   useEffect(() => {
     if (!currentUserID) return;
+
+    let cancelled = false;
+
     const load = async () => {
-      setLoading(true);
       try {
+        setLoading(true);
+        setError(null);
         const res = await axios.get(
           `http://localhost/KindLoop-project01/Backend/Chat-System/get-conversations-list.php`,
           { params: { userID: currentUserID }, withCredentials: true }
         );
-        if (res.data?.success && Array.isArray(res.data.conversations)) {
-          setConversations(res.data.conversations);
-          setError("");
-        } else {
-          setError(res.data?.message || "Failed to fetch conversations.");
+        if (!cancelled) {
+          if (res.data?.success && Array.isArray(res.data?.conversations)) {
+            setConversations(res.data.conversations);
+          } else {
+            setError(res.data?.message || "Failed to fetch conversations.");
+          }
         }
       } catch (e) {
-        setError("Server error while fetching conversations.");
+        if (!cancelled) setError("Server error while fetching conversations.");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     load();
-    // You can re-enable polling if needed:
-    // const id = setInterval(load, 8000);
-    // return () => clearInterval(id);
+    const id = setInterval(load, 8000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
   }, [currentUserID]);
 
-  // Auto-open chat from URL (?peerId=...&donationId=...)
+  // Load donation titles for conversations with donationID
   useEffect(() => {
-    const peerId = searchParams.get("peerId");
-    const donationId = searchParams.get("donationId");
-    if (peerId) {
-      setSelectedPeer(Number(peerId));
-      setSelectedDonationId(donationId ? Number(donationId) : null);
-      setChatOpen(true);
-    }
-  }, [searchParams]);
+    const idsToFetch = conversations
+      .map((c) => c.donationID)
+      .filter((id): id is number => id != null && !donationTitles[id]);
 
-  // Resolve donation titles for conversations
-  useEffect(() => {
-    const ids = Array.from(
-      new Set(
-        conversations
-          .map((c) => c.donationID)
-          .filter((id): id is number => typeof id === "number")
-      )
-    ).filter((id) => donationTitles[id] === undefined);
-
-    if (ids.length === 0) return;
+    if (idsToFetch.length === 0) return;
 
     let cancelled = false;
-    async function loadTitles() {
-      try {
-        const results = await Promise.all(
-          ids.map(async (id) => {
-            try {
-              const res = await fetch(
-                `http://localhost/KindLoop-project01/Backend/get-donation-by-id.php?DonationID=${id}`
-              );
-              const json = await res.json();
-              const title =
-                json?.status === "success" && json?.data?.title
-                  ? json.data.title
-                  : `Donation #${id}`;
-              return [id, title] as const;
-            } catch {
-              return [id, `Donation #${id}`] as const;
-            }
-          })
-        );
-        if (!cancelled) {
-          setDonationTitles((prev) => {
-            const next = { ...prev };
-            results.forEach(([id, title]) => {
-              next[id] = title;
-            });
-            return next;
-          });
+
+    const fetchTitles = async () => {
+      for (const id of idsToFetch) {
+        try {
+          const res = await axios.get(
+            `http://localhost/KindLoop-project01/Backend/get-donation-by-id.php`,
+            { params: { DonationID: id }, withCredentials: true }
+          );
+          if (!cancelled && res.data?.status === "success" && res.data?.data?.title) {
+            setDonationTitles((prev) => ({ ...prev, [id]: res.data.data.title }));
+          }
+        } catch {
+          // ignore failure for title fetch
         }
-      } catch {
-        // ignore; fallback titles will be used
       }
-    }
-    loadTitles();
+    };
+
+    fetchTitles();
     return () => {
       cancelled = true;
     };
@@ -132,6 +103,14 @@ const MessagesPage: React.FC = () => {
   );
 
   const openChat = (peerId: number, donationId: number | null) => {
+    if (peerId === currentUserID) {
+      toast({
+        title: "This is your post",
+        description: "You can’t message yourself.",
+        variant: "destructive",
+      });
+      return;
+    }
     setSelectedPeer(peerId);
     setSelectedDonationId(donationId);
     setChatOpen(true);
@@ -185,7 +164,7 @@ const MessagesPage: React.FC = () => {
                     </div>
                   ) : null}
                 </div>
-                {c.unread > 0 ? (
+                {Number(c.unread) > 0 ? (
                   <span className="ml-2 inline-flex items-center justify-center min-w-6 h-6 px-2 rounded-full bg-violet-600 text-white text-xs font-semibold">
                     {c.unread}
                   </span>
@@ -207,7 +186,7 @@ const MessagesPage: React.FC = () => {
             conversations.find(
               (c) =>
                 c.otherUserID === selectedPeer &&
-                (selectedDonationId == null || c.donationID === selectedDonationId)
+                (c.donationID ?? null) === (selectedDonationId ?? null)
             )?.otherUserName
           }
         />
@@ -216,4 +195,4 @@ const MessagesPage: React.FC = () => {
   );
 };
 
-export default MessagesPage;
+export default Messages;

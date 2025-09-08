@@ -7,6 +7,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ChatMessage {
   messageID: number;
@@ -41,6 +42,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   const [donationTitle, setDonationTitle] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const { toast } = useToast();
+  const isSelfChat = currentUserID === otherUserID;
 
   // Fetch donation title if a donationID is present
   useEffect(() => {
@@ -141,6 +144,14 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   };
 
   const sendMessage = async () => {
+    if (isSelfChat) {
+      toast({
+        title: "This is your post",
+        description: "You can’t message yourself.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!newMessage.trim()) return;
 
     setLoading(true);
@@ -193,6 +204,12 @@ const ChatBox: React.FC<ChatBoxProps> = ({
           </DialogDescription>
         </DialogHeader>
 
+        {isSelfChat && (
+          <div className="mb-2 text-sm text-red-600">
+            You can’t message yourself about your own post.
+          </div>
+        )}
+
         {/* Messages list */}
         <div className="flex-1 overflow-y-auto border rounded-md p-2 space-y-2 bg-muted">
           {messages.length > 0 ? (
@@ -238,12 +255,12 @@ const ChatBox: React.FC<ChatBoxProps> = ({
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={onKeyDown}
             placeholder="Type a message…"
-            disabled={loading}
+            disabled={loading || isSelfChat}
           />
           <button
             className="px-3 py-2 bg-violet-600 text-white rounded-md disabled:opacity-60"
             onClick={sendMessage}
-            disabled={loading}
+            disabled={loading || isSelfChat}
           >
             Send
           </button>

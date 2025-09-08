@@ -49,6 +49,7 @@ const DonationDetails = () => {
   const [chatOpen, setChatOpen] = useState(false);
 
   const userID = parseInt(localStorage.getItem("userID") || "0");
+  const isOwner = !!donation && userID === donation.userID;
 
   useEffect(() => {
     const fetchDonation = async () => {
@@ -80,6 +81,15 @@ const DonationDetails = () => {
       toast({
         title: "Login required",
         description: "Please log in to message the donor.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isOwner) {
+      toast({
+        title: "This is your post",
+        description: "You can’t message yourself.",
         variant: "destructive",
       });
       return;
@@ -246,24 +256,34 @@ const DonationDetails = () => {
                 <div className="relative flex-1">
                   <Button
                     className="w-full"
-                    disabled={!userID}
+                    disabled={!userID || isOwner}
                     onClick={() => handleRequestItem(donation.DonationID)}
                     aria-label={
-                      userID ? "Request this item" : "Login to request this item"
+                      !userID
+                        ? "Login to request this item"
+                        : isOwner
+                        ? "You cannot request your own item"
+                        : "Request this item"
                     }
                     title={
-                      userID ? "Request this item" : "Login to request this item"
+                      !userID
+                        ? "Login to request this item"
+                        : isOwner
+                        ? "You cannot request your own item"
+                        : "Request this item"
                     }
                   >
                     Request Item
                   </Button>
-                  {!userID && (
+                  {(!userID || isOwner) && (
                     <div
                       className="absolute inset-0 cursor-not-allowed rounded-md"
                       onClick={() =>
                         toast({
-                          title: "Login required",
-                          description: "Please log in to request this item.",
+                          title: !userID ? "Login required" : "This is your post",
+                          description: !userID
+                            ? "Please log in to request this item."
+                            : "You cannot request your own donation.",
                           variant: "destructive",
                         })
                       }
@@ -278,22 +298,32 @@ const DonationDetails = () => {
                     size="icon"
                     onClick={handleChat}
                     aria-label={
-                      userID ? "Open chat with donor" : "Login to message donor"
+                      !userID
+                        ? "Login to message donor"
+                        : isOwner
+                        ? "You cannot message yourself"
+                        : "Open chat with donor"
                     }
                     title={
-                      userID ? "Open chat with donor" : "Login to message donor"
+                      !userID
+                        ? "Login to message donor"
+                        : isOwner
+                        ? "You cannot message yourself"
+                        : "Open chat with donor"
                     }
-                    disabled={!userID}
+                    disabled={!userID || isOwner}
                   >
                     <MessageCircle className="h-4 w-4" />
                   </Button>
-                  {!userID && (
+                  {(!userID || isOwner) && (
                     <div
                       className="absolute inset-0 cursor-not-allowed rounded-md"
                       onClick={() =>
                         toast({
-                          title: "Login required",
-                          description: "Please log in to message the donor.",
+                          title: !userID ? "Login required" : "This is your post",
+                          description: !userID
+                            ? "Please log in to message the donor."
+                            : "You can’t message yourself.",
                           variant: "destructive",
                         })
                       }
