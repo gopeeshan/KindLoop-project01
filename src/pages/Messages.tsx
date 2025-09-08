@@ -50,8 +50,8 @@ const MessagesPage: React.FC = () => {
     };
 
     load();
-    const id = setInterval(load, 5000);
-    return () => clearInterval(id);
+    // const id = setInterval(load, 5000);
+    // return () => clearInterval(id);
   }, [currentUserID]);
 
   useEffect(() => {
