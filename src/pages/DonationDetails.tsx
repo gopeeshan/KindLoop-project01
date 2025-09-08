@@ -75,6 +75,16 @@ const DonationDetails = () => {
 
   const handleChat = () => {
     if (!donation) return;
+
+    if (!userID) {
+      toast({
+        title: "Login required",
+        description: "Please log in to message the donor.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setChatOpen(true);
     console.log(
       `Chat with donor of donation ${donation.DonationID} (donorID: ${donation.userID})`
@@ -230,23 +240,66 @@ const DonationDetails = () => {
                   </div>
                 </div>
               )}
+
               <div className="flex gap-2">
-                <Button
-                  className="flex-1"
-                  disabled={!userID}
-                  onClick={() => handleRequestItem(donation.DonationID)}
-                >
-                  Request Item
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleChat}
-                  aria-label="Open chat with donor"
-                  title="Open chat with donor"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                </Button>
+                {/* Request Item with disabled overlay toaster */}
+                <div className="relative flex-1">
+                  <Button
+                    className="w-full"
+                    disabled={!userID}
+                    onClick={() => handleRequestItem(donation.DonationID)}
+                    aria-label={
+                      userID ? "Request this item" : "Login to request this item"
+                    }
+                    title={
+                      userID ? "Request this item" : "Login to request this item"
+                    }
+                  >
+                    Request Item
+                  </Button>
+                  {!userID && (
+                    <div
+                      className="absolute inset-0 cursor-not-allowed rounded-md"
+                      onClick={() =>
+                        toast({
+                          title: "Login required",
+                          description: "Please log in to request this item.",
+                          variant: "destructive",
+                        })
+                      }
+                    />
+                  )}
+                </div>
+
+                {/* Message (chat) with disabled overlay toaster */}
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleChat}
+                    aria-label={
+                      userID ? "Open chat with donor" : "Login to message donor"
+                    }
+                    title={
+                      userID ? "Open chat with donor" : "Login to message donor"
+                    }
+                    disabled={!userID}
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                  </Button>
+                  {!userID && (
+                    <div
+                      className="absolute inset-0 cursor-not-allowed rounded-md"
+                      onClick={() =>
+                        toast({
+                          title: "Login required",
+                          description: "Please log in to message the donor.",
+                          variant: "destructive",
+                        })
+                      }
+                    />
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
