@@ -16,101 +16,55 @@ type Conversation = {
   unread: number;
 };
 
-const BASE_DELAY_MS = 2000;
-const MAX_DELAY_MS = 60000;
-
 const MessagesPage: React.FC = () => {
   const currentUserID = parseInt(localStorage.getItem("userID") || "0", 10);
   const [loading, setLoading] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [error, setError] = useState<string>("");
+
+  // Resolve donation titles for any donationIDs shown in conversations
+  const [donationTitles, setDonationTitles] = useState<Record<number, string>>(
+    {}
+  );
+
+  // Chat popup state
   const [selectedPeer, setSelectedPeer] = useState<number | null>(null);
-  const [selectedDonationId, setSelectedDonationId] = useState<number | null>(null);
+  const [selectedDonationId, setSelectedDonationId] = useState<number | null>(
+    null
+  );
   const [chatOpen, setChatOpen] = useState(false);
 
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
     if (!currentUserID) return;
-
-    let delay = BASE_DELAY_MS;
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    let stopped = false;
-    let firstRun = true;
-    let controller: AbortController | null = null;
-
-    const computeSignature = (items: Conversation[]) =>
-      items.map((c) => `${c.otherUserID}:${c.messageID}:${c.unread}:${c.timestamp}`).join("|");
-
-    let lastSig = computeSignature(conversations);
-
-    const scheduleNext = () => {
-      if (stopped) return;
-      timeoutId = setTimeout(poll, delay);
-    };
-
-    const poll = async () => {
-      if (stopped) return;
-
-      if (controller) controller.abort();
-      controller = new AbortController();
-
-      if (firstRun) setLoading(true);
-
+    const load = async () => {
+      setLoading(true);
       try {
         const res = await axios.get(
           `http://localhost/KindLoop-project01/Backend/Chat-System/get-conversations-list.php`,
-          {
-            params: { userID: currentUserID },
-            withCredentials: true,
-            signal: controller.signal,
-          }
+          { params: { userID: currentUserID }, withCredentials: true }
         );
-
         if (res.data?.success && Array.isArray(res.data.conversations)) {
-          const newItems: Conversation[] = res.data.conversations;
-          const newSig = computeSignature(newItems);
-          const hasChanged = newSig !== lastSig;
-
-          if (hasChanged) {
-            setConversations(newItems);
-            lastSig = newSig;
-            delay = BASE_DELAY_MS; // reset on new data
-          } else {
-            delay = Math.min(delay * 2, MAX_DELAY_MS); // backoff when no changes
-          }
+          setConversations(res.data.conversations);
           setError("");
         } else {
-          // Treat unexpected shape as a transient failure -> backoff
           setError(res.data?.message || "Failed to fetch conversations.");
-          delay = Math.min(delay * 2, MAX_DELAY_MS);
         }
       } catch (e) {
-        if ((e as any)?.name === "CanceledError") {
-          // request was aborted during cleanup or next poll; don't adjust delay
-        } else {
-          setError("Server error while fetching conversations.");
-          delay = Math.min(delay * 2, MAX_DELAY_MS);
-        }
+        setError("Server error while fetching conversations.");
       } finally {
-        if (firstRun) {
-          setLoading(false);
-          firstRun = false;
-        }
-        scheduleNext();
+        setLoading(false);
       }
     };
 
-    // Kick off the loop
-    poll();
+    load();
+    // You can re-enable polling if needed:
+    // const id = setInterval(load, 8000);
+    // return () => clearInterval(id);
+  }, [currentUserID]);
 
-    return () => {
-      stopped = true;
-      if (timeoutId) clearTimeout(timeoutId);
-      if (controller) controller.abort();
-    };
-  }, [currentUserID]); // eslint-disable-line react-hooks/exhaustive-deps
-
+  // Auto-open chat from URL (?peerId=...&donationId=...)
   useEffect(() => {
     const peerId = searchParams.get("peerId");
     const donationId = searchParams.get("donationId");
@@ -120,6 +74,57 @@ const MessagesPage: React.FC = () => {
       setChatOpen(true);
     }
   }, [searchParams]);
+
+  // Resolve donation titles for conversations
+  useEffect(() => {
+    const ids = Array.from(
+      new Set(
+        conversations
+          .map((c) => c.donationID)
+          .filter((id): id is number => typeof id === "number")
+      )
+    ).filter((id) => donationTitles[id] === undefined);
+
+    if (ids.length === 0) return;
+
+    let cancelled = false;
+    async function loadTitles() {
+      try {
+        const results = await Promise.all(
+          ids.map(async (id) => {
+            try {
+              const res = await fetch(
+                `http://localhost/KindLoop-project01/Backend/get-donation-by-id.php?DonationID=${id}`
+              );
+              const json = await res.json();
+              const title =
+                json?.status === "success" && json?.data?.title
+                  ? json.data.title
+                  : `Donation #${id}`;
+              return [id, title] as const;
+            } catch {
+              return [id, `Donation #${id}`] as const;
+            }
+          })
+        );
+        if (!cancelled) {
+          setDonationTitles((prev) => {
+            const next = { ...prev };
+            results.forEach(([id, title]) => {
+              next[id] = title;
+            });
+            return next;
+          });
+        }
+      } catch {
+        // ignore; fallback titles will be used
+      }
+    }
+    loadTitles();
+    return () => {
+      cancelled = true;
+    };
+  }, [conversations, donationTitles]);
 
   const totalUnread = useMemo(
     () => conversations.reduce((sum, c) => sum + (Number(c.unread) || 0), 0),
@@ -153,31 +158,30 @@ const MessagesPage: React.FC = () => {
           <div className="p-4 text-gray-500">No conversations yet.</div>
         ) : (
           conversations.map((c) => {
-            const name = c.otherUserName || `User ${c.otherUserID}`;
-            const last = c.message || "";
             const ts = new Date(c.timestamp).toLocaleString();
+            const last = c.message || "";
+            const title =
+              c.donationID != null
+                ? donationTitles[c.donationID] ?? "…"
+                : undefined;
+
             return (
               <button
-                key={`${c.otherUserID}-${c.messageID}`}
-                className="w-full text-left p-4 hover:bg-gray-50 flex items-center gap-3"
-                onClick={() => openChat(c.otherUserID, c.donationID ?? null)}
-                aria-label={`Open chat with ${name}`}
-                title={`Open chat with ${name}`}
+                key={`${c.otherUserID}-${c.donationID ?? "none"}`}
+                className="w-full p-3 flex items-center justify-between hover:bg-gray-50 text-left"
+                onClick={() => openChat(c.otherUserID, c.donationID)}
               >
-                <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                  <span className="text-sm font-medium">
-                    {name.substring(0, 1).toUpperCase()}
-                  </span>
-                </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <div className="font-medium truncate">{name}</div>
+                    <div className="font-medium truncate">
+                      {c.otherUserName || `User ${c.otherUserID}`}
+                    </div>
                     <div className="text-xs text-gray-500">{ts}</div>
                   </div>
                   <div className="text-sm text-gray-600 truncate">{last}</div>
-                  {c.donationID ? (
+                  {title ? (
                     <div className="mt-1 text-xs text-gray-500">
-                      donationID: {c.donationID}
+                      About: {title}
                     </div>
                   ) : null}
                 </div>
@@ -199,7 +203,13 @@ const MessagesPage: React.FC = () => {
           currentUserID={currentUserID}
           otherUserID={selectedPeer}
           donationID={selectedDonationId}
-          otherUserName={conversations.find((c) => c.otherUserID === selectedPeer)?.otherUserName}
+          otherUserName={
+            conversations.find(
+              (c) =>
+                c.otherUserID === selectedPeer &&
+                (selectedDonationId == null || c.donationID === selectedDonationId)
+            )?.otherUserName
+          }
         />
       )}
     </div>

@@ -1,32 +1,30 @@
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import axios from "axios";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import axios from "axios";
+
+interface ChatMessage {
+  messageID: number;
+  senderID: number;
+  receiverID: number;
+  donationID: number | null;
+  message: string;
+  timestamp: string;
+  is_read: number;
+}
 
 interface ChatBoxProps {
   open: boolean;
   onClose: () => void;
   currentUserID: number;
   otherUserID: number;
-  donationID: number;
+  donationID?: number | null;
   otherUserName?: string;
-}
-
-interface Message {
-  messageID: number;
-  senderID: number;
-  receiverID: number;
-  message: string;
-  timestamp: string;
-  is_read: number;
 }
 
 const ChatBox: React.FC<ChatBoxProps> = ({
@@ -37,10 +35,44 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   donationID,
   otherUserName,
 }) => {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [donationTitle, setDonationTitle] = useState<string | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  // Fetch donation title if a donationID is present
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadTitle() {
+      if (!donationID) {
+        setDonationTitle(null);
+        return;
+      }
+      try {
+        const res = await axios.get(
+          `http://localhost/KindLoop-project01/Backend/get-donation-by-id.php`,
+          { params: { DonationID: donationID }, withCredentials: true }
+        );
+        if (!cancelled) {
+          if (res.data?.status === "success" && res.data?.data?.title) {
+            setDonationTitle(res.data.data.title as string);
+          } else {
+            setDonationTitle(null);
+          }
+        }
+      } catch {
+        if (!cancelled) setDonationTitle(null);
+      }
+    }
+
+    loadTitle();
+    return () => {
+      cancelled = true;
+    };
+  }, [donationID]);
 
   // Scroll to bottom when messages update
   const scrollToBottom = () => {
@@ -72,14 +104,17 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
   const fetchMessages = async () => {
     try {
-      const res = await axios.get(`http://localhost/KindLoop-project01/Backend/Chat-System/get-conversation.php`, {
-        params: {
-          user1: currentUserID,
-          user2: otherUserID,
-          donationID: donationID,
-        },
-        withCredentials: true,
-      });
+      const res = await axios.get(
+        `http://localhost/KindLoop-project01/Backend/Chat-System/get-conversation.php`,
+        {
+          params: {
+            user1: currentUserID,
+            user2: otherUserID,
+            donationID: donationID,
+          },
+          withCredentials: true,
+        }
+      );
       if (res.data?.success && Array.isArray(res.data.messages)) {
         setMessages(res.data.messages);
       }
@@ -95,6 +130,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         {
           receiverID: currentUserID,
           senderID: otherUserID,
+          donationID: donationID ?? null, // include donation thread context (backend supports optional donationID)
         },
         { withCredentials: true }
       );
@@ -105,7 +141,6 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   };
 
   const sendMessage = async () => {
-    
     if (!newMessage.trim()) return;
 
     setLoading(true);
@@ -149,7 +184,10 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="max-w-lg p-4 flex flex-col h-[500px]">
         <DialogHeader>
-          <DialogTitle>Chat with {otherUserName || "User"}</DialogTitle>
+          <DialogTitle>
+            Chat {donationTitle ? `about “${donationTitle}” ` : ""}with{" "}
+            {otherUserName || "User"}
+          </DialogTitle>
           <DialogDescription>
             Discuss donation details directly with the other user.
           </DialogDescription>
@@ -166,12 +204,20 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                   className={`flex ${isMine ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`p-2 rounded-md max-w-[70%] text-l ${
-                      isMine ? "bg-violet-700 text-white" : "bg-white text-black"
+                    className={`max-w-[75%] rounded-lg px-3 py-2 text-sm shadow ${
+                      isMine
+                        ? "bg-violet-600 text-white"
+                        : "bg-white text-gray-900 border"
                     }`}
                   >
-                    <div>{msg.message}</div>
-                    <div className="text-[10px] opacity-70 mt-1">
+                    <div className="whitespace-pre-wrap break-words">
+                      {msg.message}
+                    </div>
+                    <div
+                      className={`mt-1 text-[10px] ${
+                        isMine ? "text-violet-100" : "text-gray-500"
+                      }`}
+                    >
                       {new Date(msg.timestamp).toLocaleString()}
                     </div>
                   </div>
@@ -184,18 +230,24 @@ const ChatBox: React.FC<ChatBoxProps> = ({
           <div ref={messagesEndRef} />
         </div>
 
-        <DialogFooter className="flex gap-2">
-          <Input
-            placeholder="Type your message..."
+        {/* Composer */}
+        <div className="mt-2 flex gap-2">
+          <input
+            className="flex-1 border rounded-md px-3 py-2"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={onKeyDown}
+            placeholder="Type a message…"
             disabled={loading}
           />
-          <Button onClick={sendMessage} disabled={loading || !newMessage.trim()}>
+          <button
+            className="px-3 py-2 bg-violet-600 text-white rounded-md disabled:opacity-60"
+            onClick={sendMessage}
+            disabled={loading}
+          >
             Send
-          </Button>
-        </DialogFooter>
+          </button>
+        </div>
       </DialogContent>
     </Dialog>
   );
