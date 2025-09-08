@@ -12,4 +12,4 @@ CREATE TABLE `messages` (
  KEY `idx_donation` (`donationID`),
  CONSTRAINT `fk_messages_receiver` FOREIGN KEY (`receiverID`) REFERENCES `user` (`userID`) ON DELETE CASCADE,
  CONSTRAINT `fk_messages_sender` FOREIGN KEY (`senderID`) REFERENCES `user` (`userID`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=71 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
