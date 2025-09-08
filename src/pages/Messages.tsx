@@ -16,6 +16,9 @@ type Conversation = {
   unread: number;
 };
 
+const BASE_DELAY_MS = 2000;
+const MAX_DELAY_MS = 60000;
+
 const MessagesPage: React.FC = () => {
   const currentUserID = parseInt(localStorage.getItem("userID") || "0", 10);
   const [loading, setLoading] = useState(false);
@@ -29,30 +32,84 @@ const MessagesPage: React.FC = () => {
 
   useEffect(() => {
     if (!currentUserID) return;
-    const load = async () => {
-      setLoading(true);
+
+    let delay = BASE_DELAY_MS;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let stopped = false;
+    let firstRun = true;
+    let controller: AbortController | null = null;
+
+    const computeSignature = (items: Conversation[]) =>
+      items.map((c) => `${c.otherUserID}:${c.messageID}:${c.unread}:${c.timestamp}`).join("|");
+
+    let lastSig = computeSignature(conversations);
+
+    const scheduleNext = () => {
+      if (stopped) return;
+      timeoutId = setTimeout(poll, delay);
+    };
+
+    const poll = async () => {
+      if (stopped) return;
+
+      if (controller) controller.abort();
+      controller = new AbortController();
+
+      if (firstRun) setLoading(true);
+
       try {
         const res = await axios.get(
           `http://localhost/KindLoop-project01/Backend/Chat-System/get-conversations-list.php`,
-          { params: { userID: currentUserID }, withCredentials: true }
+          {
+            params: { userID: currentUserID },
+            withCredentials: true,
+            signal: controller.signal,
+          }
         );
+
         if (res.data?.success && Array.isArray(res.data.conversations)) {
-          setConversations(res.data.conversations);
+          const newItems: Conversation[] = res.data.conversations;
+          const newSig = computeSignature(newItems);
+          const hasChanged = newSig !== lastSig;
+
+          if (hasChanged) {
+            setConversations(newItems);
+            lastSig = newSig;
+            delay = BASE_DELAY_MS; // reset on new data
+          } else {
+            delay = Math.min(delay * 2, MAX_DELAY_MS); // backoff when no changes
+          }
           setError("");
         } else {
+          // Treat unexpected shape as a transient failure -> backoff
           setError(res.data?.message || "Failed to fetch conversations.");
+          delay = Math.min(delay * 2, MAX_DELAY_MS);
         }
       } catch (e) {
-        setError("Server error while fetching conversations.");
+        if ((e as any)?.name === "CanceledError") {
+          // request was aborted during cleanup or next poll; don't adjust delay
+        } else {
+          setError("Server error while fetching conversations.");
+          delay = Math.min(delay * 2, MAX_DELAY_MS);
+        }
       } finally {
-        setLoading(false);
+        if (firstRun) {
+          setLoading(false);
+          firstRun = false;
+        }
+        scheduleNext();
       }
     };
 
-    load();
-    // const id = setInterval(load, 5000);
-    // return () => clearInterval(id);
-  }, [currentUserID]);
+    // Kick off the loop
+    poll();
+
+    return () => {
+      stopped = true;
+      if (timeoutId) clearTimeout(timeoutId);
+      if (controller) controller.abort();
+    };
+  }, [currentUserID]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const peerId = searchParams.get("peerId");
