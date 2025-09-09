@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { toast } from "@/hooks/use-toast";
 import ChatBox from "../components/ChatBox";
+import { fetchUserCredits } from "../lib/api/credits";
 
 interface Donation {
   DonationID: number;
@@ -49,6 +50,16 @@ const DonationDetails = () => {
   const [chatOpen, setChatOpen] = useState(false);
 
   const userID = parseInt(localStorage.getItem("userID") || "0");
+
+const [user, setUser] = useState<{
+  userID: number;
+  fullName: string;
+  email: string;
+  credit_points: number;
+  current_year_requests: number;
+  current_year_request_limit: number;
+} | null>(null);
+
   const isOwner = !!donation && userID === donation.userID;
 
   useEffect(() => {
@@ -112,17 +123,20 @@ const DonationDetails = () => {
             Action: "request-item",
             DonationID: DonationID,
             UserID: userID,
+            DonorID: donation.userID,
           }
         );
 
         if (response.data.success) {
           sendNotification(donation.DonationID, donation.userID, userID);
+
           toast({
             title: "Request Sent",
             description:
               response.data.message ||
               "Your request has been submitted successfully.",
           });
+          fetchUserCredits(userID);
         } else {
           toast({
             title: "Request Failed",
@@ -252,84 +266,22 @@ const DonationDetails = () => {
               )}
 
               <div className="flex gap-2">
-                {/* Request Item with disabled overlay toaster */}
-                <div className="relative flex-1">
-                  <Button
-                    className="w-full"
-                    disabled={!userID || isOwner}
-                    onClick={() => handleRequestItem(donation.DonationID)}
-                    aria-label={
-                      !userID
-                        ? "Login to request this item"
-                        : isOwner
-                        ? "You cannot request your own item"
-                        : "Request this item"
-                    }
-                    title={
-                      !userID
-                        ? "Login to request this item"
-                        : isOwner
-                        ? "You cannot request your own item"
-                        : "Request this item"
-                    }
-                  >
-                    Request Item
-                  </Button>
-                  {(!userID || isOwner) && (
-                    <div
-                      className="absolute inset-0 cursor-not-allowed rounded-md"
-                      onClick={() =>
-                        toast({
-                          title: !userID ? "Login required" : "This is your post",
-                          description: !userID
-                            ? "Please log in to request this item."
-                            : "You cannot request your own donation.",
-                          variant: "destructive",
-                        })
-                      }
-                    />
-                  )}
-                </div>
-
-                {/* Message (chat) with disabled overlay toaster */}
-                <div className="relative">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handleChat}
-                    aria-label={
-                      !userID
-                        ? "Login to message donor"
-                        : isOwner
-                        ? "You cannot message yourself"
-                        : "Open chat with donor"
-                    }
-                    title={
-                      !userID
-                        ? "Login to message donor"
-                        : isOwner
-                        ? "You cannot message yourself"
-                        : "Open chat with donor"
-                    }
-                    disabled={!userID || isOwner}
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                  </Button>
-                  {(!userID || isOwner) && (
-                    <div
-                      className="absolute inset-0 cursor-not-allowed rounded-md"
-                      onClick={() =>
-                        toast({
-                          title: !userID ? "Login required" : "This is your post",
-                          description: !userID
-                            ? "Please log in to message the donor."
-                            : "You can’t message yourself.",
-                          variant: "destructive",
-                        })
-                      }
-                    />
-                  )}
-                </div>
+                <Button
+                  className="flex-1"
+                  disabled={!userID}
+                  onClick={() => handleRequestItem(donation.DonationID)}
+                >
+                  Request Item
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleChat}
+                  aria-label="Open chat with donor"
+                  title="Open chat with donor"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                </Button>
               </div>
             </CardContent>
           </Card>
