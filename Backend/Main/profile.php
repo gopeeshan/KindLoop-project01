@@ -134,61 +134,122 @@ class Profile
         return $toBeReceived;
     }
 
-    public function confirmReceived($DonationID, $receiverID)
+    // public function confirmReceived($DonationID, $receiverID)
+    // {
+    //     $this->DonationID = $DonationID;
+    //     $stmt = $this->conn->prepare("UPDATE donation SET isDonationCompleted = 1 WHERE DonationID = ?");
+    //     $stmt->bind_param("i", $this->DonationID);
+    //     if ($stmt->execute()) {
+    //         if ($this->credits_update($this->DonationID, $receiverID)['success']) {
+    //             return ["success" => true];
+    //         }
+    //     } else {
+    //         return ["error" => "Failed to confirm receipt."];
+    //     }
+    // }
+    // public function credits_update($DonationID, $receiverID)
+    // {
+    //     $sql = "UPDATE user u
+    //         JOIN receive_items ri ON u.userID = ri.donorID
+    //         JOIN donation d ON d.DonationID = ri.donationID AND ri.receiverID = ?
+    //         SET u.credit_points = u.credit_points + (ri.quantity * d.credits)
+    //         WHERE d.DonationID = ?";
+
+    //     $stmt = $this->conn->prepare($sql);
+    //     $stmt->bind_param("ii", $receiverID, $DonationID);
+
+    //     if ($stmt->execute()) {
+    //         if ($stmt->affected_rows > 0) {
+    //             return ['success' => true, 'message' => 'Credits updated successfully'];
+    //         } else {
+    //             return ['success' => false, 'message' => 'No rows updated (maybe not received yet)'];
+    //         }
+    //     } else {
+    //         return ['success' => false, 'message' => 'Database error', 'error' => $stmt->error];
+    //     }
+    //     // // 2. Update donation status
+    //     // $stmt = $this->conn->prepare("UPDATE donation SET isDonationCompleted = 1 WHERE DonationID = ?");
+    //     // $stmt->bind_param("i", $this->DonationID);
+    //     // $stmt->execute();
+
+    //     // // 3. Update donor's credit points
+    //     // $stmt = $this->conn->prepare("UPDATE user 
+    //     //     SET credit_points = credit_points + ?, 
+    //     //         year_points = year_points + ? 
+    //     //     WHERE userID = ?");
+    //     // $stmt->bind_param("iii", $earnedPts,$earnedPts, $donorID);
+    //     // $stmt->execute();
+
+    //     // // 4. Insert into receive_items table
+    //     // $stmt = $this->conn->prepare("INSERT INTO receive_items (donationID, donorID, receiverID, quantity) VALUES (?, ?, ?, ?)");
+    //     // $stmt->bind_param("iiii", $this->DonationID, $donorID, $receiverID, $quantity);
+    //     // $stmt->execute();
+
+    //     // return ["success" => true, "creditedPoints" => $earnedPts];
+    // }
+
+    public function confirmReceived($donationID, $receiverID)
     {
-        $this->DonationID = $DonationID;
-        $stmt = $this->conn->prepare("UPDATE donation SET isDonationCompleted = 1 WHERE DonationID = ?");
-        $stmt->bind_param("i", $this->DonationID);
+        $sql = "UPDATE receive_items 
+            SET status = 'completed' 
+            WHERE donationID = ? AND receiverID = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("ii", $donationID, $receiverID);
+
         if ($stmt->execute()) {
-            if ($this->credits_update($this->DonationID, $receiverID)['success']) {
-                return ["success" => true];
+            if ($this->credits_update($donationID, $receiverID)['success']) {
+                $checkSql = "SELECT d.quantity AS totalDonationQty, 
+                        IFNULL(SUM(ri.quantity), 0) AS totalReceivedQty
+                 FROM donation d
+                 LEFT JOIN receive_items ri 
+                    ON d.DonationID = ri.donationID AND ri.status = 'completed'
+                 WHERE d.DonationID = ?
+                 GROUP BY d.DonationID";
+
+                $checkStmt = $this->conn->prepare($checkSql);
+                $checkStmt->bind_param("i", $donationID);
+                $checkStmt->execute();
+                $result = $checkStmt->get_result()->fetch_assoc();
+
+                if ($result && (int)$result['totalDonationQty'] === (int)$result['totalReceivedQty']) {
+                    // Step 4: Mark donation as completed
+                    $updateDonation = $this->conn->prepare(
+                        "UPDATE donation SET isDonationCompleted = 1 WHERE DonationID = ?"
+                    );
+                    $updateDonation->bind_param("i", $donationID);
+                    $updateDonation->execute();
+                }
+
+                return ["success" => true, "message" => "Confirmed received successfully."];
+            } else {
+                return ["success" => false, "message" => "Failed to update credits."];
             }
-            
         } else {
-            return ["error" => "Failed to confirm receipt."];
+            return ["success" => false, "message" => "Failed to update receive_items status."];
         }
     }
-    public function credits_update($DonationID, $receiverID)
-{
-    $sql = "UPDATE user u
+
+    public function credits_update($donationID, $receiverID)
+    {
+        $sql = "UPDATE user u
             JOIN receive_items ri ON u.userID = ri.donorID
-            JOIN donation d ON d.DonationID = ri.donationID AND ri.receiverID = ?
+            JOIN donation d ON d.DonationID = ri.donationID
             SET u.credit_points = u.credit_points + (ri.quantity * d.credits)
-            WHERE d.DonationID = ?";
+            WHERE d.DonationID = ? AND ri.receiverID = ? ";
 
-    $stmt = $this->conn->prepare($sql);
-    $stmt->bind_param("ii", $receiverID, $DonationID);
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("ii", $donationID, $receiverID);
 
-    if ($stmt->execute()) {
-        if ($stmt->affected_rows > 0) {
-            return ['success' => true, 'message' => 'Credits updated successfully'];
+        if ($stmt->execute()) {
+            if ($stmt->affected_rows > 0) {
+                return ['success' => true, 'message' => 'Credits updated successfully'];
+            } else {
+                return ['success' => false, 'message' => 'No credits updated (maybe already confirmed).'];
+            }
         } else {
-            return ['success' => false, 'message' => 'No rows updated (maybe not received yet)'];
+            return ['success' => false, 'message' => 'Database error', 'error' => $stmt->error];
         }
-    } else {
-        return ['success' => false, 'message' => 'Database error', 'error' => $stmt->error];
     }
-    // // 2. Update donation status
-    // $stmt = $this->conn->prepare("UPDATE donation SET isDonationCompleted = 1 WHERE DonationID = ?");
-    // $stmt->bind_param("i", $this->DonationID);
-    // $stmt->execute();
-
-    // // 3. Update donor's credit points
-    // $stmt = $this->conn->prepare("UPDATE user 
-    //     SET credit_points = credit_points + ?, 
-    //         year_points = year_points + ? 
-    //     WHERE userID = ?");
-    // $stmt->bind_param("iii", $earnedPts,$earnedPts, $donorID);
-    // $stmt->execute();
-
-    // // 4. Insert into receive_items table
-    // $stmt = $this->conn->prepare("INSERT INTO receive_items (donationID, donorID, receiverID, quantity) VALUES (?, ?, ?, ?)");
-    // $stmt->bind_param("iiii", $this->DonationID, $donorID, $receiverID, $quantity);
-    // $stmt->execute();
-
-    // return ["success" => true, "creditedPoints" => $earnedPts];
-}
-
 
 
 
