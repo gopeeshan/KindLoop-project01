@@ -119,7 +119,7 @@ class Profile
                    ON dr.donationID = d.DonationID
                   AND dr.userID = ri.receiverID
               WHERE ri.receiverID = ?
-                AND d.isDonationCompleted = 0 
+                AND ri.status = 'pending' 
                 AND dr.status = 'selected'
               ORDER BY ri.received_date DESC";
 
@@ -133,10 +133,6 @@ class Profile
         $stmt->close();
         return $toBeReceived;
     }
-
-    public function confirmReceived($DonationID, $receiverID)
-{
-    $this->DonationID = $DonationID;
 
     public function confirmReceived($DonationID, $receiverID)
     {
@@ -175,32 +171,7 @@ class Profile
 }
 
 
-    $donorID   = $donation['donorID'];
-    $credits   = (int)$donation['credits'];
-    $quantity  = (int)$donation['quantity'];
-    $earnedPts = $credits * $quantity;
 
-    // 2. Update donation status
-    $stmt = $this->conn->prepare("UPDATE donation SET isDonationCompleted = 1 WHERE DonationID = ?");
-    $stmt->bind_param("i", $this->DonationID);
-    $stmt->execute();
-
-    // 3. Update donor's credit points
-    $stmt = $this->conn->prepare("UPDATE user 
-        SET credit_points = credit_points + ?, 
-            total_points = total_points + ?, 
-            year_points = year_points + ? 
-        WHERE userID = ?");
-    $stmt->bind_param("iiii", $earnedPts, $earnedPts, $earnedPts, $donorID);
-    $stmt->execute();
-
-    // 4. Insert into receive_items table
-    $stmt = $this->conn->prepare("INSERT INTO receive_items (donationID, donorID, receiverID, quantity) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("iiii", $this->DonationID, $donorID, $receiverID, $quantity);
-    $stmt->execute();
-
-    return ["success" => true, "creditedPoints" => $earnedPts];
-}
 
 
     public function updateUserInfo($userID, $fullName, $contactNumber, $occupation, $address)

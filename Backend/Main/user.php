@@ -128,7 +128,7 @@ public function getUser($id) {
 
     public function getCredits($userID) {
     $stmt = $this->conn->prepare("
-        SELECT 
+        SELECT
             credit_points,
             total_points,
             year_points,
