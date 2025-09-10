@@ -16,6 +16,8 @@ class HandleDonation extends Profile
         $db = new DBconnector();
         $this->conn = $db->connect();
     }
+
+
     public function checkrequest($donationID, $userId)
     {
         $this->donationID = $donationID;
@@ -25,24 +27,68 @@ class HandleDonation extends Profile
         $checkStmt->execute();
         $checkResult = $checkStmt->get_result();
 
-        if ($checkResult->num_rows > 0) {
-            return (['success' => false, 'message' => 'You have already requested this donation.']);
-        }
+       if ($checkResult && $checkResult->num_rows > 0) {
+        return ['success' => false, 'message' => 'You have already requested this donation.'];
     }
+
+     return ['success' => true];
+    }
+
+ private function canUserRequest($userId)
+    {
+        $sql = "SELECT current_year_requests, current_year_request_limit 
+                FROM user WHERE userID = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($row = $result->fetch_assoc()) {
+            if ($row['current_year_requests'] >= $row['current_year_request_limit']) {
+                return ['success' => false, 'message' => 'You have reached your yearly request limit.'];
+            }
+            return ['success' => true];
+        }
+        return ['success' => false, 'message' => 'User not found.'];
+    }
+
     public function requestItem($donationID, $userId)
     {
         $this->donationID = $donationID;
         $this->userId = $userId;
 
+        if (empty($donationID) || empty($userId)) {
+    return ['success' => false, 'message' => 'Missing donationID or userID.'];
+}
+
+
+         $check = $this->checkrequest($donationID, $userId);
+        if (isset($check['success']) && $check['success'] === false) {
+        return $check;
+    }
+
+        $limitCheck = $this->canUserRequest($userId);
+        if (!$limitCheck['success']) {
+            return $limitCheck;
+        }
+
         $stmt = $this->conn->prepare("INSERT INTO donation_requests (donationID, userID, status) VALUES (?, ?, 'pending')");
         $stmt->bind_param("ii", $donationID, $userId);
 
         if ($stmt->execute()) {
+
+             $updateSql = "UPDATE user SET current_year_requests = current_year_requests + 1 WHERE userID = ?";
+            $updateStmt = $this->conn->prepare($updateSql);
+            $updateStmt->bind_param("i", $userId);
+            $updateStmt->execute();
+
             return ['success' => true, 'message' => 'Request submitted successfully'];
         } else {
             return ['success' => false, 'message' => 'Database error', 'error' => $stmt->error];
         }
     }
+
+
     public function requestingUser($donationID)
     {
         $this->donationID = $donationID;
@@ -51,6 +97,7 @@ class HandleDonation extends Profile
         FROM donation_requests dr
         JOIN user u ON dr.userID = u.userID
         WHERE dr.donationID = ?";
+
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("i", $donationID);
         $stmt->execute();
@@ -128,6 +175,8 @@ class HandleDonation extends Profile
     //     }
     //     return $received;
     // }
+
+
     public function getcredits($userId)
     {
         $sqlUser = "SELECT credit_points FROM user WHERE userID = ?";

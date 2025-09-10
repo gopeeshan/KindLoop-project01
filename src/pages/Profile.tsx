@@ -27,7 +27,9 @@ import {
   LogOut,
   Bell,
   X,
+  TrendingUp,
   Eye,
+  Coins,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -52,6 +54,8 @@ import {
 } from "@/components/ui/select";
 import { send } from "process";
 import MessagesBar from "@/components/MessagesBar";
+import { CardDescription } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 
 interface Notification {
   notificationID: number;
@@ -71,6 +75,21 @@ interface Donation {
   isVerified: number;
   isDonationCompleted: number;
   credits: number;
+}
+
+interface User {
+  fullName: string;
+  email: string;
+  contactNumber?: string;
+  occupation?: string;
+  address?: string;
+  credit_points: number;
+  userID: number | null;
+  avatar?: string | null;
+  total_points: number;
+  year_points: number;
+  current_year_requests: number;
+  current_year_request_limit: number;
 }
 
 interface ReceivedItem {
@@ -113,7 +132,7 @@ const Profile = () => {
     address: "",
   });
 
-  const [user, setUser] = useState({
+  const [user, setUser] = useState<User>({
     fullName: "",
     email: "",
     contactNumber: "",
@@ -122,6 +141,10 @@ const Profile = () => {
     credit_points: 0,
     userID: null,
     avatar: null,
+    total_points: 0,
+    year_points: 0,
+    current_year_requests: 0,
+    current_year_request_limit: 12,
   });
 
   const [formData, setFormData] = useState(user);
@@ -147,6 +170,50 @@ const Profile = () => {
     null
   );
   const [confirmCheck, setConfirmCheck] = useState(false);
+  const [isCreditsDialogOpen, setCreditsDialogOpen] = useState(false);
+
+  // Fetch user credits and set state
+  const fetchUserCredits = async (userID: number) => {
+    try {
+      const res = await axios.get(
+        `http://localhost/KindLoop-project01/Backend/get_credits.php?userID=${userID}`
+      );
+
+      if (res.data.status === "success") {
+        const data = res.data.data;
+        setUser((prev) => ({
+          ...prev,
+          credit_points: data.credit_points,
+          total_points: data.total_points,
+          year_points: data.year_points,
+          current_year_requests: data.current_year_requests,
+          current_year_request_limit: data.current_year_limit, // fixed property name
+        }));
+      } else {
+        console.error(res.data.message);
+      }
+    } catch (error) {
+      console.error("Failed to fetch credits", error);
+    }
+  };
+
+  // Corrected progress calculation
+  const yearProgress =
+    user.current_year_request_limit > 0
+      ? (user.current_year_requests / user.current_year_request_limit) * 100
+      : 0;
+
+  const canMakeRequest =
+    user.current_year_requests < user.current_year_request_limit;
+
+  //const currentYear = new Date().getFullYear();
+
+  // Trigger dialog open and fetch latest credits
+  const handleOpenCreditsDialog = () => {
+    if (!user.userID) return;
+    fetchUserCredits(user.userID);
+    setCreditsDialogOpen(true);
+  };
 
   useEffect(() => {
     const email = localStorage.getItem("userEmail");
@@ -165,6 +232,8 @@ const Profile = () => {
         setDonationHistory(data.donationHistory || []);
         setReceivedHistory(data.receivedHistory || []);
         setToBeReceivedItems(data.toBeReceived || []);
+
+        if (data.userID) fetchUserCredits(data.userID);
       })
       .catch((err) => console.log("Failed to fetch user data", err));
   }, []);
@@ -547,10 +616,133 @@ const Profile = () => {
                   </p>
 
                   <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start space-y-2 sm:space-y-0 sm:space-x-4">
-                    <Badge variant="secondary" className="text-lg px-4 py-2">
-                      <Star className="h-4 w-4 mr-2" />
-                      {user.credit_points} Credits
-                    </Badge>
+                    <Dialog
+                      open={isCreditsDialogOpen}
+                      onOpenChange={setCreditsDialogOpen}
+                    >
+                      <DialogTrigger asChild>
+                        <button
+                          onClick={handleOpenCreditsDialog}
+                          className="flex items-center gap-2 bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700
+    text-white font-semibold px-5 py-2 rounded-2xl shadow-md 
+    hover:shadow-lg hover:scale-105 transition-all duration-200"
+                        >
+                          <Star className="h-5 w-5 text-yellow-300 drop-shadow-sm" />
+                          <span>{user.credit_points} Credits</span>
+                        </button>
+                      </DialogTrigger>
+
+                      <DialogContent className="max-w-md rounded-2xl font-sans">
+                        <DialogHeader>
+                          <DialogTitle className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                            Credit Points Overview
+                          </DialogTitle>
+                          <DialogDescription className="text-sm text-gray-600">
+                            Track your total credits, yearly credits, and
+                            request usage
+                          </DialogDescription>
+                        </DialogHeader>
+
+                        {/* Summary Section */}
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <Card className="shadow-md rounded-xl">
+                            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                              <CardTitle className="text-sm font-medium text-gray-700">
+                                Total Credits
+                              </CardTitle>
+                              <TrendingUp className="h-4 w-4 text-purple-500" />
+                            </CardHeader>
+                            <CardContent>
+                              <div className="text-2xl font-bold text-purple-600">
+                                {user.total_points}
+                              </div>
+                              {/* <p className="text-xs text-gray-500">
+                                Lifetime accumulation
+                              </p> */}
+                            </CardContent>
+                          </Card>
+
+                          <Card className="shadow-md rounded-xl">
+                            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                              <CardTitle className="text-sm font-medium text-gray-700">
+                                Annual Credits
+                              </CardTitle>
+                              <Coins className="h-4 w-4 text-purple-500" />
+                            </CardHeader>
+                            <CardContent>
+                              <div className="text-2xl font-bold text-purple-600">
+                                {user.year_points}
+                              </div>
+                              {/* <p className="text-xs text-gray-500">
+                                Resets each year
+                              </p> */}
+                            </CardContent>
+                          </Card>
+                        </div>
+
+                        {/* Usage Progress */}
+                        <div className="grid gap-6 mt-4">
+                          <Card className="shadow-md rounded-xl">
+                            <CardHeader>
+                              <CardTitle className="flex items-center gap-20 text-gray-800 text-base  text-xl font-medium">
+                                Current year usage
+                                <Badge
+                                  variant={
+                                    user.current_year_request_limit === 0
+                                      ? "secondary" // neutral style
+                                      : canMakeRequest
+                                      ? "default"
+                                      : "destructive"
+                                  }
+                                >
+                                  {user.current_year_request_limit === 0
+                                    ? "Inactive"
+                                    : canMakeRequest
+                                    ? "Active"
+                                    : "Limit Reached"}
+                                </Badge>
+                              </CardTitle>
+                            </CardHeader>
+
+                            <CardContent className="space-y-4">
+                              {user.current_year_request_limit === 0 ? (
+                                <div className="text-center text-gray-500 italic">
+                                  Your request limit is currently <b>0</b>. Earn
+                                  points this year to unlock request
+                                  opportunities next year.
+                                </div>
+                              ) : (
+                                <div className="space-y-2">
+                                  <div className="flex justify-between text-sm text-gray-700">
+                                    <span>
+                                      Used: {user.current_year_requests}
+                                    </span>
+                                    <span>
+                                      Limit: {user.current_year_request_limit}
+                                    </span>
+                                  </div>
+                                  <Progress
+                                    value={yearProgress}
+                                    className="h-2 bg-gray-200 [&>div]:bg-purple-600"
+                                  />
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </div>
+
+                        {/* Close Button */}
+                        <div className="flex justify-end mt-6">
+                          <Button
+                            variant="secondary"
+                            onClick={() => setCreditsDialogOpen(false)}
+                          >
+                            Close
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+
                     <MessagesBar currentUserID={user.userID} openAsPage />
                     <Dialog
                       open={isPasswordDialogOpen}
@@ -723,13 +915,15 @@ const Profile = () => {
                             {notification.type === "complaint_registered" && (
                               <p className="text-sm text-gray-600">
                                 Complaint Registered for{" "}
-                                {notification.donation_title} <br />By {notification.requester_name}
+                                {notification.donation_title} <br />
+                                By {notification.requester_name}
                               </p>
                             )}
                             {notification.type === "complaint_resolved" && (
                               <p className="text-sm text-gray-600">
-                                Your Complaint for{" "}
-                                {notification.donation_title} has been Resolved <br /> Solution :: "{notification.complaint_solution}"
+                                Your Complaint for {notification.donation_title}{" "}
+                                has been Resolved <br /> Solution :: "
+                                {notification.complaint_solution}"
                                 {notification.donation_title} By{" "}
                                 {notification.requester_name}
                               </p>
@@ -975,7 +1169,12 @@ const Profile = () => {
 
                       <p className="text-base font-semibold text-red-600 flex items-center gap-2 leading-relaxed">
                         <span>
-                          <strong>Important </strong><br />Please Do not confirm the receipt until you have received the item <br />OR Made a Solution.<br/>
+                          <strong>Important </strong>
+                          <br />
+                          Please Do not confirm the receipt until you have
+                          received the item <br />
+                          OR Made a Solution.
+                          <br />
                           Please use this form only for genuine issues. <br />
                           Submitting false or misleading complaints may result
                           in suspension of your account.
@@ -1070,12 +1269,23 @@ const Profile = () => {
                           name="evidence_images[]"
                           accept="image/*"
                           multiple
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            const files = e.target.files
+                              ? Array.from(e.target.files)
+                              : [];
+                            if (files.length > 5) {
+                              toast({
+                                title: "Upload limit reached",
+                                description:
+                                  "You can only upload up to 5 images.",
+                                variant: "destructive",
+                              });
+                            }
                             setComplaintData((prev) => ({
                               ...prev,
-                              evidence_images: Array.from(e.target.files),
-                            }))
-                          }
+                              evidence_images: files.slice(0, 5),
+                            }));
+                          }}
                           className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4
                file:rounded-lg file:border-0
                file:text-sm file:font-medium

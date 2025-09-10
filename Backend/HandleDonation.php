@@ -39,14 +39,9 @@ if ($method === 'POST' && $action === 'request-item') {
         }
 
     if ($userID !== $donorID) {
-        if ($handleDonation->checkrequest($donationID, $userID)) {
-            echo json_encode(['success' => false, 'message' => 'You have already requested this donation.']);
-            exit;
-        } else {
-            $handleDonation->requestItem($donationID, $userID);
-            echo json_encode(['success' => true]);
-            exit;
-        }
+        $response = $handleDonation->requestItem($donationID, $userID);
+        echo json_encode($response);
+        exit;
     } else {
         echo json_encode(['success' => false, 'message' => 'You cannot request your own donation.']);
         exit;

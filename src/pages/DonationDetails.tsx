@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { toast } from "@/hooks/use-toast";
 import ChatBox from "../components/ChatBox";
+import { fetchUserCredits } from "../lib/api/credits";
 
 interface Donation {
   DonationID: number;
@@ -50,6 +51,17 @@ const DonationDetails = () => {
 
   const userID = parseInt(localStorage.getItem("userID") || "0");
 
+const [user, setUser] = useState<{
+  userID: number;
+  fullName: string;
+  email: string;
+  credit_points: number;
+  current_year_requests: number;
+  current_year_request_limit: number;
+} | null>(null);
+
+  const isOwner = !!donation && userID === donation.userID;
+
   useEffect(() => {
     const fetchDonation = async () => {
       setLoading(true);
@@ -75,6 +87,25 @@ const DonationDetails = () => {
 
   const handleChat = () => {
     if (!donation) return;
+
+    if (!userID) {
+      toast({
+        title: "Login required",
+        description: "Please log in to message the donor.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isOwner) {
+      toast({
+        title: "This is your post",
+        description: "You can’t message yourself.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setChatOpen(true);
     console.log(
       `Chat with donor of donation ${donation.DonationID} (donorID: ${donation.userID})`
@@ -92,17 +123,20 @@ const DonationDetails = () => {
             Action: "request-item",
             DonationID: DonationID,
             UserID: userID,
+            DonorID: donation.userID,
           }
         );
 
         if (response.data.success) {
           sendNotification(donation.DonationID, donation.userID, userID);
+
           toast({
             title: "Request Sent",
             description:
               response.data.message ||
               "Your request has been submitted successfully.",
           });
+          fetchUserCredits(userID);
         } else {
           toast({
             title: "Request Failed",
@@ -230,6 +264,7 @@ const DonationDetails = () => {
                   </div>
                 </div>
               )}
+
               <div className="flex gap-2">
                 <Button
                   className="flex-1"

@@ -126,5 +126,73 @@ public function getUser($id) {
         return $result->fetch_assoc() ?? null;
     }
 
+    public function getCredits($userID) {
+    $stmt = $this->conn->prepare("
+        SELECT 
+            credit_points,
+            total_points,
+            year_points,
+            current_year_requests,
+            current_year_request_limit,
+            registered_date,
+            last_year_reset
+        FROM user
+        WHERE userID = ?
+    ");
+    $stmt->bind_param("i", $userID);
+    $stmt->execute();
+    $user = $stmt->get_result()->fetch_assoc();
+
+    if (!$user) {
+        return ["status" => "error", "message" => "User not found"];
+    }
+
+    $today = new DateTime();
+
+    if (!empty($user['last_year_reset'])) {
+        $lastReset = new DateTime($user['last_year_reset']);
+    } else {
+        $lastReset = new DateTime($user['registered_date']);
+    }
+
+    $nextReset = clone $lastReset;
+    $nextReset->modify('+1 year');
+ 
+    $todayDate = $today->format('Y-m-d');
+$nextResetDate = $nextReset->format('Y-m-d');
+
+if ($todayDate >= $nextResetDate) {
+        $prevYearPoints = (int)$user['year_points'];
+        $newLimit =  floor($prevYearPoints / 100);
+
+        $stmtUpdate = $this->conn->prepare("
+            UPDATE user 
+            SET year_points = 0, 
+                current_year_requests = 0, 
+                current_year_request_limit = ?, 
+                last_year_reset = NOW()
+            WHERE userID = ?
+        ");
+        $stmtUpdate->bind_param("ii", $newLimit, $userID);
+        $stmtUpdate->execute();
+
+        $user['year_points'] = 0;
+        $user['current_year_requests'] = 0;
+        $user['current_year_request_limit'] = $newLimit;
+    }
+
+    return [
+        "status" => "success",
+        "data" => [
+            "credit_points" => (int)$user['credit_points'],
+            "total_points" => (int)$user['total_points'],
+            "year_points" => (int)$user['year_points'],
+            "current_year_requests" => (int)$user['current_year_requests'],
+            "current_year_limit" => (int)$user['current_year_request_limit'] 
+        ]
+    ];
+}
+
+
 }
 ?>

@@ -66,6 +66,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    // Do not allow sending messages to self
+    if ($senderID === $receiverID) {
+        http_response_code(400);
+        echo json_encode(["success" => false, "message" => "You cannot message yourself."]);
+        exit;
+    }
+
     $chat = new ChatSystem();
     $ok = $chat->sendMessage($senderID, $receiverID, $message, $donationID);
 

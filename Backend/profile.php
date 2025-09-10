@@ -5,8 +5,10 @@ header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json");
 
 require_once 'Main/profile.php';
+require_once 'Main/user.php';
 
 $profile = new Profile();
+$userObj = new User();
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -21,6 +23,12 @@ if ($method === "GET" && isset($_GET['email'])) {
          echo json_encode(["error" => "User not found."]);
          exit;
     }
+
+    $credits = $userObj->getCredits($user['userID']);
+if ($credits['status'] === 'success') {
+    // Merge credits data into user array
+    $user = array_merge($user, $credits['data']);
+}
 
    // Step 2: Fetch Donation History (items donated by the user)
    $donationHistory = $profile->getUserDonations($user['userID']);
