@@ -176,12 +176,10 @@ const Profiledd = () => {
           </Card>
 
           {/* Requesting Users */}
-          {donation.isDonationCompleted === 0 && (
             <RequestingUsers
               users={requestingUsers}
               donationID={parseInt(id || "0")}
             />
-          )}
           {/* <AdminComplaints donationID={parseInt(id || "0")} /> */}
         </div>
       </div>

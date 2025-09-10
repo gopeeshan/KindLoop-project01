@@ -290,6 +290,7 @@ const Profile = () => {
         action: "confirm_received",
         DonationID: DonationID,
         credits: credits,
+        receiverID: user.userID,
       })
       .then(() => {
         toast({

@@ -135,17 +135,42 @@ class Profile
     }
 
 
-    public function confirmReceived($DonationID)
+    public function confirmReceived($DonationID, $receiverID)
     {
         $this->DonationID = $DonationID;
         $stmt = $this->conn->prepare("UPDATE donation SET isDonationCompleted = 1 WHERE DonationID = ?");
         $stmt->bind_param("i", $this->DonationID);
         if ($stmt->execute()) {
-            return ["success" => true];
+            if ($this->credits_update($this->DonationID, $receiverID)['success']) {
+                return ["success" => true];
+            }
+            
         } else {
             return ["error" => "Failed to confirm receipt."];
         }
     }
+    public function credits_update($DonationID, $receiverID)
+{
+    $sql = "UPDATE user u
+            JOIN receive_items ri ON u.userID = ri.donorID
+            JOIN donation d ON d.DonationID = ri.donationID AND ri.receiverID = ?
+            SET u.credit_points = u.credit_points + (ri.quantity * d.credits)
+            WHERE d.DonationID = ?";
+
+    $stmt = $this->conn->prepare($sql);
+    $stmt->bind_param("ii", $receiverID, $DonationID);
+
+    if ($stmt->execute()) {
+        if ($stmt->affected_rows > 0) {
+            return ['success' => true, 'message' => 'Credits updated successfully'];
+        } else {
+            return ['success' => false, 'message' => 'No rows updated (maybe not received yet)'];
+        }
+    } else {
+        return ['success' => false, 'message' => 'Database error', 'error' => $stmt->error];
+    }
+}
+
 
     public function updateUserInfo($userID, $fullName, $contactNumber, $occupation, $address)
     {

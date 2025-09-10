@@ -50,9 +50,11 @@ if ($method === 'POST') {
 
     $action = $input['action'] ?? '';
     $DonationID = $input['DonationID'] ?? null;
+    $credits = $input['credits'] ?? null;
+    $receiverID = $input['receiverID'] ?? null;
 
    if ($action === 'confirm_received' && $DonationID !== null) {
-       $profile->confirmReceived($DonationID);
+       $profile->confirmReceived($DonationID, $receiverID);
        echo json_encode(["success" => true]);
        exit;
    }
