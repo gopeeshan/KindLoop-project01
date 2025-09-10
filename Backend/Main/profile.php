@@ -161,7 +161,6 @@ class Profile
     // 3. Update donor's credit points
     $stmt = $this->conn->prepare("UPDATE user 
         SET credit_points = credit_points + ?, 
-            total_points = total_points + ?, 
             year_points = year_points + ? 
         WHERE userID = ?");
     $stmt->bind_param("iiii", $earnedPts, $earnedPts, $earnedPts, $donorID);

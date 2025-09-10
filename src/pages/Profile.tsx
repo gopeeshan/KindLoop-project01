@@ -86,7 +86,6 @@ interface User {
   credit_points: number;
   userID: number | null;
   avatar?: string | null;
-  total_points: number;
   year_points: number;
   current_year_requests: number;
   current_year_request_limit: number;
@@ -140,7 +139,6 @@ const Profile = () => {
     credit_points: 0,
     userID: null,
     avatar: null,
-    total_points: 0,
     year_points: 0,
     current_year_requests: 0,
     current_year_request_limit: 12,
@@ -183,10 +181,9 @@ const Profile = () => {
         setUser((prev) => ({
           ...prev,
           credit_points: data.credit_points,
-          total_points: data.total_points,
           year_points: data.year_points,
           current_year_requests: data.current_year_requests,
-          current_year_request_limit: data.current_year_limit, // fixed property name
+          current_year_request_limit: data.current_year_limit, 
         }));
       } else {
         console.error(res.data.message);
@@ -652,7 +649,7 @@ const Profile = () => {
                             </CardHeader>
                             <CardContent>
                               <div className="text-2xl font-bold text-purple-600">
-                                {user.total_points}
+                                {user.credit_points}
                               </div>
                               {/* <p className="text-xs text-gray-500">
                                 Lifetime accumulation

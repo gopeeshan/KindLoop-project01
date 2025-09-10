@@ -130,7 +130,6 @@ public function getUser($id) {
     $stmt = $this->conn->prepare("
         SELECT 
             credit_points,
-            total_points,
             year_points,
             current_year_requests,
             current_year_request_limit,
@@ -185,7 +184,6 @@ if ($todayDate >= $nextResetDate) {
         "status" => "success",
         "data" => [
             "credit_points" => (int)$user['credit_points'],
-            "total_points" => (int)$user['total_points'],
             "year_points" => (int)$user['year_points'],
             "current_year_requests" => (int)$user['current_year_requests'],
             "current_year_limit" => (int)$user['current_year_request_limit'] 
