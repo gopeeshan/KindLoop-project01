@@ -168,6 +168,25 @@ class Profile
     } else {
         return ['success' => false, 'message' => 'Database error', 'error' => $stmt->error];
     }
+    // // 2. Update donation status
+    // $stmt = $this->conn->prepare("UPDATE donation SET isDonationCompleted = 1 WHERE DonationID = ?");
+    // $stmt->bind_param("i", $this->DonationID);
+    // $stmt->execute();
+
+    // // 3. Update donor's credit points
+    // $stmt = $this->conn->prepare("UPDATE user 
+    //     SET credit_points = credit_points + ?, 
+    //         year_points = year_points + ? 
+    //     WHERE userID = ?");
+    // $stmt->bind_param("iii", $earnedPts,$earnedPts, $donorID);
+    // $stmt->execute();
+
+    // // 4. Insert into receive_items table
+    // $stmt = $this->conn->prepare("INSERT INTO receive_items (donationID, donorID, receiverID, quantity) VALUES (?, ?, ?, ?)");
+    // $stmt->bind_param("iiii", $this->DonationID, $donorID, $receiverID, $quantity);
+    // $stmt->execute();
+
+    // return ["success" => true, "creditedPoints" => $earnedPts];
 }
 
 
