@@ -163,7 +163,7 @@ class Profile
         SET credit_points = credit_points + ?, 
             year_points = year_points + ? 
         WHERE userID = ?");
-    $stmt->bind_param("iiii", $earnedPts, $earnedPts, $earnedPts, $donorID);
+    $stmt->bind_param("iii", $earnedPts,$earnedPts, $donorID);
     $stmt->execute();
 
     // 4. Insert into receive_items table
