@@ -472,12 +472,12 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="verification" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
+          <TabsList className="flex gap-4 overflow-x-auto overflow-y-hidden scrollbar-hide md:grid md:grid-cols-[repeat(auto-fit,minmax(160px,1fr))]">
             {visibleTabs.map((tab) => (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="flex items-center justify-center gap-2"
+                className="flex items-center justify-center gap-2 min-w-[140px] md:min-w-0"
               >
                 {tab.icon}
                 {tab.label}
@@ -554,7 +554,7 @@ const Admin = () => {
 
           <TabsContent value="users" className="space-y-6">
             <Card>
-              <CardHeader>
+              <CardHeader className="space-y-6">
                 <CardTitle>User Management</CardTitle>
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
