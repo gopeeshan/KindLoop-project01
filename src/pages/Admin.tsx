@@ -229,7 +229,8 @@ const Admin = () => {
         });
         fetchAdminData();
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error("Failed to verify donation:", error);
         toast({
           title: "Error",
           description: "Failed to verify donation.",
@@ -253,6 +254,7 @@ const Admin = () => {
         fetchAdminData();
       })
       .catch((error) => {
+        console.error("Failed to update user action:", error);
         toast({
           title: "Error",
           description: "Failed to perform user action.",
@@ -274,13 +276,44 @@ const Admin = () => {
         });
         fetchAdminData();
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error("Failed to update admin action:", error);
         toast({
           title: "Error",
           description: "Failed to perform admin action.",
         });
       });
   };
+
+   const handleDonationVisibility = (
+     DonationID: number,
+     setVisible: number
+   ) => {
+     axios
+       .post("http://localhost/KindLoop-project01/Backend/Admin.php", {
+         action: "update_visibility",
+         DonationID,
+         setVisible,
+       })
+       .then(() => {
+         toast({
+           title: setVisible === 1 ? "Donation Visible" : "Donation Hidden",
+           description: `Donation has been ${
+             setVisible === 1 ? "made visible" : "hidden"
+           } successfully.`,
+         });
+
+         fetchAdminData();
+       })
+       .catch((error) => {
+         console.error("Error updating donation visibility:", error);
+         toast({
+           title: "Error",
+           description: "Failed to update visibility. Please try again.",
+         });
+       });
+
+   };
 
   const handleViewUser = (userID: number) => {
     const user = users.find((u) => u.userID === userID);
@@ -331,7 +364,8 @@ const Admin = () => {
         fetchAdminData();
         setIsDialogOpen(false);
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error("Failed to update admin:", error);
         toast({
           title: "Error",
           description: "Failed to update admin.",
@@ -815,6 +849,26 @@ const Admin = () => {
                             {/* <Button size="sm" variant="destructive" onClick={() => handleDonation(donation.DonationID)}>
                               Remove
                             </Button> */}
+
+                            <Button
+                              size="sm"
+                              variant="default"
+                              className={`text-white px-3 py-1 rounded ${
+                                Number(donation.setVisible) === 1
+                                  ? "bg-purple-500 hover:bg-purple-700"
+                                  : "bg-blue-800 hover:bg-blue-700"
+                              }`}
+                              onClick={() =>
+                                handleDonationVisibility(
+                                  donation.DonationID,
+                                  Number(donation.setVisible) === 1 ? 0 : 1
+                                )
+                              }
+                            >
+                              {Number(donation.setVisible) === 1
+                                ? "Hide"
+                                : "Unhide"}
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>

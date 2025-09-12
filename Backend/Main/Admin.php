@@ -206,6 +206,12 @@ public function checkcredentials($email, $nic) {
         return $stmt->execute();
     }
 
+     public function updateDonationVisibleStatus($DonationID, $setVisible) {
+        $stmt = $this->conn->prepare("UPDATE donation SET setVisible = ? WHERE DonationID = ?");
+        $stmt->bind_param("ii", $setVisible, $DonationID);
+        return $stmt->execute();
+    }
+
     public function getAdmins() {
     $sql = "SELECT AdminID, fullName, email, nic, contactNumber, address,joined_at AS joined_date, active_state AS Admin_status
             FROM admin where role='subadmin' ORDER BY joined_at ";

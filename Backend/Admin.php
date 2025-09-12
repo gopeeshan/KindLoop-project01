@@ -96,7 +96,18 @@ if ($action === 'update_admin' && $AdminID !== null) {
     exit;
 }
 
+ if ($action === 'update_visibility' && $DonationID !== null && $setVisible !== null) {
+        $updated = $admin->updateDonationVisibleStatus($DonationID, $setVisible);
+
+        if ($updated) {
+            echo json_encode(["status" => "success", "message" => "Visibility updated"]);
+        } else {
+            echo json_encode(["status" => "error", "message" => "Failed to update visibility"]);
+        }
+        exit;
+    }
 }
+
 
 echo json_encode([
     "status" => "success",
