@@ -45,6 +45,11 @@ interface User {
   credit_points: number;
   active_state: string;
   donation_count: number;
+  registered_date: string;
+  year_points: number;
+  current_year_requests: number;
+  current_year_request_limit: number;
+  last_year_reset: string;
 }
 
 interface Admin {
@@ -850,7 +855,7 @@ const Admin = () => {
               {selectedUser && (
                 <div className="space-y-2 text-sm text-muted-foreground">
                   <p>
-                    <strong>Full Name:</strong> {selectedUser.fullName}
+                    <strong>Full name:</strong> {selectedUser.fullName}
                   </p>
                   <p>
                     <strong>Email:</strong> {selectedUser.email}
@@ -862,7 +867,10 @@ const Admin = () => {
                     <strong>District:</strong> {selectedUser.district}
                   </p>
                   <p>
-                    <strong>Credit Points:</strong> {selectedUser.credit_points}
+                    <strong>Credit points:</strong> {selectedUser.credit_points}
+                  </p>
+                  <p>
+                    <strong>Annual credits:</strong> {selectedUser.year_points}
                   </p>
                   <p>
                     <strong>Status:</strong> {selectedUser.active_state}
@@ -870,6 +878,24 @@ const Admin = () => {
                   <p>
                     <strong>Donations:</strong> {selectedUser.donation_count}
                   </p>
+                  <p>
+                    <strong>Registered date:</strong>{" "}
+                    {selectedUser.registered_date}
+                  </p>
+                  <p>
+                    <strong>Currentyear requests:</strong>{" "}
+                    {selectedUser.current_year_requests}
+                  </p>
+                  <p>
+                    <strong>Currentyear request limit:</strong>{" "}
+                    {selectedUser.current_year_request_limit}
+                  </p>
+                  <p>
+                    <strong>Last reset:</strong>{" "}
+                    {selectedUser?.last_year_reset ??
+                      "No reset has been done yet"}
+                  </p>
+
                   {/* <p><strong>Donation History:</strong> 
                     <table>
                       <thead>
