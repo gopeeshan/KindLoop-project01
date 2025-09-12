@@ -227,6 +227,18 @@ public function checkcredentials($email, $nic) {
         return $stmt->execute();
     }
 
+    public function updateAdminDetails($AdminID, $fullName, $email, $contactNumber, $address) {
+        
+    $stmt = $this->conn->prepare("UPDATE admin SET fullName = ?, email = ?, contactNumber = ?, address = ? WHERE AdminID = ?");
+    $stmt->bind_param("ssssi", $fullName, $email, $contactNumber, $address, $AdminID);
+
+    if ($stmt->execute()) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 
    
 }

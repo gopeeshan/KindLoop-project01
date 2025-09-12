@@ -78,6 +78,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(["status" => "success", "message" => "Admin status updated"]);
         exit;
     }
+
+
+if ($action === 'update_admin' && $AdminID !== null) {
+    $fullName = $input['fullName'] ?? '';
+    $email = $input['email'] ?? '';
+    $contactNumber = $input['contactNumber'] ?? '';
+    $address = $input['address'] ?? '';
+
+    $updated = $admin->updateAdminDetails($AdminID, $fullName, $email, $contactNumber, $address);
+
+    if ($updated) {
+        echo json_encode(["status" => "success", "message" => "Admin updated successfully"]);
+    } else {
+        echo json_encode(["status" => "error", "message" => "Failed to update admin"]);
+    }
+    exit;
+}
+
 }
 
 echo json_encode([

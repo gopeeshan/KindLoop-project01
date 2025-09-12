@@ -116,6 +116,7 @@ const Admin = () => {
     null
   );
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [editAdminData, setEditAdminData] = useState<Admin | null>(null);
 
   const fetchAdminData = () => {
     axios
@@ -282,6 +283,7 @@ const Admin = () => {
       setSelectedUser(user);
       setSelectedDonation(null);
       setSelectedAdmin(null);
+      setEditAdminData(null);
       setIsDialogOpen(true);
     }
   };
@@ -293,7 +295,43 @@ const Admin = () => {
       setSelectedUser(null);
       setSelectedDonation(null);
       setIsDialogOpen(true);
+      setEditAdminData(null);
     }
+  };
+
+  const handleEditAdmin = (AdminID: number) => {
+    const admin = admins.find((a) => a.AdminID === AdminID);
+    if (admin) {
+      setSelectedAdmin(null);
+      setEditAdminData({ ...admin });
+      setSelectedUser(null);
+      setSelectedDonation(null);
+      setIsDialogOpen(true);
+    }
+  };
+
+  const handleSaveAdmin = () => {
+    if (!editAdminData) return;
+
+    axios
+      .post("http://localhost/KindLoop-project01/Backend/Admin.php", {
+        action: "update_admin",
+        ...editAdminData,
+      })
+      .then(() => {
+        toast({
+          title: "Updated",
+          description: "Admin details updated successfully.",
+        });
+        fetchAdminData();
+        setIsDialogOpen(false);
+      })
+      .catch(() => {
+        toast({
+          title: "Error",
+          description: "Failed to update admin.",
+        });
+      });
   };
 
   const handleViewDonation = (DonationID: number) => {
@@ -302,6 +340,7 @@ const Admin = () => {
       setSelectedDonation(donation);
       setSelectedAdmin(null);
       setSelectedUser(null);
+      setEditAdminData(null);
       setIsDialogOpen(true);
     }
   };
@@ -689,6 +728,13 @@ const Admin = () => {
                             </Button>
                             <Button
                               size="sm"
+                              variant="outline"
+                              onClick={() => handleEditAdmin(admin.AdminID)}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              size="sm"
                               variant={
                                 admin.Admin_status === "suspend"
                                   ? "default"
@@ -778,19 +824,23 @@ const Admin = () => {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>
-                  {selectedUser
-                    ? "User Details"
+                  {editAdminData
+                    ? "Edit Admin"
                     : selectedAdmin
                     ? "Admin Details"
+                    : selectedUser
+                    ? "User Details"
                     : selectedDonation
                     ? "Donation Details"
                     : "Details"}
                 </DialogTitle>
                 <DialogDescription>
-                  {selectedUser
-                    ? "Read-only user information"
+                  {editAdminData
+                    ? "Update admin information"
                     : selectedAdmin
                     ? "Read-only admin information"
+                    : selectedUser
+                    ? "Read-only user information"
                     : selectedDonation
                     ? "Donation item details"
                     : ""}
@@ -955,8 +1005,83 @@ const Admin = () => {
                 </DialogContent>
               </Dialog>
 
+              {editAdminData && (
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-4">
+                    <label className="w-32 text-sm font-medium">
+                      Full Name :
+                    </label>
+                    <Input
+                      value={editAdminData.fullName}
+                      onChange={(e) =>
+                        setEditAdminData({
+                          ...editAdminData,
+                          fullName: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center space-x-4">
+                    <label className="w-32 text-sm font-medium">Email :</label>
+                    <Input
+                      type="email"
+                      value={editAdminData.email}
+                      onChange={(e) =>
+                        setEditAdminData({
+                          ...editAdminData,
+                          email: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center space-x-4">
+                    <label className="w-32 text-sm font-medium">
+                      Contact No :
+                    </label>
+                    <Input
+                      value={editAdminData.contactNumber}
+                      onChange={(e) =>
+                        setEditAdminData({
+                          ...editAdminData,
+                          contactNumber: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center space-x-4">
+                    <label className="w-32 text-sm font-medium">
+                      Address :
+                    </label>
+                    <Input
+                      value={editAdminData.address}
+                      onChange={(e) =>
+                        setEditAdminData({
+                          ...editAdminData,
+                          address: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              )}
+
               <DialogFooter>
-                <Button onClick={() => setIsDialogOpen(false)}>Close</Button>
+                {editAdminData ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button onClick={handleSaveAdmin}>Save</Button>
+                  </>
+                ) : (
+                  <Button onClick={() => setIsDialogOpen(false)}>Close</Button>
+                )}
               </DialogFooter>
             </DialogContent>
           </Dialog>
