@@ -23,6 +23,18 @@ const AdminSignUp = () => {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [passwordStrengthError, setPasswordStrengthError] = useState(false);
+    const [emailError, setEmailError] = useState(false);
+    const [nicError, setNicError] = useState(false);
+    const [phoneError, setPhoneError] = useState(false);
+    const [fullNameError, setFullNameError] = useState(false);
+    const [addressError, setAddressError] = useState(false);
+
+     const isPasswordStrong = (password: string): boolean => {
+       const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+       return regex.test(password);
+     };
+
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -32,6 +44,44 @@ const AdminSignUp = () => {
       ...prev,
       [name]: value,
     }));
+    
+    // Validation checks
+    if (name === "password") {
+      setPasswordStrengthError(!isPasswordStrong(value));
+    }
+    if (name === "nic") {
+      const isValidNIC =
+        /^[0-9]{9}[vVxX]$/.test(value) || /^[0-9]{12}$/.test(value);
+      setNicError(!isValidNIC);
+    }
+    if (name === "contactNumber") {
+      const isValidPhone = /^07[0-9]{8}$/.test(value);
+      setPhoneError(!isValidPhone);
+    }
+    if (name === "email") {
+      const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+      setEmailError(!isValidEmail);
+    }
+  };
+
+  // Validate other fields (like fullName, address)
+  const validateOtherFields = () => {
+    let valid = true;
+
+    if (!/^[A-Za-z\s]{3,}$/.test(formData.fullName.trim())) {
+      setFullNameError(true);
+      valid = false;
+    } else setFullNameError(false);
+
+    if (
+      !/^[A-Za-z0-9\s,./-]{5,100}$/.test(formData.address.trim()) ||
+      /[<>]/.test(formData.address)
+    ) {
+      setAddressError(true);
+      valid = false;
+    } else setAddressError(false);
+
+    return valid;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,6 +95,23 @@ const AdminSignUp = () => {
       });
       return;
     }
+
+const isValid = validateOtherFields();
+
+if (
+  !formData.email ||
+  !formData.nic ||
+  !formData.contactNumber ||
+  !formData.password ||
+  emailError ||
+  nicError ||
+  phoneError ||
+  passwordStrengthError ||
+  !isValid
+) {
+  return;
+}
+
 
     setIsLoading(true);
 
@@ -128,6 +195,11 @@ const AdminSignUp = () => {
                   required
                   disabled={isLoading}
                 />
+                {fullNameError && (
+                  <p className="text-sm text-red-500">
+                    Full name must be at least 3 letters (A–Z only).
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -142,6 +214,11 @@ const AdminSignUp = () => {
                   required
                   disabled={isLoading}
                 />
+                {emailError && (
+                  <p className="text-sm text-red-500">
+                    Please enter a valid email address.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -156,6 +233,12 @@ const AdminSignUp = () => {
                   required
                   disabled={isLoading}
                 />
+                {nicError && formData.nic.length > 0 && (
+                  <p className="text-sm text-red-500">
+                    NIC must be 9 digits followed by 'V' or 'X', or 12 digits
+                    only.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -170,21 +253,12 @@ const AdminSignUp = () => {
                   required
                   disabled={isLoading}
                 />
+                {phoneError && formData.contactNumber.length > 0 && (
+                  <p className="text-sm text-red-500">
+                    Contact number must be 10 digits starting with 07.
+                  </p>
+                )}
               </div>
-
-              {/* <div className="space-y-2">
-                <Label htmlFor="occupation">Occupation</Label>
-                <Input
-                  id="occupation"
-                  name="occupation"
-                  type="text"
-                  placeholder="Enter your occupation"
-                  value={formData.occupation}
-                  onChange={handleInputChange}
-                  required
-                  disabled={isLoading}
-                />
-              </div> */}
 
               <div className="space-y-2">
                 <Label htmlFor="address">Address</Label>
@@ -198,27 +272,12 @@ const AdminSignUp = () => {
                   required
                   disabled={isLoading}
                 />
+                {addressError && (
+                  <p className="text-sm text-red-500">
+                    Address must be 5–100 characters, no &lt; or &gt; allowed.
+                  </p>
+                )}
               </div>
-
-              {/* <div className="space-y-2">
-                <Label htmlFor="district">District</Label>
-                <select
-                  id="district"
-                  name="district"
-                  className="w-full border rounded-md px-3 py-2 bg-background text-foreground"
-                  value={formData.district}
-                  onChange={handleInputChange}
-                  required
-                  disabled={isLoading}
-                >
-                  <option value="">Select your district</option>
-                  {districtList.map((district) => (
-                    <option key={district} value={district}>
-                      {district}
-                    </option>
-                  ))}
-                </select>
-              </div> */}
 
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
@@ -232,6 +291,12 @@ const AdminSignUp = () => {
                   required
                   disabled={isLoading}
                 />
+                {passwordStrengthError && formData.password.length > 0 && (
+                  <p className="text-sm text-red-500">
+                    Password must be at least 8 characters long and include
+                    uppercase, lowercase, number, and special character.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -248,7 +313,20 @@ const AdminSignUp = () => {
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={
+                  isLoading ||
+                  passwordStrengthError ||
+                  nicError ||
+                  phoneError ||
+                  emailError ||
+                  !formData.nic ||
+                  !formData.contactNumber ||
+                  !formData.email
+                }
+              >
                 {isLoading ? "Creating Account..." : "Create Account"}
               </Button>
             </form>
