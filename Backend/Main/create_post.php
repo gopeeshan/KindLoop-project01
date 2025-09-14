@@ -19,7 +19,7 @@
             $this->conn = $db->connect();
         }
 
-        public function createNewPost($userID, $title, $description, $category, $location, $condition, $images, $usageDuration, $credits, $quantity,$available_quantity) {
+        public function createNewPost($userID, $title, $description, $category, $location, $condition, $images, $usageDuration, $credits, $quantity, $available_quantity) {
             $this->userID = $userID;
             $this->title = $title;
             $this->description = $description;
@@ -31,10 +31,8 @@
             $this->credits = $credits;
             $this->quantity = $quantity;
 
-            // $imagesJson = json_encode($this->images);
-
             $sql = "INSERT INTO donation (userID, title, description, category, location, `condition`, images, usageDuration, credits, quantity, availableQuantity)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $this->conn->prepare($sql);
             $stmt->bind_param(
                 "isssssssiii",
@@ -51,14 +49,44 @@
                 $quantity,
             );
 
-        if ($stmt->execute()) {
-            return (["status" => "success", "message" => "Your post is posted successfully!"]);
-        } else {
-            return (["status" => "error", "message" => "Posting failed: " . $stmt->error]);
+            $result = [];
+            if ($stmt->execute()) {
+                $result = ["status" => "success", "message" => "Your post is posted successfully!"];
+            } else {
+                $result = ["status" => "error", "message" => "Posting failed: " . $stmt->error];
+            }
+
+            $stmt->close();
+            $this->conn->close();
+            return $result;
         }
 
-        $stmt->close();
-        $this->conn->close();
+        public function editPost($donationID, $userID, $title, $description, $category, $location, $condition, $images, $usageDuration, $quantity) {
+            $sql = "UPDATE donation SET title=?, description=?, category=?, location=?, `condition`=?, images=?, usageDuration=?, quantity=? WHERE DonationID=? AND userID=?";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bind_param(
+                "sssssssiii",
+                $title,
+                $description,
+                $category,
+                $location,
+                $condition,
+                $images,
+                $usageDuration,
+                $quantity,
+                $donationID,
+                $userID
+            );
+
+            $result = [];
+            if ($stmt->execute()) {
+                $result = ["status" => "success", "message" => "Post updated successfully!"];
+            } else {
+                $result = ["status" => "error", "message" => "Update failed: " . $stmt->error];
+            }
+            $stmt->close();
+            $this->conn->close();
+            return $result;
+        }
     }
-}
 ?>
