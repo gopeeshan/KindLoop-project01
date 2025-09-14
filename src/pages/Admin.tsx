@@ -285,35 +285,31 @@ const Admin = () => {
       });
   };
 
-   const handleDonationVisibility = (
-     DonationID: number,
-     setVisible: number
-   ) => {
-     axios
-       .post("http://localhost/KindLoop-project01/Backend/Admin.php", {
-         action: "update_visibility",
-         DonationID,
-         setVisible,
-       })
-       .then(() => {
-         toast({
-           title: setVisible === 1 ? "Donation Visible" : "Donation Hidden",
-           description: `Donation has been ${
-             setVisible === 1 ? "made visible" : "hidden"
-           } successfully.`,
-         });
+  const handleDonationVisibility = (DonationID: number, setVisible: number) => {
+    axios
+      .post("http://localhost/KindLoop-project01/Backend/Admin.php", {
+        action: "update_visibility",
+        DonationID,
+        setVisible,
+      })
+      .then(() => {
+        toast({
+          title: setVisible === 1 ? "Donation Visible" : "Donation Hidden",
+          description: `Donation has been ${
+            setVisible === 1 ? "made visible" : "hidden"
+          } successfully.`,
+        });
 
-         fetchAdminData();
-       })
-       .catch((error) => {
-         console.error("Error updating donation visibility:", error);
-         toast({
-           title: "Error",
-           description: "Failed to update visibility. Please try again.",
-         });
-       });
-
-   };
+        fetchAdminData();
+      })
+      .catch((error) => {
+        console.error("Error updating donation visibility:", error);
+        toast({
+          title: "Error",
+          description: "Failed to update visibility. Please try again.",
+        });
+      });
+  };
 
   const handleViewUser = (userID: number) => {
     const user = users.find((u) => u.userID === userID);
@@ -350,6 +346,56 @@ const Admin = () => {
 
   const handleSaveAdmin = () => {
     if (!editAdminData) return;
+
+    // if (
+    //   !editAdminData.fullName.trim() ||
+    //   !editAdminData.email.trim() ||
+    //   !editAdminData.contactNumber.trim() ||
+    //   !editAdminData.address.trim()
+    // ) {
+    //   toast({
+    //     title: "Validation Error",
+    //     description: "All fields are required. Please fill in all details.",
+    //     variant: "destructive",
+    //   });
+    //   return;
+    // }
+
+    if (!editAdminData.fullName.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Full name is required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!/^\d{10}$/.test(editAdminData.contactNumber)) {
+      toast({
+        title: "Validation Error",
+        description: "Contact number must be 10 digits.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editAdminData.email)) {
+      toast({
+        title: "Validation Error",
+        description: "Enter a valid email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!editAdminData.address.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Address cannot be empty.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     axios
       .post("http://localhost/KindLoop-project01/Backend/Admin.php", {
