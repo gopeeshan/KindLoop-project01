@@ -25,6 +25,7 @@ const EditPost = () => {
   const [condition, setCondition] = useState("");
   const [usageDuration, setUsageDuration] = useState<string>("");
   const [images, setImages] = useState<FileList | null>(null);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
   const [quantity, setQuantity] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -34,21 +35,37 @@ const EditPost = () => {
   const MAX_IMAGES = 5;
 
   useEffect(() => {
-    // Fetch post data to populate fields
+    // Fetch post data to populate fields (align with existing backend)
     const fetchPost = async () => {
       try {
         const response = await axios.get(
-          `http://localhost/KindLoop-project01/Backend/get-post.php?donationID=${donationID}`
+          "http://localhost/KindLoop-project01/Backend/get-donation-by-id.php",
+          { params: { DonationID: donationID } }
         );
         const data = response.data;
-        if (data.status === "success" && data.post) {
-          setTitle(data.post.title || "");
-          setDescription(data.post.description || "");
-          setCategory(data.post.category || "");
-          setLocation(data.post.location || "");
-          setCondition(data.post.condition || "");
-          setUsageDuration(data.post.usageDuration || "");
-          setQuantity(data.post.quantity || "");
+        if (data.status === "success" && data.data) {
+          const post = data.data;
+          setTitle(post.title || "");
+          setDescription(post.description || "");
+          setCategory(post.category || "");
+          setLocation(post.location || "");
+          setCondition(post.condition || "");
+          setUsageDuration(post.usageDuration || "");
+          setQuantity(post.quantity != null ? String(post.quantity) : "");
+
+          // Normalize images into an array
+          let imgs: string[] = [];
+          if (Array.isArray(post.images)) {
+            imgs = post.images;
+          } else if (typeof post.images === "string" && post.images.length > 0) {
+            try {
+              const parsed = JSON.parse(post.images);
+              if (Array.isArray(parsed)) imgs = parsed;
+            } catch {
+              // ignore invalid JSON
+            }
+          }
+          setExistingImages(imgs);
         } else {
           toast({
             title: "Error",
@@ -67,7 +84,16 @@ const EditPost = () => {
       }
     };
 
-    fetchPost();
+    if (donationID) {
+      fetchPost();
+    } else {
+      setLoading(false);
+      toast({
+        title: "Invalid URL",
+        description: "Missing donation ID.",
+      });
+      navigate("/");
+    }
     // eslint-disable-next-line
   }, [donationID]);
 
@@ -130,6 +156,10 @@ const EditPost = () => {
     formData.append("usageDuration", usageDuration);
     formData.append("quantity", quantity);
 
+    // Always send the images we want to keep
+    formData.append("existingImages", JSON.stringify(existingImages));
+
+    // If user selected new files, append them. Backend will merge.
     if (images) {
       for (let i = 0; i < images.length; i++) {
         formData.append("images[]", images[i]);
@@ -281,38 +311,25 @@ const EditPost = () => {
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="usageDuration">Usage Duration *</Label>
-                    <Select
+                    <Input
+                      id="usageDuration"
+                      placeholder="e.g., 6 months"
                       value={usageDuration}
-                      onValueChange={setUsageDuration}
-                    >
-                      <SelectTrigger id="usageDuration" className="pl-3">
-                        <SelectValue placeholder="Select usage duration" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Within 1">Within 1 year</SelectItem>
-                        <SelectItem value="2 to 4">2 – 4 years</SelectItem>
-                        <SelectItem value="5 to 7">5 – 7 years</SelectItem>
-                        <SelectItem value="8 to 10">8 – 10 years</SelectItem>
-                        <SelectItem value="More Than 10">
-                          More than 10 years
-                        </SelectItem>
-                        <SelectItem value="Not Sure">Not sure</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      onChange={(e) => setUsageDuration(e.target.value)}
+                      required
+                    />
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="quantity">Quantity *</Label>
-                    <div className="relative">
-                      <Input
-                        id="quantity"
-                        type="number"
-                        placeholder="Enter quantity"
-                        value={quantity}
-                        onChange={(e) => setQuantity(e.target.value)}
-                        required
-                      />
-                    </div>
+                    <Input
+                      id="quantity"
+                      type="number"
+                      min={1}
+                      placeholder="Enter quantity"
+                      value={quantity}
+                      onChange={(e) => setQuantity(e.target.value)}
+                      required
+                    />
                   </div>
                 </div>
 
@@ -332,14 +349,16 @@ const EditPost = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="images">Images (Optional)</Label>
+                  <Label htmlFor="images">Images</Label>
                   <Input
-                    id="images[]"
+                    id="images"
                     type="file"
                     multiple
                     accept="image/*"
                     onChange={handleImageChange}
                   />
+                  {/* If you want to support deletions, you can render existingImages here with a remove toggle and
+                      send a `removeImages` JSON array in the submit handler. */}
                 </div>
 
                 <Button type="submit" className="w-full" size="lg">
