@@ -34,6 +34,10 @@ const EditPost = () => {
 
   const MAX_IMAGES = 5;
 
+  // Edit restrictions message for disabled fields
+  const editRestrictionMsg =
+    "You can edit only the Title, Description, Pickup Location, and Images. Category, Condition, Usage Duration, and Quantity cannot be changed after creation.";
+
   useEffect(() => {
     // Fetch post data to populate fields (align with existing backend)
     const fetchPost = async () => {
@@ -172,6 +176,7 @@ const EditPost = () => {
         formData
       );
       const data = response.data;
+
       if (data.status === "success") {
         toast({
           title: "Success",
@@ -182,34 +187,28 @@ const EditPost = () => {
         toast({
           title: "Error",
           description: data.message || "Failed to update post.",
+          variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Server Error",
-        description: "Something went wrong. Please try again later.",
+        title: "Error",
+        description: "An error occurred while updating the post.",
+        variant: "destructive",
       });
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <span>Loading...</span>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
+        <div className="mb-6">
           <Link
             to="/"
-            className="flex items-center space-x-2 text-primary hover:text-primary/80"
+            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
           >
-            <ArrowLeft className="h-5 w-5" />
-            <span>Back to Home</span>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Home
           </Link>
         </div>
 
@@ -254,7 +253,11 @@ const EditPost = () => {
                       onValueChange={setCategory}
                       required
                     >
-                      <SelectTrigger>
+                      <SelectTrigger
+                        disabled
+                        title={editRestrictionMsg}
+                        className="cursor-not-allowed opacity-60"
+                      >
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
@@ -279,6 +282,22 @@ const EditPost = () => {
                           Toys & Games
                         </SelectItem>
                         <SelectItem value="Baby & Kids">Baby & Kids</SelectItem>
+                        <SelectItem value="Health & Personal Care">
+                          Health & Personal Care
+                        </SelectItem>
+                        <SelectItem value="Pet Supplies">Pet Supplies</SelectItem>
+                        <SelectItem value="Office & School Supplies">
+                          Office & School Supplies
+                        </SelectItem>
+                        <SelectItem value="Hobbies & Crafts">
+                          Hobbies & Crafts
+                        </SelectItem>
+                        <SelectItem value="Automotive & Tools">
+                          Automotive & Tools
+                        </SelectItem>
+                        <SelectItem value="Musical Instruments">
+                          Musical Instruments
+                        </SelectItem>
                         <SelectItem value="Others">Others</SelectItem>
                       </SelectContent>
                     </Select>
@@ -291,7 +310,11 @@ const EditPost = () => {
                       onValueChange={setCondition}
                       required
                     >
-                      <SelectTrigger>
+                      <SelectTrigger
+                        disabled
+                        title={editRestrictionMsg}
+                        className="cursor-not-allowed opacity-60"
+                      >
                         <SelectValue placeholder="Select condition" />
                       </SelectTrigger>
                       <SelectContent>
@@ -317,6 +340,10 @@ const EditPost = () => {
                       value={usageDuration}
                       onChange={(e) => setUsageDuration(e.target.value)}
                       required
+                      disabled
+                      readOnly
+                      title={editRestrictionMsg}
+                      className="cursor-not-allowed opacity-60"
                     />
                   </div>
                   <div className="space-y-2">
@@ -329,6 +356,10 @@ const EditPost = () => {
                       value={quantity}
                       onChange={(e) => setQuantity(e.target.value)}
                       required
+                      disabled
+                      readOnly
+                      title={editRestrictionMsg}
+                      className="cursor-not-allowed opacity-60"
                     />
                   </div>
                 </div>
@@ -361,8 +392,8 @@ const EditPost = () => {
                       send a `removeImages` JSON array in the submit handler. */}
                 </div>
 
-                <Button type="submit" className="w-full" size="lg">
-                  Update Post
+                <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                  {loading ? "Loading..." : "Update Post"}
                 </Button>
               </form>
             </CardContent>
