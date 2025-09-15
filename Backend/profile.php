@@ -135,4 +135,14 @@ else {
     echo json_encode(["error" => "Method not allowed"]);
 }
 
+if ($action === 'update_visibility') {
+    $donationID = $input['DonationID'] ?? null;
+    $userID = $input['userID'] ?? null;
+    $setVisible = $input['setVisible'] ?? null;
+
+    $result = $profile->updateDonationVisibility($donationID, $userID, $setVisible);
+    echo json_encode($result);
+    exit;
+}
+
 ?>
