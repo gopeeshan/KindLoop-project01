@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Link } from "react-router-dom";
 import {
   Select,
   SelectContent,
@@ -21,12 +20,15 @@ import {
   Search,
   Filter,
   Eye,
+  Pencil,
 } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 
 const Donations = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [verificationFilter, setVerificationFilter] = useState("all");
@@ -34,6 +36,9 @@ const Donations = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  // Current logged-in user (stored in localStorage by the app)
+  const currentUserID = localStorage.getItem("userID");
 
   useEffect(() => {
     const categoryParam = searchParams.get("category");
@@ -192,6 +197,23 @@ const Donations = () => {
                 key={donation.DonationID}
               >
                 <Card className="group hover:shadow-lg cursor-pointer relative">
+                  {/* Owner-only Edit button */}
+                  {String(donation.userID) === currentUserID && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="absolute bottom-4 right-4 z-10"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        navigate(`/edit-post/${donation.DonationID}`);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Edit
+                    </Button>
+                  )}
+
                   <div className="w-full h-64 bg-gray-100 rounded-t-lg flex items-center justify-center overflow-hidden">
                     {donation.images && donation.images.length > 0 ? (
                       <img
