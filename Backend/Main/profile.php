@@ -316,4 +316,31 @@ class Profile
             return ["error" => "Donation not found"];
         }
     }
+
+    public function updateDonationVisibility($donationID, $userID, $setVisible)
+    {
+        // Ensure setVisible is 0 or 1
+        $setVisible = (int) $setVisible === 1 ? 1 : 0;
+
+        // Verify ownership
+        $check = $this->conn->prepare("SELECT DonationID FROM donation WHERE DonationID = ? AND userID = ?");
+        $check->bind_param("ii", $donationID, $userID);
+        $check->execute();
+        $res = $check->get_result();
+        if ($res->num_rows === 0) {
+            $check->close();
+            return ["success" => false, "message" => "Not authorized to change visibility for this donation."];
+        }
+        $check->close();
+
+        $stmt = $this->conn->prepare("UPDATE donation SET setVisible = ? WHERE DonationID = ? AND userID = ?");
+        $stmt->bind_param("iii", $setVisible, $donationID, $userID);
+        $ok = $stmt->execute();
+        $stmt->close();
+
+        if ($ok) {
+            return ["success" => true];
+        }
+        return ["success" => false, "message" => "Failed to update visibility."];
+    }
 }

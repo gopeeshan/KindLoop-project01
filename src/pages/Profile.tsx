@@ -52,7 +52,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { send } from "process";
 import MessagesBar from "@/components/MessagesBar";
 import { CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -67,6 +66,7 @@ interface Notification {
   requester_name: string;
   complaint_solution?: string;
 }
+
 interface Donation {
   DonationID: number;
   title: string;
@@ -75,6 +75,7 @@ interface Donation {
   isVerified: number;
   isDonationCompleted: number;
   credits: number;
+  setVisible: number; // 1 = Public, 0 = Private
 }
 
 interface User {
@@ -184,7 +185,7 @@ const Profile = () => {
           credit_points: data.credit_points,
           year_points: data.year_points,
           current_year_requests: data.current_year_requests,
-          current_year_request_limit: data.current_year_limit, 
+          current_year_request_limit: data.current_year_limit,
         }));
       } else {
         console.error(res.data.message);
@@ -294,6 +295,57 @@ const Profile = () => {
     // console.log("Viewing details for donation ID:", DonationID);
     navigate(`/profiledonation/${DonationID}`);
   };
+
+  const handleToggleVisibility = async (
+    donationID: number,
+    currentVisible: number
+  ) => {
+    if (!user.userID) return;
+
+    const nextVisible = currentVisible === 1 ? 0 : 1;
+
+    try {
+      const res = await axios.post(
+        "http://localhost/KindLoop-project01/Backend/profile.php",
+        {
+          action: "update_visibility",
+          DonationID: donationID,
+          userID: user.userID, // backend will verify ownership
+          setVisible: nextVisible,
+        }
+      );
+
+      if (res.data?.success) {
+        // Update local state
+        setDonationHistory((prev) =>
+          prev.map((d) =>
+            d.DonationID === donationID ? { ...d, setVisible: nextVisible } : d
+          )
+        );
+        toast({
+          title: nextVisible === 1 ? "Post is now Public" : "Post is now Private",
+          description:
+            nextVisible === 1
+              ? "This donation will appear on the public Donations page."
+              : "This donation is hidden from the public Donations page.",
+        });
+      } else {
+        toast({
+          title: "Update failed",
+          description: res.data?.message || "Could not update visibility.",
+          variant: "destructive",
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: "Server error",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
 
   const handleSave = async () => {
     if (!validateForm()) {
@@ -1015,6 +1067,20 @@ const Profile = () => {
                             <Eye className="h-4 w-4 mr-2" />
                             View Details
                           </Button>
+
+                          <label className="flex items-center space-x-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={donation.setVisible === 1}
+                              onChange={() =>
+                                handleToggleVisibility(
+                                  donation.DonationID,
+                                  donation.setVisible
+                                )
+                              }
+                            />
+                            <span><b>Visible</b></span>
+                          </label>
                         </div>
                       </div>
                     ))}
@@ -1084,7 +1150,8 @@ const Profile = () => {
                                 {item.category} • From {item.donor}
                               </p>
                               <p className="text-sm text-muted-foreground">
-                                Quantity: {item.quantity} • Credits: {item.credits}
+                                Quantity: {item.quantity} • Credits:{" "}
+                                {item.credits}
                               </p>
                               <p className="text-sm text-muted-foreground">
                                 Approved on: {item.received_date}
@@ -1129,7 +1196,10 @@ const Profile = () => {
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() =>
-                                      handleConfirmReceived(item.DonationID,item.credits)
+                                      handleConfirmReceived(
+                                        item.DonationID,
+                                        item.credits
+                                      )
                                     }
                                   >
                                     Confirm Receipt
