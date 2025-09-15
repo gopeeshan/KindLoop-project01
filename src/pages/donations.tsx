@@ -24,6 +24,12 @@ import {
 } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const Donations = () => {
   const [searchParams] = useSearchParams();
@@ -199,19 +205,35 @@ const Donations = () => {
                 <Card className="group hover:shadow-lg cursor-pointer relative">
                   {/* Owner-only Edit button */}
                   {String(donation.userID) === currentUserID && (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="absolute bottom-4 right-4 z-10"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        navigate(`/edit-post/${donation.DonationID}`);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4 mr-2" />
-                      Edit
-                    </Button>
+                    <TooltipProvider>
+                      <Tooltip delayDuration={200}>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="absolute bottom-4 right-4 z-10"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              navigate(`/edit-post/${donation.DonationID}`);
+                            }}
+                            aria-label="Edit post"
+                          >
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Edit
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent
+                          side="top"
+                          align="end"
+                          className="max-w-xs"
+                        >
+                          <p>
+                            Please note that the <b>Category</b>, <b>Condition</b>, <b>Usage Duration</b>, and <b>Quantity</b> cannot be modified once the post has been created.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   )}
 
                   <div className="w-full h-64 bg-gray-100 rounded-t-lg flex items-center justify-center overflow-hidden">
