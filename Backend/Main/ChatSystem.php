@@ -6,8 +6,7 @@ class ChatSystem {
     private $lastError = '';
 
     public function __construct() {
-        $db = new DBconnector();
-        $this->conn = $db->connect(); // mysqli connection
+        $this->conn = DBconnector::getInstance()->getConnection();
     }
 
     public function getLastError(): string {

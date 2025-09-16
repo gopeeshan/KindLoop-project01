@@ -13,8 +13,7 @@ class HandleDonation extends Profile
     public function __construct()
     {
         parent::__construct();
-        $db = new DBconnector();
-        $this->conn = $db->connect();
+        $this->conn = DBconnector::getInstance()->getConnection();
     }
 
 

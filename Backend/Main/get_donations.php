@@ -1,18 +1,20 @@
 <?php
-    require_once 'dbc.php';
+require_once 'dbc.php';
 
-    class Donation {
-        private $conn;
-        protected $donationID;
+class Donation
+{
+    private $conn;
+    protected $donationID;
 
-        public function __construct() {
-            $db= new DBconnector();
-            $this->conn = $db->connect();
-        }
+    public function __construct()
+    {
+        $this->conn = DBconnector::getInstance()->getConnection();
+    }
 
-        // Function to get all donations
-        public function getAllDonations() {
-            $sql = "SELECT
+    // Function to get all donations
+    public function getAllDonations()
+    {
+        $sql = "SELECT
                 donation.DonationID,
                 donation.userID,
                 user.fullName,
@@ -33,40 +35,41 @@
             WHERE donation.setVisible = 1 && donation.isVerified = 1
             ORDER BY donation.date_time DESC";
 
-            $result = $this->conn->query($sql);
-            $donations = [];
+        $result = $this->conn->query($sql);
+        $donations = [];
 
-            if ($result) {
-                while ($row = $result->fetch_assoc()) {
-                    // Decode images JSON stored as text if exists
-                    $row['images'] = $row['images'] ? json_decode($row['images'], true) : [];
-                    $donations[] = $row;
-                }
-                return ["status" => "success", "data" => $donations];
-            } else {
-                return ["status" => "error", "message" => "Failed to fetch donations"];
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                // Decode images JSON stored as text if exists
+                $row['images'] = $row['images'] ? json_decode($row['images'], true) : [];
+                $donations[] = $row;
             }
+            return ["status" => "success", "data" => $donations];
+        } else {
+            return ["status" => "error", "message" => "Failed to fetch donations"];
         }
+    }
 
-        public function getDonationById($donationID) {
-            $this->donationID = $donationID;
-            $stmt = $this->conn->prepare("
+    public function getDonationById($donationID)
+    {
+        $this->donationID = $donationID;
+        $stmt = $this->conn->prepare("
                 SELECT *, user.fullName, user.userID
                 FROM donation
                 JOIN user ON donation.userID = user.userID
                 WHERE donation.DonationID = ?
             ");
-            $stmt->bind_param("i", $donationID);
-            $stmt->execute();
-            $result = $stmt->get_result();
+        $stmt->bind_param("i", $donationID);
+        $stmt->execute();
+        $result = $stmt->get_result();
 
-            if ($result->num_rows > 0) {
-                $donation = $result->fetch_assoc();
-                return ["status" => "success", "data" => $donation];
-            } else {
-                return ["status" => "error", "message" => "Donation not found."];
-            }
+        if ($result->num_rows > 0) {
+            $donation = $result->fetch_assoc();
+            return ["status" => "success", "data" => $donation];
+        } else {
+            return ["status" => "error", "message" => "Donation not found."];
         }
+    }
 
     //      public function getDonation($id) {
     //     $stmt = $this->conn->prepare("SELECT DonationID AS id, title, description, category, `condition` AS cond, usageDuration FROM donation WHERE DonationID=?");
@@ -76,4 +79,4 @@
     //     return $result->fetch_assoc() ?? null;
     // }
 
-    }
+}

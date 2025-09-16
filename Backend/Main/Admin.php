@@ -2,7 +2,7 @@
 require_once 'dbc.php';
 
 class Admin {
-   private $conn;
+    private $conn;
     protected $email;
     protected $password;
     protected $AdminID;
@@ -12,11 +12,12 @@ class Admin {
     protected $DonationID;
     protected $isVerified;
     protected $setVisible;
+    protected $nic;
+    protected $contactNumber;
    
 
     public function __construct() {
-        $db = new DBconnector();
-        $this->conn = $db->connect();
+        $this->conn = DBconnector::getInstance()->getConnection();
     }
 
   public function login($email, $password) {

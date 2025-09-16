@@ -9,8 +9,7 @@ class User {
     protected $nic;
 
     public function __construct() {
-        $db = new DBconnector();
-        $this->conn = $db->connect();
+        $this->conn = DBconnector::getInstance()->getConnection();
     }
 
     public function login($email, $password) {

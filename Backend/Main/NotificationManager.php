@@ -5,8 +5,7 @@ class NotificationManager {
     private $conn;
 
     public function __construct() {
-        $db = new DBconnector();
-        $this->conn = $db->connect();
+        $this->conn = DBconnector::getInstance()->getConnection();
     }
 
     public function send($userId, $fromUserId, $type, $donationId = null, $complaintId = null) {

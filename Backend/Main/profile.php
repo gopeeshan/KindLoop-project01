@@ -9,10 +9,8 @@ class Profile
     protected $userID;
     protected $DonationID;
 
-    public function __construct()
-    {
-        $db = new DBconnector();
-        $this->conn = $db->connect();
+    public function __construct() {
+        $this->conn = DBconnector::getInstance()->getConnection();
     }
 
     public function getUserDetails($email)
@@ -73,19 +71,19 @@ class Profile
     {
         $this->userID = $userID;
         $receivedHistory = [];
-        $stmt = $this->conn->prepare("SELECT 
-                d.DonationID, 
-                d.title, 
-                d.date_time AS requestDate, 
-                d.category, 
-                u.fullName AS donor, 
+        $stmt = $this->conn->prepare("SELECT
+                d.DonationID,
+                d.title,
+                d.date_time AS requestDate,
+                d.category,
+                u.fullName AS donor,
                 u.contactNumber AS donorContact,
                 ri.quantity,
                 ri.received_date
             FROM receive_items ri
             JOIN donation d ON ri.donationID = d.DonationID
             JOIN user u ON ri.donorID = u.userID
-            WHERE ri.receiverID = ? 
+            WHERE ri.receiverID = ?
               AND d.isDonationCompleted = 1
             ORDER BY ri.received_date DESC");
         $stmt->bind_param("i", $userID);

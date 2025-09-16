@@ -5,8 +5,7 @@ class Complaint {
     private $conn;
 
     public function __construct() {
-        $db = new DBconnector();
-        $this->conn = $db->connect();
+        $this->conn = DBconnector::getInstance()->getConnection();
     }
 
     
