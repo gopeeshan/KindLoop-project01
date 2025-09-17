@@ -1,6 +1,16 @@
 <?php
 
 session_start();
+// Session timeout: 30 minutes
+$timeout = 1800; // seconds
+if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > $timeout)) {
+    session_unset();
+    session_destroy();
+    echo json_encode(["error" => "Session expired. Please log in again."]);
+    exit;
+}
+$_SESSION['LAST_ACTIVITY'] = time();
+
 header("Access-Control-Allow-Origin: http://localhost:2025");
 header("Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
@@ -14,22 +24,33 @@ $profile = new Profile();
 $userObj = new User();
 
 $method = $_SERVER['REQUEST_METHOD'];
-// $action = $_GET['action'] ?? null;
 
-// if ($action === "get_session_user") {
-//     if (isset($_SESSION['DonorID'])) {
-//         echo json_encode([
-//             "success" => true,
-//             "userID" => $_SESSION['DonorID']
-//         ]);
-//     } else {
-//         echo json_encode([
-//             "success" => false,
-//             "message" => "No active session found."
-//         ]);
-//     }
-//     exit;
-// }
+    // if (isset($_SESSION['donorID'])) {
+    //     echo json_encode([
+    //         "success" => true,
+    //         "donorID" => $_SESSION['donorID']
+    //     ]);
+    // } else {
+    //     echo json_encode([
+    //         "success" => false,
+    //         "message" => "No active session found."
+    //     ]);
+    // }
+    // exit;
+    if ($method === "GET" && isset($_GET['action']) && $_GET['action'] === "get_donor_id") {
+    if (isset($_SESSION['userID'])) {
+        echo json_encode([
+            "success" => true,
+            "DonorID" => $_SESSION['userID']
+        ]);
+    } else {
+        echo json_encode([
+            "success" => false,
+            "message" => "No active session found."
+        ]);
+    }
+    exit;
+}
 
 if ($method === "GET" && !isset($_GET['donationId'])) {
     if (!isset($_SESSION['userID']) || !isset($_SESSION['email'])) {

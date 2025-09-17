@@ -58,12 +58,16 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
   const fetchSessionUserID = () => {
     axios
       .get("http://localhost/KindLoop-project01/Backend/profile.php", {
-        withCredentials: true
+        withCredentials: true,
+        params: {
+          action: "get_donor_id",
+        },
       })
       .then((res) => {
+        console.log("Session response:", res.data);
         if (res.data.success) {
-          setDonorID(res.data.userID);
-        }else{
+          setDonorID(res.data.DonorID);
+        } else {
           console.warn("No donor session found");
         }
       })
@@ -178,7 +182,7 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
             description: `User has been ${newStatus} successfully.`,
             variant: "default",
           });
-          sendNotification(donationID, donorID, userID);
+          sendNotification(donationID, donorID, userID, newStatus);
         } else {
           toast({
             title: "Error",
@@ -200,7 +204,8 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
   const sendNotification = (
     donationID: number,
     DonorID: number,
-    RequesterID: number
+    RequesterID: number,
+    newStatus: string
   ) => {
     axios
       .post(
@@ -209,9 +214,9 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
           donationID,
           msg_receiver_ID: RequesterID,
           msg_sender_ID: DonorID,
+          status: newStatus,
           action: "notify_request_acceptance",
-        },
-        { withCredentials: true }
+        }
       )
       .then((res) => console.log("Notification sent", res.data))
       .catch((err) => console.error(err));
@@ -299,12 +304,12 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
                         handleStatusChange(
                           user.userID,
                           donationID,
-                          "selected",
+                          'selected',
                           user.allocatedQuantity
                         )
                       }
                       disabled={
-                        user.status === "selected " ||
+                        user.status === 'selected' ||
                         availableQuantity <= 0 ||
                         !user.allocatedQuantity
                       }
@@ -324,11 +329,11 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
                         handleStatusChange(
                           user.userID,
                           donationID,
-                          "rejected",
+                          'rejected',
                           user.allocatedQuantity
                         )
                       }
-                      disabled={user.status === "rejected"}
+                      disabled={user.status === 'rejected'}
                     >
                       Reject
                     </Button>

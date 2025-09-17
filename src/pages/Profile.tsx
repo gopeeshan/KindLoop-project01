@@ -215,11 +215,20 @@ const Profile = () => {
 
   useEffect(() => {
     axios
-    .get("http://localhost/KindLoop-project01/Backend/profile.php", {
-      withCredentials: true,
-    })
+      .get("http://localhost/KindLoop-project01/Backend/profile.php", {
+        withCredentials: true,
+      })
       .then((res) => {
         const data = res.data;
+        if (data.error === "Session expired. Please log in again.") {
+          toast({
+            title: "Session Expired",
+            description: "Please log in again.",
+            variant: "destructive",
+          });
+          navigate("/login");
+          return;
+        }
         setUser(data);
         setFormData(data);
         setDonationHistory(data.donationHistory || []);
@@ -956,6 +965,12 @@ const Profile = () => {
                             {notification.type === "request_accepted" && (
                               <p className="text-sm text-gray-600">
                                 Your Request Accepted by{" "}
+                                {notification.requester_name}
+                              </p>
+                            )}
+                            {notification.type === "request_declined" && (
+                              <p className="text-sm text-gray-600">
+                                Your Request Declined by{" "}
                                 {notification.requester_name}
                               </p>
                             )}

@@ -297,9 +297,9 @@ class Profile
 
     public function viewDonationDetails($donationId)
     {
-        $stmt = $this->conn->prepare("SELECT d.*, u.fullName as donor 
-                                        FROM donation d 
-                                        JOIN user u ON d.userID = u.userID 
+        $stmt = $this->conn->prepare("SELECT d.*, u.fullName as donor,u.userID as donorID
+                                        FROM donation d
+                                        JOIN user u ON d.userID = u.userID
                                         WHERE d.DonationID = ?");
         $stmt->bind_param("i", $donationId);
         $stmt->execute();

@@ -24,6 +24,7 @@ else{
     if ($response['status'] === 'success' && isset($response['user'])) {
         $_SESSION['userID'] = $response['user']['id'];
         $_SESSION['email'] = $response['user']['email'];
+        $_SESSION['donorID'] = $response['user']['id'];
     }
     echo json_encode($response);
 }

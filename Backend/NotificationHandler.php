@@ -1,5 +1,6 @@
 <?php
-header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Origin:*");
+header("Access-Control-Allow-Credentials: true");
 header("Content-Type: application/json");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Methods: POST,GET, OPTIONS");
@@ -12,6 +13,7 @@ $action = $data['action'] ?? '';
 $donationID = $data['donationID'] ?? null;
 $msg_sender_ID = $data['msg_sender_ID'] ?? null;
 $msg_receiver_ID = $data['msg_receiver_ID'] ?? null;
+$status = $data['status'] ?? null;
 $complaintID = $data['complaintID'] ?? null;
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -26,8 +28,14 @@ if ($method === 'POST' && $action === 'notify_request') {
     }
 }
 else if ($method === 'POST' && $action === 'notify_request_acceptance') {
-    
-        $type = 'request_accepted';
+        if($status === 'selected') {
+            $type = 'request_accepted';
+        } else if($status === 'rejected') {
+            $type = 'request_declined';
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Invalid status provided']);
+            exit;
+        }
         $success = $notificationManager->send($msg_receiver_ID, $msg_sender_ID, $type, $donationID);
         echo json_encode(['success' => $success]);
         exit;

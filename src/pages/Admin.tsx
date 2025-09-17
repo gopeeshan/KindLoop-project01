@@ -281,7 +281,7 @@ const Admin = () => {
         action: "user_action",
         userID,
         active_state,
-      })
+      },{ withCredentials: true })
       .then(() => {
         toast({
           title: `User ${active_state}`,
@@ -305,7 +305,7 @@ const Admin = () => {
         action: "admin_action",
         AdminID,
         AdminActive_state: newStatus,
-      })
+      },{ withCredentials: true })
       .then(() => {
         toast({
           title: `Admin ${newStatus}`,
@@ -328,7 +328,7 @@ const Admin = () => {
         action: "update_visibility",
         DonationID,
         setVisible,
-      })
+      },{withCredentials: true })
       .then(() => {
         toast({
           title: setVisible === 1 ? "Donation Visible" : "Donation Hidden",
