@@ -102,10 +102,12 @@ class Admin
     }
 
 
-    public function getUsers()
-    {
-        $sql = "SELECT u.userID, u.fullName, u.email, u.occupation, u.district, u.credit_points,u.registered_date, u.year_points, u.current_year_requests,u.current_year_request_limit,u.last_year_reset, u.active_state, COUNT(d.DonationID) AS donation_count
-                FROM user u LEFT JOIN donation d ON u.userID = d.userID GROUP BY u.userID, u.fullName, u.email ORDER BY donation_count DESC";
+    public function getUsers() {
+        $sql = "SELECT u.userID, u.fullName, u.email, u.occupation, u.district, i.credit_points,i.registered_date, i.year_points, i.current_year_requests,i.current_year_request_limit,i.last_year_reset, u.active_state, COUNT(d.DonationID) AS donation_count
+                 FROM user u
+        JOIN user_info i ON u.userID = i.userID
+        LEFT JOIN donation d ON u.userID = d.userID
+                GROUP BY u.userID, u.fullName, u.email ORDER BY donation_count DESC";
         $userResult = $this->conn->query($sql);
 
         $users = [];

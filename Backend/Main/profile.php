@@ -16,7 +16,10 @@ class Profile
     public function getUserDetails($email)
     {
         $this->email = $email;
-        $stmt = $this->conn->prepare("SELECT userID, fullName, email, contactNumber, occupation, address, credit_points FROM user WHERE email = ?");
+        $stmt = $this->conn->prepare("SELECT u.userID, u.fullName, u.email, u.contactNumber, u.occupation, u.address, i.credit_points 
+        FROM user u
+        JOIN user_info i ON u.userID = i.userID
+         WHERE u.email = ?");
         $stmt->bind_param("s", $email);
         if (!$stmt->execute()) {
             return ["error" => "Database error while fetching user."];
@@ -229,10 +232,10 @@ class Profile
 
     public function credits_update($donationID, $receiverID)
     {
-        $sql = "UPDATE user u
-            JOIN receive_items ri ON u.userID = ri.donorID
+        $sql = "UPDATE user_info i
+            JOIN receive_items ri ON i.userID = ri.donorID
             JOIN donation d ON d.DonationID = ri.donationID
-            SET u.credit_points = u.credit_points + (ri.quantity * d.credits)
+            SET i.credit_points = i.credit_points + (ri.quantity * d.credits)
             WHERE d.DonationID = ? AND ri.receiverID = ? ";
 
         $stmt = $this->conn->prepare($sql);

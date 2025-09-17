@@ -36,7 +36,7 @@ class HandleDonation extends Profile
  private function canUserRequest($userId)
     {
         $sql = "SELECT current_year_requests, current_year_request_limit 
-                FROM user WHERE userID = ?";
+                FROM user_info WHERE userID = ?";
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("i", $userId);
         $stmt->execute();
@@ -76,7 +76,7 @@ class HandleDonation extends Profile
 
         if ($stmt->execute()) {
 
-             $updateSql = "UPDATE user SET current_year_requests = current_year_requests + 1 WHERE userID = ?";
+             $updateSql = "UPDATE user_info SET current_year_requests = current_year_requests + 1 WHERE userID = ?";
             $updateStmt = $this->conn->prepare($updateSql);
             $updateStmt->bind_param("i", $userId);
             $updateStmt->execute();
@@ -178,7 +178,7 @@ class HandleDonation extends Profile
 
     public function getcredits($userId)
     {
-        $sqlUser = "SELECT credit_points FROM user WHERE userID = ?";
+        $sqlUser = "SELECT credit_points FROM user_info WHERE userID = ?";
         $stmtUser = $this->conn->prepare($sqlUser);
         $stmtUser->bind_param("i", $userId);
         $stmtUser->execute();

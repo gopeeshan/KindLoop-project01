@@ -23,6 +23,7 @@ class User
         $row = $result->fetch_assoc();
         return $row ? $row['userID'] : null;
     }
+
     public function login($email, $password)
     {
 
@@ -110,15 +111,34 @@ class User
         $stmt->bind_param("ssssssss", $fullName, $email, $nic, $contactNumber, $occupation, $address, $district, $password);
 
         if ($stmt->execute()) {
+        $userID = $this->conn->insert_id;
+
+        $sql2 = "INSERT INTO user_info (userID, registered_date, credit_points) VALUES (?, NOW(), 0)";
+        $stmt2 = $this->conn->prepare($sql2);
+        $stmt2->bind_param("i", $userID);
+
+         if ($stmt2->execute()) {
             return ["status" => "success", "message" => "User registered successfully!"];
         } else {
-            return ["status" => "error", "message" => "Registration failed: " . $stmt->error];
+            return ["status" => "error", "message" => "Failed to create user info: " . $stmt2->error];
         }
+    } else {
+        return ["status" => "error", "message" => "Registration failed: " . $stmt->error];
+    }
+        
     }
 
-    public function getUser($id)
-    {
-        $stmt = $this->conn->prepare("SELECT userID AS id, fullName AS name, email, contactNumber, credit_points, occupation FROM user WHERE userID=?");
+    public function getUser($id) {
+        $stmt = $this->conn->prepare("SELECT 
+            u.userID AS id, 
+            u.fullName AS name, 
+            u.email, 
+            u.contactNumber, 
+            u.occupation,
+            i.credit_points
+        FROM user u
+        JOIN user_info i ON u.userID = i.userID
+        WHERE u.userID = ?");
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -128,9 +148,10 @@ class User
     public function getDonor($id)
     {
         $stmt = $this->conn->prepare(
-            "SELECT u.userID AS id, u.fullName AS name, u.email, u.occupation, u.contactNumber AS phone, u.credit_points,
+            "SELECT u.userID AS id, u.fullName AS name, u.email, u.occupation, u.contactNumber AS phone, i.credit_points,
             COUNT(d.DonationID) AS total_donations
             FROM user u
+            JOIN user_info i ON u.userID = i.userID
             LEFT JOIN donation d ON u.userID = d.userID
             WHERE u.userID = ?
             GROUP BY u.userID"
@@ -151,9 +172,9 @@ class User
             current_year_request_limit,
             registered_date,
             last_year_reset
-        FROM user
+        FROM user_info
         WHERE userID = ?
-    ");
+        ");
         $stmt->bind_param("i", $userID);
         $stmt->execute();
         $user = $stmt->get_result()->fetch_assoc();
@@ -176,12 +197,8 @@ class User
         $todayDate = $today->format('Y-m-d');
         $nextResetDate = $nextReset->format('Y-m-d');
 
-        if ($todayDate >= $nextResetDate) {
-            $prevYearPoints = (int)$user['year_points'];
-            $newLimit =  floor($prevYearPoints / 100);
-
-            $stmtUpdate = $this->conn->prepare("
-            UPDATE user 
+        $stmtUpdate = $this->conn->prepare("
+            UPDATE user_info 
             SET year_points = 0, 
                 current_year_requests = 0, 
                 current_year_request_limit = ?, 
@@ -194,8 +211,6 @@ class User
             $user['year_points'] = 0;
             $user['current_year_requests'] = 0;
             $user['current_year_request_limit'] = $newLimit;
-        }
-
         return [
             "status" => "success",
             "data" => [
