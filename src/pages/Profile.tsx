@@ -171,7 +171,6 @@ const Profile = () => {
   const [confirmCheck, setConfirmCheck] = useState(false);
   const [isCreditsDialogOpen, setCreditsDialogOpen] = useState(false);
 
-  // Fetch user credits and set state
   const fetchUserCredits = async (userID: number) => {
     try {
       const res = await axios.get(

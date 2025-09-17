@@ -1,8 +1,7 @@
 <?php
 
 session_start();
-// Session timeout: 30 minutes
-$timeout = 1800; // seconds
+$timeout = 1800;
 if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > $timeout)) {
     session_unset();
     session_destroy();
@@ -54,7 +53,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === "GET" && !isset($_GET['donationId'])) {
     if (!isset($_SESSION['userID']) || !isset($_SESSION['email'])) {
-        echo json_encode(["error" => "Unauthorized. No session."]);
+        echo json_encode(["error" => "Session expired. Please log in again."]);
         exit;
     }
     $email = $_SESSION['email'];
