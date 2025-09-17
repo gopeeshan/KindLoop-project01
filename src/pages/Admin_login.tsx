@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,16 +15,7 @@ const Login = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  useEffect(() => {
-    const adminLoggedIn = localStorage.getItem("isAdminLoggedIn");
-    if (adminLoggedIn === "true") {
-      setIsAuthenticated(true);
-    } else {
-      navigate("/Admin_login");
-    }
-  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,25 +25,16 @@ const Login = () => {
     try {
       const response = await axios.post(
         "http://localhost/KindLoop-project01/Backend/AdminLogin.php",
-        { email, password }
+        { email, password },
+        { withCredentials: true }
       );
       const data = response.data;
 
       if (data.status === "success") {
-        const adminData = data.admin;
-
-        localStorage.setItem("isAdminLoggedIn", "true");
-        localStorage.setItem("email", adminData.email || "");
-        localStorage.setItem("AdminID", adminData.AdminID?.toString() || "");
-        localStorage.setItem("role", adminData.role || "subadmin");
-
-        console.log("AdminID being stored:", adminData.AdminID);
-
         toast({
           title: "Login Successful.",
           description: "Welcome back, Admin!",
         });
-
         navigate("/admin");
       } else {
         const message = data.message ?? "Invalid credentials.";

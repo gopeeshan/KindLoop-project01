@@ -1,8 +1,11 @@
 <?php
-header("Access-Control-Allow-Origin: *");
+
+session_start();
+header("Access-Control-Allow-Origin: http://localhost:2025");
 header("Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json");
+header("Access-Control-Allow-Credentials: true");
 
 require_once 'Main/profile.php';
 require_once 'Main/user.php';
@@ -11,45 +14,66 @@ $profile = new Profile();
 $userObj = new User();
 
 $method = $_SERVER['REQUEST_METHOD'];
+// $action = $_GET['action'] ?? null;
 
+// if ($action === "get_session_user") {
+//     if (isset($_SESSION['DonorID'])) {
+//         echo json_encode([
+//             "success" => true,
+//             "userID" => $_SESSION['DonorID']
+//         ]);
+//     } else {
+//         echo json_encode([
+//             "success" => false,
+//             "message" => "No active session found."
+//         ]);
+//     }
+//     exit;
+// }
 
-// GET request to fetch user by email
-if ($method === "GET" && isset($_GET['email'])) {
-        $email = $_GET['email'];
+if ($method === "GET" && !isset($_GET['donationId'])) {
+    if (!isset($_SESSION['userID']) || !isset($_SESSION['email'])) {
+        echo json_encode(["error" => "Unauthorized. No session."]);
+        exit;
+    }
+    $email = $_SESSION['email'];
 
-   // Step 1: Fetch user info
-   $user = $profile->getUserDetails($email);
+    // Step 1: Fetch user info
+    $user = $profile->getUserDetails($email);
     if (!$user) {
-         echo json_encode(["error" => "User not found."]);
-         exit;
+        echo json_encode(["error" => "User not found."]);
+        exit;
     }
 
     $credits = $userObj->getCredits($user['userID']);
-if ($credits['status'] === 'success') {
-    // Merge credits data into user array
-    $user = array_merge($user, $credits['data']);
-}
+    if ($credits['status'] === 'success') {
+        // Merge credits data into user array
+        $user = array_merge($user, $credits['data']);
+    }
 
-   // Step 2: Fetch Donation History (items donated by the user)
-   $donationHistory = $profile->getUserDonations($user['userID']);
+    // Step 2: Fetch Donation History (items donated by the user)
+    $donationHistory = $profile->getUserDonations($user['userID']);
 
     // Step 3: Fetch Received History (items received by the user)
-   $receivedHistory = $profile->getReceivedHistory($user['userID']);
+    $receivedHistory = $profile->getReceivedHistory($user['userID']);
 
-   // Step 4: Fetch To-Be-Received Items (items accepted but not yet received)
-   $toBeReceived = $profile->getToBeReceivedItems($user['userID']);
+    // Step 4: Fetch To-Be-Received Items (items accepted but not yet received)
+    $toBeReceived = $profile->getToBeReceivedItems($user['userID']);
 
     // Step 5: Merge all data into user array
-   $user['donationHistory'] = $donationHistory;
-   $user['receivedHistory'] = $receivedHistory;
-   $user['toBeReceived'] = $toBeReceived;
+    $user['donationHistory'] = $donationHistory;
+    $user['receivedHistory'] = $receivedHistory;
+    $user['toBeReceived'] = $toBeReceived;
 
-  echo json_encode($user);
-   exit;
+    echo json_encode($user);
+    exit;
 }
 if ($method === 'GET' && isset($_GET['donationId'])) {
     $donationId = intval($_GET['donationId']);
     $result = $profile->viewDonationDetails($donationId);
+    if ($result && isset($result['DonorID'])) {
+        $_SESSION['DonorID'] = $result['userID'];
+    }
     echo json_encode($result);
     exit;
 }

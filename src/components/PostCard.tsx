@@ -12,7 +12,19 @@ type Post = {
 };
 
 const PostCard = ({ post }: { post: Post }) => {
-  const currentUserID = localStorage.getItem("userID"); // If you have an auth context, prefer using that
+
+  const [currentUserID, setCurrentUserID] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    fetch("http://localhost/KindLoop-project01/Backend/profile.php", {
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setCurrentUserID(data?.userID ? String(data.userID) : null);
+      })
+      .catch(() => setCurrentUserID(null));
+  }, []);
 
   const isOwner =
     currentUserID !== null &&

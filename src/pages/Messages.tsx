@@ -30,10 +30,18 @@ const Messages = () => {
 
   const [searchParams] = useSearchParams();
 
-  const currentUserID = useMemo(
-    () => Number(localStorage.getItem("userID") || "0"),
-    []
-  );
+  const [currentUserID, setCurrentUserID] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch("http://localhost/KindLoop-project01/Backend/profile.php", {
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setCurrentUserID(data?.userID ?? null);
+      })
+      .catch(() => setCurrentUserID(null));
+  }, []);
 
   // Poll conversations list with adaptive backoff and only update on changes
   useEffect(() => {

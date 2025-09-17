@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu, X, Recycle, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -6,8 +6,20 @@ import { Link } from "react-router-dom";
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Simple authentication check - in a real app this would be connected to your auth system
-  const isLoggedIn = localStorage.getItem("isUserLoggedIn") === "true";
+  // Session-based authentication check
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Check session on mount
+  useEffect(() => {
+    fetch("http://localhost/KindLoop-project01/Backend/profile.php", {
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setIsLoggedIn(!!data && !!data.userID);
+      })
+      .catch(() => setIsLoggedIn(false));
+  }, []);
 
   return (
     <nav className="bg-background/95 backdrop-blur-sm border-b border-border sticky top-0 z-50">

@@ -266,7 +266,6 @@ const Signup = () => {
         setOtp("");
         setOtpSent(false);
         setIsOtpVerified(false);
-        localStorage.setItem("isLoggedIn", "true");
         setTimeout(() => navigate("/login"), 1000);
       }
     } catch (error) {

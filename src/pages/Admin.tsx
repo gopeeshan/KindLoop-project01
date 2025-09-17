@@ -113,8 +113,6 @@ const Admin = () => {
     Verification[]
   >([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [role, setRole] = useState<string | null>(null);
-
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
   const [selectedDonation, setSelectedDonation] = useState<Donation | null>(
@@ -122,21 +120,49 @@ const Admin = () => {
   );
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [editAdminData, setEditAdminData] = useState<Admin | null>(null);
+  const [adminID, setAdminID] = useState<number | null>(null);
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchAdminData();
+  }, [navigate]);
 
   const fetchAdminData = () => {
     axios
-      .get("http://localhost/KindLoop-project01/Backend/Admin.php")
+      .get("http://localhost/KindLoop-project01/Backend/Admin.php", {
+        withCredentials: true,
+      })
       .then((response) => {
         const data = response.data;
+        if (
+          data.message === "Session expired. Please login again." ||
+          data.message === "Unauthorized"
+        ) {
+          toast({
+            title: "Session Expired",
+            description: "Your session expired. Please login again.",
+            variant: "destructive",
+          });
+          setTimeout(() => {
+            navigate("/Admin_login");
+          }, 2000);
+          return;
+        }
         if (data.status === "success") {
+          setIsAuthenticated(true);
           setUsers(data.users);
           setDonations(data.donations);
           setAdmins(data.admins);
           setPendingVerifications(data.pendingVerifications);
+          setAdminID(data.adminID);
+          setRole(data.adminRole);
           console.log("Fetched data successfully");
+          if (data.adminID) setAdminID(data.adminID);
+          if (data.adminRole) setRole(data.adminRole);
         }
       })
       .catch((error) => {
+        setIsAuthenticated(false);
         console.error("Error fetching data:", error);
       });
   };
@@ -181,28 +207,37 @@ const Admin = () => {
       : []),
   ];
 
-  useEffect(() => {
-    const adminLoggedIn = localStorage.getItem("isAdminLoggedIn");
-    const role = localStorage.getItem("role");
+  // useEffect(() => {
+  //   const adminLoggedIn = localStorage.getItem("isAdminLoggedIn");
+  //   const role = localStorage.getItem("role");
 
-    if (adminLoggedIn === "true" && role) {
-      setIsAuthenticated(true);
-      setRole(role);
-    } else {
-      navigate("/Admin_login");
-      return;
-    }
-    fetchAdminData();
-  }, [navigate]);
+  //   if (adminLoggedIn === "true" && role) {
+  //     setIsAuthenticated(true);
+  //     setRole(role);
+  //   } else {
+  //     navigate("/Admin_login");
+  //     return;
+  //   }
+  //   fetchAdminData();
+  // }, [navigate]);
 
   const handleLogout = () => {
-    localStorage.removeItem("isAdminLoggedIn");
-    localStorage.removeItem("AdminID");
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out.",
-    });
-    navigate("/Admin_login");
+    axios
+      .post("http://localhost/KindLoop-project01/Backend/logout.php", {}, { withCredentials: true })
+      .then(() => {
+        toast({
+          title: "Logged Out",
+          description: "You have been successfully logged out.",
+        });
+        navigate("/Admin_login");
+      })
+      .catch(() => {
+        toast({
+          title: "Logout Failed",
+          description: "Could not log out. Please try again.",
+          variant: "destructive",
+        });
+      });
   };
 
   const handleVerifyDonation = async (
@@ -210,18 +245,20 @@ const Admin = () => {
     isVerified: number,
     setVisible: number
   ) => {
-    const AdminID = localStorage.getItem("AdminID");
-
     const action = isVerified === 1 ? "approved" : "rejected";
 
     axios
-      .post("http://localhost/KindLoop-project01/Backend/Admin.php", {
-        action: "verify_donation",
-        DonationID,
-        isVerified,
-        AdminID,
-        setVisible,
-      })
+      .post(
+        "http://localhost/KindLoop-project01/Backend/Admin.php",
+        {
+          action: "verify_donation",
+          DonationID,
+          isVerified,
+          AdminID: adminID,
+          setVisible,
+        },
+        { withCredentials: true }
+      )
       .then(() => {
         toast({
           title: `Donation ${action}`,
@@ -267,7 +304,7 @@ const Admin = () => {
       .post("http://localhost/KindLoop-project01/Backend/Admin.php", {
         action: "admin_action",
         AdminID,
-        AdminActive_state: newStatus, // match backend field
+        AdminActive_state: newStatus,
       })
       .then(() => {
         toast({

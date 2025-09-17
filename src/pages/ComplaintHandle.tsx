@@ -107,13 +107,23 @@ const AdminComplaints = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
-    const adminLoggedIn = localStorage.getItem("isAdminLoggedIn");
-    if (adminLoggedIn === "true") {
-      setIsAuthenticated(true);
-      fetchComplaints();
-    } else {
-      navigate("/login");
-    }
+    fetch("http://localhost/KindLoop-project01/Backend/Admin.php", {
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status === "success" && data.adminID) {
+          setIsAuthenticated(true);
+          fetchComplaints();
+        } else {
+          setIsAuthenticated(false);
+          navigate("/login");
+        }
+      })
+      .catch(() => {
+        setIsAuthenticated(false);
+        navigate("/login");
+      });
   }, [navigate]);
 
   const fetchComplaints = async () => {

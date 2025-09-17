@@ -1,7 +1,8 @@
 <?php
 require_once 'dbc.php';
 
-class Admin {
+class Admin
+{
     private $conn;
     protected $email;
     protected $password;
@@ -14,17 +15,19 @@ class Admin {
     protected $setVisible;
     protected $nic;
     protected $contactNumber;
-   
 
-    public function __construct() {
+
+    public function __construct()
+    {
         $this->conn = DBconnector::getInstance()->getConnection();
     }
 
-  public function login($email, $password) {
+    public function login($email, $password)
+    {
 
         $this->email  = $email;
         $this->password = $password;
-        
+
         $sql = "SELECT * FROM admin WHERE email = ?";
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("s", $email);
@@ -32,39 +35,40 @@ class Admin {
         $result = $stmt->get_result();
         $admin = $result->fetch_assoc();
 
-if (!$admin) {
-        return [
-            "status" => "error",
-            "message" => "Invalid email or password"
-        ];
+        if (!$admin) {
+            return [
+                "status" => "error",
+                "message" => "Invalid email or password"
+            ];
+        }
+
+        if ($admin["active_state"] !== "active") {
+            return [
+                "status" => "error",
+                "message" => "Your account is suspended. Contact super admin."
+            ];
+        }
+
+        if (password_verify($password, $admin["password"])) {
+            return [
+                "status" => "success",
+                "message" => "Admin login successful",
+                "admin" => [
+                    "AdminID"    => $admin["AdminID"],
+                    "email" => $admin["email"],
+                    "role"  => $admin["role"]
+                ]
+            ];
+        } else {
+            return [
+                "status" => "error",
+                "message" => "Invalid email or password"
+            ];
+        }
     }
 
-    if ($admin["active_state"] !== "active") {
-        return [
-            "status" => "error",
-            "message" => "Your account is suspended. Contact super admin."
-        ];
-    }
-    
- if (password_verify($password, $admin["password"])) {
-        return [
-            "status" => "success",
-            "message" => "Admin login successful",
-            "admin" => [
-                "AdminID"    => $admin["AdminID"],
-                "email" => $admin["email"],
-                "role"  => $admin["role"]
-            ]
-        ];
-    } else {
-        return [
-            "status" => "error",
-            "message" => "Invalid email or password"
-        ];
-    }
-}
-
-public function checkcredentials($email, $nic) {
+    public function checkcredentials($email, $nic)
+    {
         $this->email = $email;
         $this->nic = $nic;
 
@@ -81,23 +85,25 @@ public function checkcredentials($email, $nic) {
         return ["status" => "success"];
     }
 
-    public function signup($fullName, $email, $nic, $contactNumber, $address, $password) {
-    $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+    public function signup($fullName, $email, $nic, $contactNumber, $address, $password)
+    {
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
-    $sql = "INSERT INTO admin (fullName, email, nic, contactNumber, address, password)
+        $sql = "INSERT INTO admin (fullName, email, nic, contactNumber, address, password)
             VALUES (?, ?, ?, ?, ?, ?)";
-    $stmt = $this->conn->prepare($sql);
-    $stmt->bind_param("ssssss", $fullName, $email, $nic, $contactNumber, $address, $passwordHash);
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("ssssss", $fullName, $email, $nic, $contactNumber, $address, $passwordHash);
 
-    if ($stmt->execute()) {
-        return ["status" => "success", "message" => "Admin registered successfully!"];
-    } else {
-        return ["status" => "error", "message" => "Registration failed: " . $stmt->error];
+        if ($stmt->execute()) {
+            return ["status" => "success", "message" => "Admin registered successfully!"];
+        } else {
+            return ["status" => "error", "message" => "Registration failed: " . $stmt->error];
+        }
     }
-}
 
 
-    public function getUsers() {
+    public function getUsers()
+    {
         $sql = "SELECT u.userID, u.fullName, u.email, u.occupation, u.district, u.credit_points,u.registered_date, u.year_points, u.current_year_requests,u.current_year_request_limit,u.last_year_reset, u.active_state, COUNT(d.DonationID) AS donation_count
                 FROM user u LEFT JOIN donation d ON u.userID = d.userID GROUP BY u.userID, u.fullName, u.email ORDER BY donation_count DESC";
         $userResult = $this->conn->query($sql);
@@ -111,9 +117,10 @@ public function checkcredentials($email, $nic) {
         return $users;
     }
 
-    public function getDonations() {
+    public function getDonations()
+    {
         // $sql = "SELECT DonationID, title, userID, category, date_time, isVerified, isDonationCompleted FROM donation";
-        $sql="SELECT donation.DonationID, donation.title, donation.userID, user.fullName AS userName,donation.description, donation.`condition`, 
+        $sql = "SELECT donation.DonationID, donation.title, donation.userID, user.fullName AS userName,donation.description, donation.`condition`, 
                 donation.category, donation.images, donation.date_time, donation.isVerified,donation.isDonationCompleted, donation.approvedBy ,
                 donation.credits,donation.location,donation.setVisible,donation.usageDuration
                 FROM donation JOIN user ON donation.userID = user.userID";
@@ -131,7 +138,8 @@ public function checkcredentials($email, $nic) {
         return $donations;
     }
 
-    public function showToBeVerified() {
+    public function showToBeVerified()
+    {
         $sql = "SELECT donation.DonationID, donation.title, donation.userID, user.fullName AS userName, donation.`condition`, donation.category, donation.images, donation.date_time, donation.isVerified, donation.approvedBy 
                 FROM donation JOIN user ON donation.userID = user.userID 
                 WHERE donation.isVerified = 0 AND donation.setVisible = 1 ORDER BY date_time";
@@ -150,7 +158,8 @@ public function checkcredentials($email, $nic) {
         return $pendingVerifications;
     }
 
-    public function getAdminIDByEmail($email) {
+    public function getAdminIDByEmail($email)
+    {
         $this->email = $email;
         $stmt = $this->conn->prepare("SELECT AdminID FROM admin WHERE email = ?");
         $stmt->bind_param("s", $email);
@@ -163,7 +172,8 @@ public function checkcredentials($email, $nic) {
         return null;
     }
 
-    public function verifyDonation($DonationID, $isVerified, $setVisible, $AdminID) {
+    public function verifyDonation($DonationID, $isVerified, $setVisible, $AdminID)
+    {
         $this->DonationID = $DonationID;
         $this->isVerified = $isVerified;
         $this->setVisible = $setVisible;
@@ -174,79 +184,80 @@ public function checkcredentials($email, $nic) {
         return $stmt->execute();
     }
 
-    public function logRejectedDonation($DonationID,$AdminID) {
+    public function logRejectedDonation($DonationID, $AdminID)
+    {
         $this->DonationID = $DonationID;
         // $this->adminEmail = $adminEmail;
-        $this->AdminID=$AdminID;
+        $this->AdminID = $AdminID;
 
         $logStmt = $this->conn->prepare("INSERT INTO rejecteditems (DonationID, rejectedBy) VALUES (?, ?)");
         $logStmt->bind_param("ii", $DonationID, $AdminID);
-       if ($logStmt->execute()) {
-    $stmt = $this->conn->prepare("UPDATE `donation` SET `isVerified` = 0, `setVisible` = 0, `approvedBy` = ? WHERE `DonationID` = ?");
-    $stmt->bind_param("ii", $AdminID, $DonationID);
+        if ($logStmt->execute()) {
+            $stmt = $this->conn->prepare("UPDATE `donation` SET `isVerified` = 0, `setVisible` = 0, `approvedBy` = ? WHERE `DonationID` = ?");
+            $stmt->bind_param("ii", $AdminID, $DonationID);
 
-    $success = $stmt->execute();
-    $stmt->close();
-    $logStmt->close();
+            $success = $stmt->execute();
+            $stmt->close();
+            $logStmt->close();
 
-    if ($success) {
-        return ["status" => "success", "message" => "Donation rejected"];
-    } else {
-        return ["status" => "error", "message" => "Failed to update donation"];
+            if ($success) {
+                return ["status" => "success", "message" => "Donation rejected"];
+            } else {
+                return ["status" => "error", "message" => "Failed to update donation"];
+            }
+        } else {
+            $logStmt->close();
+            return ["status" => "error", "message" => "Failed to log rejected donation"];
+        }
     }
-} else {
-    $logStmt->close();
-    return ["status" => "error", "message" => "Failed to log rejected donation"];
-}
 
-    }
-
-    public function updateUserStatus($userID, $active_state) {
+    public function updateUserStatus($userID, $active_state)
+    {
         $stmt = $this->conn->prepare("UPDATE user SET active_state = ? WHERE userID = ?");
         $stmt->bind_param("si", $active_state, $userID);
         return $stmt->execute();
     }
 
-     public function updateDonationVisibleStatus($DonationID, $setVisible) {
+    public function updateDonationVisibleStatus($DonationID, $setVisible)
+    {
         $stmt = $this->conn->prepare("UPDATE donation SET setVisible = ? WHERE DonationID = ?");
         $stmt->bind_param("ii", $setVisible, $DonationID);
         return $stmt->execute();
     }
 
-    public function getAdmins() {
-    $sql = "SELECT AdminID, fullName, email, nic, contactNumber, address,joined_at AS joined_date, active_state AS Admin_status
+    public function getAdmins()
+    {
+        $sql = "SELECT AdminID, fullName, email, nic, contactNumber, address,joined_at AS joined_date, active_state AS Admin_status
             FROM admin where role='subadmin' ORDER BY joined_at ";
-    $adminResult = $this->conn->query($sql);
+        $adminResult = $this->conn->query($sql);
 
-    $admins = [];
-    if ($adminResult->num_rows > 0) {
-        while ($row = $adminResult->fetch_assoc()) {
-            $admins[] = $row;
+        $admins = [];
+        if ($adminResult->num_rows > 0) {
+            while ($row = $adminResult->fetch_assoc()) {
+                $admins[] = $row;
+            }
         }
+        return $admins;
     }
-    return $admins;
-}
 
 
-    public function updateAdminStatus($AdminID, $AdminActive_state) {
+    public function updateAdminStatus($AdminID, $AdminActive_state)
+    {
         $stmt = $this->conn->prepare("UPDATE admin SET active_state = ? WHERE AdminID = ?");
         $stmt->bind_param("si", $AdminActive_state, $AdminID);
         return $stmt->execute();
     }
 
-    public function updateAdminDetails($AdminID, $fullName, $email, $contactNumber, $address) {
-        
-    $stmt = $this->conn->prepare("UPDATE admin SET fullName = ?, email = ?, contactNumber = ?, address = ? WHERE AdminID = ?");
-    $stmt->bind_param("ssssi", $fullName, $email, $contactNumber, $address, $AdminID);
+    public function updateAdminDetails($AdminID, $fullName, $email, $contactNumber, $address)
+    {
 
-    if ($stmt->execute()) {
-        return true;
-    } else {
-        return false;
+        $stmt = $this->conn->prepare("UPDATE admin SET fullName = ?, email = ?, contactNumber = ?, address = ? WHERE AdminID = ?");
+        $stmt->bind_param("ssssi", $fullName, $email, $contactNumber, $address, $AdminID);
+
+        if ($stmt->execute()) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
-
-
-   
-}
-?>

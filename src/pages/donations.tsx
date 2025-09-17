@@ -43,8 +43,18 @@ const Donations = () => {
   const [error, setError] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  // Current logged-in user (stored in localStorage by the app)
-  const currentUserID = localStorage.getItem("userID");
+  const [currentUserID, setCurrentUserID] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("http://localhost/KindLoop-project01/Backend/profile.php", {
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setCurrentUserID(data?.userID ? String(data.userID) : null);
+      })
+      .catch(() => setCurrentUserID(null));
+  }, []);
 
   useEffect(() => {
     const categoryParam = searchParams.get("category");

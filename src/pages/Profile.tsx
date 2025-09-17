@@ -214,15 +214,10 @@ const Profile = () => {
   };
 
   useEffect(() => {
-    const email = localStorage.getItem("userEmail");
-    if (!email) return;
-
     axios
-      .get(
-        `http://localhost/KindLoop-project01/Backend/profile.php?email=${encodeURIComponent(
-          email
-        )}`
-      )
+    .get("http://localhost/KindLoop-project01/Backend/profile.php", {
+      withCredentials: true,
+    })
       .then((res) => {
         const data = res.data;
         setUser(data);
@@ -389,14 +384,22 @@ const Profile = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("isUserLoggedIn");
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("userID");
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out.",
-    });
-    navigate("/");
+    axios
+      .post("http://localhost/KindLoop-project01/Backend/logout.php", {}, { withCredentials: true })
+      .then(() => {
+        toast({
+          title: "Logged Out",
+          description: "You have been successfully logged out.",
+        });
+        navigate("/");
+      })
+      .catch(() => {
+        toast({
+          title: "Logout Failed",
+          description: "Could not log out. Please try again.",
+          variant: "destructive",
+        });
+      });
   };
 
   const handleConfirmReceived = (DonationID: number, credits: number) => {
@@ -542,7 +545,7 @@ const Profile = () => {
   };
 
   const handlePasswordChange = async () => {
-    const email = localStorage.getItem("userEmail");
+    const email = user.email;
     setPasswordError("");
 
     if (

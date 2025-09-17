@@ -25,25 +25,19 @@ const Login = () => {
       const response = await axios.post(
         "http://localhost/KindLoop-project01/Backend/login.php",
         {
-          // method: "POST",
-          // headers: { "Content-Type": "application/json" },
-          "email": email,
-          "password": password,
-        }
+          email,
+          password,
+        },
+        { withCredentials: true }
       );
 
       const data = response.data;
 
       if (data.status === "success") {
-        localStorage.setItem("isUserLoggedIn", "true");
-        localStorage.setItem("userEmail", email);
-        localStorage.setItem("userID", data.user.id);
-
         toast({
           title: "Login Successful .",
           description: "Welcome back!",
         });
-
         navigate("/");
       } else {
         setError(data.message ?? "Invalid credentials.");

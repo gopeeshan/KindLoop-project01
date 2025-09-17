@@ -46,12 +46,31 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
   const [currentUser, setCurrentUser] = useState<RequestingUser | null>(null);
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [isComplaintDialogOpen, setIsComplaintDialogOpen] = useState(false);
+  const [donorID, setDonorID] = useState<number | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchRequests();
     fetchDonationQuantity();
+    fetchSessionUserID();
   }, [donationID]);
+
+  const fetchSessionUserID = () => {
+    axios
+      .get("http://localhost/KindLoop-project01/Backend/profile.php", {
+        withCredentials: true
+      })
+      .then((res) => {
+        if (res.data.success) {
+          setDonorID(res.data.userID);
+        }else{
+          console.warn("No donor session found");
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching session userID", err);
+      });
+  };
 
   const fetchRequests = () => {
     axios
@@ -91,7 +110,7 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
       })
       .catch((err) => console.error("Error fetching donation quantity", err));
   };
-  
+
   const handleViewComplaints = (complainantID: number, donationID: number) => {
     axios
       .get(
@@ -125,15 +144,27 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
     newStatus: string,
     quantity: number
   ) => {
+    if (!donorID) {
+      toast({
+        title: "Error",
+        description: "Session expired. Please log in again.",
+        variant: "destructive",
+      });
+      return;
+    }
     axios
-      .post("http://localhost/KindLoop-project01/Backend/HandleDonation.php", {
-        Action: "accept_or_reject",
-        DonationID: donationID,
-        UserID: userID,
-        status: newStatus,
-        DonorID: localStorage.getItem("userID"),
-        quantity: quantity,
-      })
+      .post(
+        "http://localhost/KindLoop-project01/Backend/HandleDonation.php",
+        {
+          Action: "accept_or_reject",
+          DonationID: donationID,
+          UserID: userID,
+          status: newStatus,
+          DonorID: donorID,
+          quantity: quantity,
+        },
+        { withCredentials: true }
+      )
       .then((res) => {
         if (res.data.success) {
           setRequestingUsers((prev) =>
@@ -147,11 +178,7 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
             description: `User has been ${newStatus} successfully.`,
             variant: "default",
           });
-          sendNotification(
-            donationID,
-            parseInt(localStorage.getItem("userID")),
-            userID
-          );
+          sendNotification(donationID, donorID, userID);
         } else {
           toast({
             title: "Error",
@@ -183,7 +210,8 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
           msg_receiver_ID: RequesterID,
           msg_sender_ID: DonorID,
           action: "notify_request_acceptance",
-        }
+        },
+        { withCredentials: true }
       )
       .then((res) => console.log("Notification sent", res.data))
       .catch((err) => console.error(err));
@@ -202,7 +230,7 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
     }
   };
 
-   const handleQuantityChange = (userID: number, value: number) => {
+  const handleQuantityChange = (userID: number, value: number) => {
     setRequestingUsers((prev) =>
       prev.map((u) =>
         u.userID === userID
@@ -268,10 +296,17 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
                       variant="default"
                       size="sm"
                       onClick={() =>
-                        handleStatusChange(user.userID, donationID, "selected",user.allocatedQuantity)
+                        handleStatusChange(
+                          user.userID,
+                          donationID,
+                          "selected",
+                          user.allocatedQuantity
+                        )
                       }
                       disabled={
-                        user.status === "selected " || availableQuantity <= 0 || !user.allocatedQuantity
+                        user.status === "selected " ||
+                        availableQuantity <= 0 ||
+                        !user.allocatedQuantity
                       }
                       // onClick={() => {
                       //   console.log(donationID + " " + user.userID);
@@ -286,9 +321,14 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
                       variant="destructive"
                       size="sm"
                       onClick={() =>
-                        handleStatusChange(user.userID, donationID, "rejected", user.allocatedQuantity)
+                        handleStatusChange(
+                          user.userID,
+                          donationID,
+                          "rejected",
+                          user.allocatedQuantity
+                        )
                       }
-                      disabled={user.status === "rejected" }
+                      disabled={user.status === "rejected"}
                     >
                       Reject
                     </Button>
@@ -353,7 +393,7 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
           </div>
         )}
       </CardContent>
-      
+
       <Dialog
         open={isComplaintDialogOpen}
         onOpenChange={setIsComplaintDialogOpen}

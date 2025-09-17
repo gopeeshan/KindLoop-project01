@@ -1,8 +1,11 @@
 <?php
-header("Access-Control-Allow-Origin: *");
+
+session_start();
+header("Access-Control-Allow-Origin: http://localhost:2025");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+header("Access-Control-Allow-Credentials: true");
 
 require_once 'Main/user.php';
 
@@ -18,7 +21,10 @@ if (!$email || !$password) {
 }
 else{
     $response = $loginUser->login($email, $password);
-
+    if ($response['status'] === 'success' && isset($response['user'])) {
+        $_SESSION['userID'] = $response['user']['id'];
+        $_SESSION['email'] = $response['user']['email'];
+    }
     echo json_encode($response);
 }
 ?>

@@ -1,5 +1,11 @@
 <?php
-header("Access-Control-Allow-Origin: *");
+if (isset($_SERVER['HTTP_ORIGIN'])) {
+    header("Access-Control-Allow-Origin: " . $_SERVER['HTTP_ORIGIN']);
+    header("Access-Control-Allow-Credentials: true");
+} else {
+    header("Access-Control-Allow-Origin: http://localhost:2025");
+    header("Access-Control-Allow-Credentials: true");
+}
 header("Content-Type: application/json");
 
 require_once './Main/get_donations.php';

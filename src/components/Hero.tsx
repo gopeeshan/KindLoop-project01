@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Search, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -5,8 +6,21 @@ import { useNavigate } from "react-router-dom";
 const Hero = () => {
   const navigate = useNavigate();
 
-  // Simple authentication check - in a real app this would be connected to your auth system
-  const isLoggedIn = localStorage.getItem("isUserLoggedIn") === "true"; // This would come from your authentication context/state
+
+  // Session-based authentication check
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Check session on mount
+  useEffect(() => {
+    fetch("http://localhost/KindLoop-project01/Backend/profile.php", {
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setIsLoggedIn(!!data && !!data.userID);
+      })
+      .catch(() => setIsLoggedIn(false));
+  }, []);
 
   const handleStartDonating = () => {
     if (isLoggedIn) {

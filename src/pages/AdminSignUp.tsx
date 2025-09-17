@@ -141,7 +141,7 @@ if (
           password: "",
           confirmPassword: "",
         });
-        localStorage.setItem("isLoggedIn", "true");
+        // Session will be set by backend after signup
         navigate("/admin");
       }
     } catch (error) {

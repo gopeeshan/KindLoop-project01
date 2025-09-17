@@ -48,19 +48,28 @@ const DonationDetails = () => {
   const [loading, setLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
-
-  const userID = parseInt(localStorage.getItem("userID") || "0");
-
-const [user, setUser] = useState<{
-  userID: number;
-  fullName: string;
-  email: string;
-  credit_points: number;
-  current_year_requests: number;
-  current_year_request_limit: number;
-} | null>(null);
+  const [userID, setUserID] = useState<number | null>(null);
+  const [user, setUser] = useState<{
+    userID: number;
+    fullName: string;
+    email: string;
+    credit_points: number;
+    current_year_requests: number;
+    current_year_request_limit: number;
+  } | null>(null);
 
   const isOwner = !!donation && userID === donation.userID;
+
+  useEffect(() => {
+    fetch("http://localhost/KindLoop-project01/Backend/profile.php", {
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setUserID(data?.userID ?? null);
+      })
+      .catch(() => setUserID(null));
+  }, []);
 
   useEffect(() => {
     const fetchDonation = async () => {

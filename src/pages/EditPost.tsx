@@ -119,11 +119,22 @@ const EditPost = () => {
     setImages(files);
   };
 
+  const [userID, setUserID] = useState<number | null>(null);
+
+  // Fetch userID from session on mount
+  useEffect(() => {
+    fetch("http://localhost/KindLoop-project01/Backend/profile.php", {
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setUserID(data?.userID ?? null);
+      })
+      .catch(() => setUserID(null));
+  }, []);
+
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const storedID = localStorage.getItem("userID");
-    const userID = storedID ? parseInt(storedID, 10) : null;
 
     if (!userID) {
       toast({
