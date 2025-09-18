@@ -53,9 +53,9 @@ class CreatePost
 
         $result = [];
         if ($stmt->execute()) {
-            $result = ["status" => "success", "message" => "Your post is posted successfully!"];
+            $result = ["status" => "success", "message" => "Your post is created successfully! Once approved, it will be visible to others."];
         } else {
-            $result = ["status" => "error", "message" => "Posting failed: " . $stmt->error];
+            $result = ["status" => "error", "message" => "Creating post failed: " . $stmt->error];
         }
 
         $stmt->close();

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,34 +23,16 @@ const PostCreation = () => {
   const [location, setLocation] = useState("");
   const [condition, setCondition] = useState("");
   const [usageDuration, setUsageDuration] = useState<string>("");
-  const [images, setImages] = useState<FileList | null>(null);
   const [quantity, setQuantity] = useState("");
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [userID, setUserID] = useState<number | null>(null);
 
   const { toast } = useToast();
   const navigate = useNavigate();
-
   const MAX_IMAGES = 5;
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
 
-    if (files.length > MAX_IMAGES) {
-      toast({
-        title: "Upload limit reached",
-        description: `You can only upload up to ${MAX_IMAGES} images.`,
-        variant: "destructive",
-      });
-
-      e.target.value = "";
-      return;
-    }
-
-    setImages(files);
-  };
-
-  const [userID, setUserID] = useState<number | null>(null);
-
-  React.useEffect(() => {
+  useEffect(() => {
     fetch("http://localhost/KindLoop-project01/Backend/profile.php", {
       credentials: "include",
     })
@@ -61,29 +43,38 @@ const PostCreation = () => {
       .catch(() => setUserID(null));
   }, []);
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const newFiles = Array.from(files);
+    if (selectedImages.length + newFiles.length > MAX_IMAGES) {
+      toast({
+        title: "Upload limit reached",
+        description: `You can only upload up to ${MAX_IMAGES} images.`,
+        variant: "destructive",
+      });
+      e.target.value = "";
+      return;
+    }
+
+    setSelectedImages((prev) => [...prev, ...newFiles]);
+  };
+
+  const removeImage = (index: number) => {
+    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!userID) {
-      toast({
-        title: "User Not Found",
-        description: "Please log in again.",
-      });
+      toast({ title: "User Not Found", description: "Please log in again." });
       return;
     }
 
-    if (
-      !title ||
-      !description ||
-      !category ||
-      !location ||
-      !condition ||
-      !usageDuration
-    ) {
-      toast({
-        title: "Missing Fields",
-        description: "Please fill all required fields.",
-      });
+    if (!title || !description || !category || !location || !condition || !usageDuration) {
+      toast({ title: "Missing Fields", description: "Please fill all required fields." });
       return;
     }
 
@@ -97,11 +88,7 @@ const PostCreation = () => {
     formData.append("usageDuration", usageDuration);
     formData.append("quantity", quantity);
 
-    if (images) {
-      for (let i = 0; i < images.length; i++) {
-        formData.append("images[]", images[i]);
-      }
-    }
+    selectedImages.forEach((file) => formData.append("images[]", file));
 
     try {
       const response = await axios.post(
@@ -178,35 +165,19 @@ const PostCreation = () => {
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Category *</Label>
-                    <Select
-                      value={category}
-                      onValueChange={setCategory}
-                      required
-                    >
+                    <Select value={category} onValueChange={setCategory} required>
                       <SelectTrigger>
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Clothing & Accessories">
-                          Clothing & Accessories
-                        </SelectItem>
+                        <SelectItem value="Clothing & Accessories">Clothing & Accessories</SelectItem>
                         <SelectItem value="Electronics">Electronics</SelectItem>
-                        <SelectItem value="Books & Education">
-                          Books & Education
-                        </SelectItem>
+                        <SelectItem value="Books & Education">Books & Education</SelectItem>
                         <SelectItem value="Furniture">Furniture</SelectItem>
-                        <SelectItem value="Sports & Outdoors">
-                          Sports & Outdoors
-                        </SelectItem>
-                        <SelectItem value="Kitchen & Dining">
-                          Kitchen & Dining
-                        </SelectItem>
-                        <SelectItem value="Home & Garden">
-                          Home & Garden
-                        </SelectItem>
-                        <SelectItem value="Toys & Games">
-                          Toys & Games
-                        </SelectItem>
+                        <SelectItem value="Sports & Outdoors">Sports & Outdoors</SelectItem>
+                        <SelectItem value="Kitchen & Dining">Kitchen & Dining</SelectItem>
+                        <SelectItem value="Home & Garden">Home & Garden</SelectItem>
+                        <SelectItem value="Toys & Games">Toys & Games</SelectItem>
                         <SelectItem value="Baby & Kids">Baby & Kids</SelectItem>
                         <SelectItem value="Others">Others</SelectItem>
                       </SelectContent>
@@ -215,11 +186,7 @@ const PostCreation = () => {
 
                   <div className="space-y-2">
                     <Label>Condition *</Label>
-                    <Select
-                      value={condition}
-                      onValueChange={setCondition}
-                      required
-                    >
+                    <Select value={condition} onValueChange={setCondition} required>
                       <SelectTrigger>
                         <SelectValue placeholder="Select condition" />
                       </SelectTrigger>
@@ -228,9 +195,7 @@ const PostCreation = () => {
                         <SelectItem value="Very Good">Very Good</SelectItem>
                         <SelectItem value="Good">Good</SelectItem>
                         <SelectItem value="Acceptable">Acceptable</SelectItem>
-                        <SelectItem value="Needs Repair">
-                          Needs Repair
-                        </SelectItem>
+                        <SelectItem value="Needs Repair">Needs Repair</SelectItem>
                         <SelectItem value="Not Sure">Not Sure</SelectItem>
                       </SelectContent>
                     </Select>
@@ -249,9 +214,7 @@ const PostCreation = () => {
                         <SelectItem value="2 to 4">2 – 4 years</SelectItem>
                         <SelectItem value="5 to 7">5 – 7 years</SelectItem>
                         <SelectItem value="8 to 10">8 – 10 years</SelectItem>
-                        <SelectItem value="More Than 10">
-                          More than 10 years
-                        </SelectItem>
+                        <SelectItem value="More Than 10">More than 10 years</SelectItem>
                         <SelectItem value="Not Sure">Not sure</SelectItem>
                       </SelectContent>
                     </Select>
@@ -259,16 +222,14 @@ const PostCreation = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="quantity">Quantity *</Label>
-                    <div className="relative">
-                      <Input
-                        id="quantity"
-                        type="number"
-                        placeholder="Enter quantity"
-                        value={quantity}
-                        onChange={(e) => setQuantity(e.target.value)}
-                        required
-                      />
-                    </div>
+                    <Input
+                      id="quantity"
+                      type="number"
+                      placeholder="Enter quantity"
+                      value={quantity}
+                      onChange={(e) => setQuantity(e.target.value)}
+                      required
+                    />
                   </div>
                 </div>
 
@@ -296,6 +257,29 @@ const PostCreation = () => {
                     accept="image/*"
                     onChange={handleImageChange}
                   />
+
+                  {/* Image Previews */}
+                  {selectedImages.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {selectedImages.map((image, index) => (
+                        <div key={index} className="relative w-24 h-24 border rounded overflow-hidden">
+                          <img
+                            src={URL.createObjectURL(image)}
+                            alt={`preview-${index}`}
+                            className="w-full h-full object-cover cursor-pointer"
+                            onClick={() => setPreviewImage(URL.createObjectURL(image))}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-700"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <Button type="submit" className="w-full" size="lg">
@@ -306,6 +290,20 @@ const PostCreation = () => {
           </Card>
         </div>
       </div>
+
+      {/* Modal for large image preview */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={() => setPreviewImage(null)}
+        >
+          <img
+            src={previewImage}
+            alt="preview-large"
+            className="max-h-[80%] max-w-[80%] rounded shadow-lg"
+          />
+        </div>
+      )}
     </div>
   );
 };
