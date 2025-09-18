@@ -1167,12 +1167,12 @@ const Profile = () => {
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>
-                          Remove this post from your list?
+                          Do you want to delete this post?
                         </AlertDialogTitle>
                         <AlertDialogDescription>
                           This action will Delete{" "}
                           <strong>“{deleteTarget?.title}”</strong> from your My
-                          Donations list.
+                          Donations list and from public view.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
