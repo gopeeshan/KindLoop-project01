@@ -2,34 +2,21 @@
 require_once 'dbc.php';
 
 
-class User
-{
+class User {
     private $conn;
     protected $email;
     protected $password;
     protected $nic;
 
-    public function __construct()
-    {
+    public function __construct() {
         $this->conn = DBconnector::getInstance()->getConnection();
     }
 
-    public function getUserIDByEmail($email)
-    {
-        $stmt = $this->conn->prepare("SELECT userID FROM user WHERE email = ?");
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $row = $result->fetch_assoc();
-        return $row ? $row['userID'] : null;
-    }
-
-    public function login($email, $password)
-    {
+    public function login($email, $password) {
 
         $this->email = $email;
         $this->password = $password;
-
+        
         $sql = "SELECT * FROM user WHERE email = ?";
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("s", $email);
@@ -38,7 +25,7 @@ class User
         $user = $result->fetch_assoc();
 
         if ($user && password_verify($password, $user["password"])) {
-            if ($user["active_state"] === "suspend") {
+            if($user["active_state"]=== "suspend"){
                 return [
                     "status" => "error",
                     "message" => "Your account has been blocked due to inappropriate activities."
@@ -60,8 +47,7 @@ class User
         }
     }
 
-    public function checkEmail($email)
-    {
+     public function checkEmail($email) {
         $this->email = $email;
 
         $checkSql = "SELECT userID FROM user WHERE email = ?";
@@ -83,9 +69,8 @@ class User
         $stmtCheck->close();
         return ["status" => "success", "message" => "Email is available."];
     }
-
-    public function checkcredentials($email, $nic)
-    {
+    
+    public function checkcredentials($email, $nic) {
         $this->email = $email;
         $this->nic = $nic;
 
@@ -102,8 +87,7 @@ class User
         // return ["status" => "success", "message" => "Credentials are available."];
     }
 
-    public function signup($fullName, $email, $nic, $contactNumber, $occupation, $address, $district, $password)
-    {
+    public function signup($fullName, $email, $nic, $contactNumber, $occupation, $address, $district, $password) {
 
         $sql = "INSERT INTO user (fullName, email, nic, contactNumber, occupation, address, district, password)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
@@ -128,7 +112,7 @@ class User
         
     }
 
-    public function getUser($id) {
+public function getUser($id) {
         $stmt = $this->conn->prepare("SELECT 
             u.userID AS id, 
             u.fullName AS name, 
@@ -145,8 +129,7 @@ class User
         return $result->fetch_assoc() ?? null;
     }
 
-    public function getDonor($id)
-    {
+     public function getDonor($id) {
         $stmt = $this->conn->prepare(
             "SELECT u.userID AS id, u.fullName AS name, u.email, u.occupation, u.contactNumber AS phone, i.credit_points,
             COUNT(d.DonationID) AS total_donations
@@ -162,9 +145,8 @@ class User
         return $result->fetch_assoc() ?? null;
     }
 
-    public function getCredits($userID)
-    {
-        $stmt = $this->conn->prepare("
+    public function getCredits($userID) {
+    $stmt = $this->conn->prepare("
         SELECT
             credit_points,
             year_points,
@@ -174,28 +156,32 @@ class User
             last_year_reset
         FROM user_info
         WHERE userID = ?
-        ");
-        $stmt->bind_param("i", $userID);
-        $stmt->execute();
-        $user = $stmt->get_result()->fetch_assoc();
+    ");
+    $stmt->bind_param("i", $userID);
+    $stmt->execute();
+    $user = $stmt->get_result()->fetch_assoc();
 
-        if (!$user) {
-            return ["status" => "error", "message" => "User not found"];
-        }
+    if (!$user) {
+        return ["status" => "error", "message" => "User not found"];
+    }
 
-        $today = new DateTime();
+    $today = new DateTime();
 
-        if (!empty($user['last_year_reset'])) {
-            $lastReset = new DateTime($user['last_year_reset']);
-        } else {
-            $lastReset = new DateTime($user['registered_date']);
-        }
+    if (!empty($user['last_year_reset'])) {
+        $lastReset = new DateTime($user['last_year_reset']);
+    } else {
+        $lastReset = new DateTime($user['registered_date']);
+    }
 
-        $nextReset = clone $lastReset;
-        $nextReset->modify('+1 year');
+    $nextReset = clone $lastReset;
+    $nextReset->modify('+1 year');
+ 
+    $todayDate = $today->format('Y-m-d');
+$nextResetDate = $nextReset->format('Y-m-d');
 
-        $todayDate = $today->format('Y-m-d');
-        $nextResetDate = $nextReset->format('Y-m-d');
+if ($todayDate >= $nextResetDate) {
+        $prevYearPoints = (int)$user['year_points'];
+        $newLimit =  floor($prevYearPoints / 100);
 
         $stmtUpdate = $this->conn->prepare("
             UPDATE user_info 
@@ -205,20 +191,25 @@ class User
                 last_year_reset = NOW()
             WHERE userID = ?
         ");
-            $stmtUpdate->bind_param("ii", $newLimit, $userID);
-            $stmtUpdate->execute();
+        $stmtUpdate->bind_param("ii", $newLimit, $userID);
+        $stmtUpdate->execute();
 
-            $user['year_points'] = 0;
-            $user['current_year_requests'] = 0;
-            $user['current_year_request_limit'] = $newLimit;
-        return [
-            "status" => "success",
-            "data" => [
-                "credit_points" => (int)$user['credit_points'],
-                "year_points" => (int)$user['year_points'],
-                "current_year_requests" => (int)$user['current_year_requests'],
-                "current_year_limit" => (int)$user['current_year_request_limit']
-            ]
-        ];
+        $user['year_points'] = 0;
+        $user['current_year_requests'] = 0;
+        $user['current_year_request_limit'] = $newLimit;
     }
+
+    return [
+        "status" => "success",
+        "data" => [
+            "credit_points" => (int)$user['credit_points'],
+            "year_points" => (int)$user['year_points'],
+            "current_year_requests" => (int)$user['current_year_requests'],
+            "current_year_limit" => (int)$user['current_year_request_limit'] 
+        ]
+    ];
 }
+
+
+}
+?>

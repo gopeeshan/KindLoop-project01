@@ -87,7 +87,7 @@ class Profile
             JOIN donation d ON ri.donationID = d.DonationID
             JOIN user u ON ri.donorID = u.userID
             WHERE ri.receiverID = ?
-              AND d.isDonationCompleted = 1
+              AND ri.status = 'completed'
             ORDER BY ri.received_date DESC");
         $stmt->bind_param("i", $userID);
         if ($stmt->execute()) {
