@@ -63,6 +63,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ToastAction } from "@/components/ui/toast";
 
 interface Notification {
   notificationID: number;
@@ -340,6 +341,15 @@ const Profile = () => {
             nextVisible === 1
               ? "This donation will appear on the public Donations page."
               : "This donation is hidden from the public Donations page.",
+          action:
+            nextVisible === 1 ? (
+              <ToastAction
+                altText="View Donations"
+                onClick={() => navigate("/donations")}
+              >
+                View Donations
+              </ToastAction>
+            ) : undefined,
         });
       } else {
         toast({
