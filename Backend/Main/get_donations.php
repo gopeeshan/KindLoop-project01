@@ -32,7 +32,9 @@ class Donation
                 donation.quantity
             FROM donation
             JOIN user ON donation.userID = user.userID
-            WHERE donation.setVisible = 1 && donation.isVerified = 1
+            WHERE donation.setVisible = 1 
+            AND donation.isVerified = 1
+            AND donation.availableQuantity > 0
             ORDER BY donation.date_time DESC";
 
         $result = $this->conn->query($sql);
