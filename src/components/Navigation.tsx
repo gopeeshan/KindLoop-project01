@@ -8,17 +8,39 @@ const Navigation = () => {
 
   // Session-based authentication check
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState<string>("");
 
-  // Check session on mount
+  // Extract first name from full name
+  const firstName = userName?.trim()?.split(" ")?.[0] || "";
+
+  // Check session on mount and fetch user name
   useEffect(() => {
+    let isMounted = true;
+
     fetch("http://localhost/KindLoop-project01/Backend/profile.php", {
       credentials: "include",
     })
       .then((res) => res.json())
       .then((data) => {
-        setIsLoggedIn(!!data && !!data.userID);
+        if (!isMounted) return;
+        const loggedIn = !!data && !!data.userID;
+        setIsLoggedIn(loggedIn);
+        if (loggedIn) {
+          // Prefer fullName; fallback to name or empty string
+          setUserName(data?.fullName || data?.name || "");
+        } else {
+          setUserName("");
+        }
       })
-      .catch(() => setIsLoggedIn(false));
+      .catch(() => {
+        if (!isMounted) return;
+        setIsLoggedIn(false);
+        setUserName("");
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (
@@ -60,9 +82,9 @@ const Navigation = () => {
             {isLoggedIn ? (
               <div className="flex items-center space-x-2">
                 <Button variant="outline" asChild>
-                  <Link to="/profile">
+                  <Link to="/profile" aria-label="Profile">
                     <User className="mr-2 h-4 w-4" />
-                    Profile
+                    {firstName || "Profile"}
                   </Link>
                 </Button>
               </div>
@@ -84,6 +106,7 @@ const Navigation = () => {
               variant="ghost"
               size="sm"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="Toggle navigation menu"
             >
               {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
@@ -116,9 +139,9 @@ const Navigation = () => {
               {isLoggedIn ? (
                 <div className="px-3 py-2">
                   <Button variant="outline" className="w-full" asChild>
-                    <Link to="/profile">
+                    <Link to="/profile" aria-label="Profile">
                       <User className="mr-2 h-4 w-4" />
-                      Profile
+                      {firstName || "Profile"}
                     </Link>
                   </Button>
                 </div>
