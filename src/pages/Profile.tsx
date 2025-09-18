@@ -29,7 +29,9 @@ import {
   X,
   TrendingUp,
   Eye,
+  EyeOff,
   Coins,
+  Info,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -55,6 +57,12 @@ import {
 import MessagesBar from "@/components/MessagesBar";
 import { CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Notification {
   notificationID: number;
@@ -326,7 +334,8 @@ const Profile = () => {
           )
         );
         toast({
-          title: nextVisible === 1 ? "Post is now Public" : "Post is now Private",
+          title:
+            nextVisible === 1 ? "Post is now Public" : "Post is now Private",
           description:
             nextVisible === 1
               ? "This donation will appear on the public Donations page."
@@ -348,7 +357,6 @@ const Profile = () => {
       });
     }
   };
-
 
   const handleSave = async () => {
     if (!validateForm()) {
@@ -393,7 +401,11 @@ const Profile = () => {
 
   const handleLogout = () => {
     axios
-      .post("http://localhost/KindLoop-project01/Backend/logout.php", {}, { withCredentials: true })
+      .post(
+        "http://localhost/KindLoop-project01/Backend/logout.php",
+        {},
+        { withCredentials: true }
+      )
       .then(() => {
         toast({
           title: "Logged Out",
@@ -1070,34 +1082,67 @@ const Profile = () => {
                             {donation.credits} credits
                           </div>
 
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              if (donation.DonationID) {
-                                handleViewDetails(donation.DonationID);
-                              } else {
-                                console.error("Donation ID is missing!");
-                              }
-                            }}
-                          >
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Details
-                          </Button>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (donation.DonationID) {
+                                      handleViewDetails(donation.DonationID);
+                                    } else {
+                                      console.error("Donation ID is missing!");
+                                    }
+                                  }}
+                                  className="flex items-center"
+                                >
+                                  <Info className="h-4 w-4 mr-2" />
+                                  View Details
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                Click to see full details of this donation
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
 
-                          <label className="flex items-center space-x-2 text-sm">
-                            <input
-                              type="checkbox"
-                              checked={donation.setVisible === 1}
-                              onChange={() =>
-                                handleToggleVisibility(
-                                  donation.DonationID,
-                                  donation.setVisible
-                                )
-                              }
-                            />
-                            <span><b>Visible</b></span>
-                          </label>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  className={`text-white px-3 py-1 rounded ${
+                                    Number(donation.setVisible) === 1
+                                      ? "bg-purple-500 hover:bg-purple-700"
+                                      : "bg-blue-800 hover:bg-blue-700"
+                                  }`}
+                                  onClick={() =>
+                                    handleToggleVisibility(
+                                      donation.DonationID,
+                                      Number(donation.setVisible)
+                                    )
+                                  }
+                                >
+                                  {Number(donation.setVisible) === 1 ? (
+                                    <>
+                                      <EyeOff className="mr-2 h-4 w-4" /> Hide
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Eye className="mr-2 h-4 w-4" /> Show
+                                    </>
+                                  )}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {Number(donation.setVisible) === 1
+                                  ? "Currently Your post is visible. Click to hide from public."
+                                  : "Currently Your post is hidden. Click to show to public."}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                       </div>
                     ))}
