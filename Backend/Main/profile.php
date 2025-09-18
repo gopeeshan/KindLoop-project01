@@ -55,6 +55,7 @@ class Profile
         $sql = "SELECT DonationID, title, category, date_time, credits, isDonationCompleted, isVerified
             FROM donation
             WHERE userID = ?
+            AND setVisible = 1
             ORDER BY date_time DESC";
 
         $stmt = $this->conn->prepare($sql);
