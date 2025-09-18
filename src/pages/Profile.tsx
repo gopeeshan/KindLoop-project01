@@ -32,6 +32,7 @@ import {
   EyeOff,
   Coins,
   Info,
+  Pencil,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -1150,6 +1151,40 @@ const Profile = () => {
                                 {Number(donation.setVisible) === 1
                                   ? "Currently Your post is visible. Click to hide from public."
                                   : "Currently Your post is hidden. Click to show to public."}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+
+                          {/* New: Edit button similar to Donations page */}
+                          <TooltipProvider>
+                            <Tooltip delayDuration={200}>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  className="flex items-center"
+                                  onClick={() =>
+                                    navigate(
+                                      `/edit-post/${donation.DonationID}`
+                                    )
+                                  }
+                                  aria-label="Edit post"
+                                >
+                                  <Pencil className="h-4 w-4 mr-2" />
+                                  Edit
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent
+                                side="top"
+                                align="end"
+                                className="max-w-xs"
+                              >
+                                <p>
+                                  Please note that the <b>Category</b>,{" "}
+                                  <b>Condition</b>, <b>Usage Duration</b>, and{" "}
+                                  <b>Quantity</b> cannot be modified once the
+                                  post has been created.
+                                </p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
