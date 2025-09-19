@@ -43,10 +43,13 @@ class HandleDonation extends Profile
         $result = $stmt->get_result();
 
         if ($row = $result->fetch_assoc()) {
-            if ($row['current_year_requests'] >= $row['current_year_request_limit']) {
-                return ['success' => false, 'message' => 'You have reached your yearly request limit.'];
-            }
-            return ['success' => true];
+        if ($row['current_year_request_limit'] == 0) {
+            return ['success' => false, 'message' => 'Request unavailable: Earn points to enable requests next year.'];
+        }
+        if ($row['current_year_requests'] >= $row['current_year_request_limit']) {
+            return ['success' => false, 'message' => 'You have reached your yearly request limit.'];
+        }
+        return ['success' => true];
         }
         return ['success' => false, 'message' => 'User not found.'];
     }
