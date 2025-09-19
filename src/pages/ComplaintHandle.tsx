@@ -66,6 +66,7 @@ interface Complaint {
   solution?: string;
   evidence_images?: string[];
   proof_images?: string[];
+  resolvedByAdminEmail?: string;
 }
 interface DonorDetails {
   id: number;
@@ -129,7 +130,8 @@ const AdminComplaints = () => {
   const fetchComplaints = async () => {
     try {
       const { data } = await axios.get(
-        "http://localhost/KindLoop-project01/Backend/ComplaintController.php"
+        "http://localhost/KindLoop-project01/Backend/ComplaintController.php",
+        { withCredentials: true }
       );
       setComplaints(Array.isArray(data) ? data : []);
     } catch {
@@ -205,11 +207,15 @@ const AdminComplaints = () => {
     try {
       const { data } = await axios.post(
         `http://localhost/KindLoop-project01/Backend/ComplaintController.php?action=resolve&id=${selectedComplaint.id}`,
-        formData
+        formData,
+        {
+          withCredentials: true,
+          headers: { "Content-Type": "multipart/form-data" },
+        }
       );
+
       if (data.success) {
         toast({ title: "Complaint Resolved", description: data.message });
-        
 
         setComplaints((prev) =>
           prev.map((c) =>
@@ -235,7 +241,7 @@ const AdminComplaints = () => {
           selectedComplaint.donorId,
           selectedComplaint.id
         );
-        
+
         setSelectedComplaint(null);
         setSolution("");
         setProofFiles([]);
@@ -249,13 +255,15 @@ const AdminComplaints = () => {
     }
   };
 
-    const sendNotification =(
+  const sendNotification = (
     donationID: number,
     DonorID: number,
     RequesterID: number,
     complaintID: number
   ) => {
-    axios.post("http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
+    axios
+      .post(
+        "http://localhost/KindLoop-project01/Backend/NotificationHandler.php",
         {
           donationID,
           msg_receiver_ID: DonorID,
@@ -425,7 +433,12 @@ const AdminComplaints = () => {
                     </TableCell>
                     <TableCell>{getStatusBadge(complaint.status)}</TableCell>
                     <TableCell>
-                      <Dialog>
+                      <Dialog
+                        open={selectedComplaint?.id === complaint.id}
+                        onOpenChange={(isOpen) => {
+                          if (!isOpen) setSelectedComplaint(null);
+                        }}
+                      >
                         <DialogTrigger asChild>
                           <Button
                             size="sm"
@@ -714,9 +727,7 @@ const AdminComplaints = () => {
                                             alt={`evidence-${idx}`}
                                             className="w-40 h-40 object-cover rounded-lg shadow-sm"
                                             onClick={() =>
-                                              setSelectedImage(
-                                                img
-                                              )
+                                              setSelectedImage(img)
                                             }
                                           />
                                         )
@@ -791,27 +802,38 @@ const AdminComplaints = () => {
                                     {selectedComplaint.solution}
                                   </p>
 
-                                  {selectedComplaint.proof_images &&
-                                    selectedComplaint.proof_images.length >
-                                      0 && (
-                                      <div className="mt-2">
-                                        <h5 className="text-sm font-medium">
-                                          Proof Images
-                                        </h5>
-                                        <div className="flex flex-wrap gap-2 mt-1">
-                                          {selectedComplaint.proof_images.map(
-                                            (img: string, idx: number) => (
-                                              <img
-                                                key={idx}
-                                                src={img}
-                                                alt={`proof-${idx}`}
-                                                className="w-32 h-32 object-cover rounded-md border border-muted p-1"
-                                              />
-                                            )
-                                          )}
-                                        </div>
-                                      </div>
-                                    )}
+                                  {selectedComplaint.solution && (
+                                    <div>
+                                      <h4 className="font-semibold text-sm text-muted-foreground mb-2">
+                                        Resolved by:
+                                      </h4>
+                                      <p className="text-sm bg-purple-100 p-3 rounded-md">
+                                        {selectedComplaint.resolvedByAdminEmail}
+                                      </p>
+
+                                      {selectedComplaint.proof_images &&
+                                        selectedComplaint.proof_images.length >
+                                          0 && (
+                                          <div className="mt-2">
+                                            <h5 className="text-sm font-medium">
+                                              Proof Images
+                                            </h5>
+                                            <div className="flex flex-wrap gap-2 mt-1">
+                                              {selectedComplaint.proof_images.map(
+                                                (img: string, idx: number) => (
+                                                  <img
+                                                    key={idx}
+                                                    src={img}
+                                                    alt={`proof-${idx}`}
+                                                    className="w-32 h-32 object-cover rounded-md border border-muted p-1"
+                                                  />
+                                                )
+                                              )}
+                                            </div>
+                                          </div>
+                                        )}
+                                    </div>
+                                  )}
                                 </div>
                               )}
                             </div>
