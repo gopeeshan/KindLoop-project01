@@ -202,3 +202,150 @@ CREATE TABLE `user_info` (
   PRIMARY KEY (`userID`),
   CONSTRAINT `user_info_ibfk_1` FOREIGN KEY (`userID`) REFERENCES `user` (`userID`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+//Mermaid Class Diagram (https://mermaid.js.org/intro/)
+---
+config:
+  layout: elk
+  theme: neutral
+---
+classDiagram
+direction TB
+    class DBconnector {
+	    -connection : mysqli
+	    +getInstance() DBconnector
+	    +getConnection() mysqli
+    }
+    class Admin {
+	    -adminID : int
+	    -email : string
+	    -password : string
+	    -state : boolean
+	    +login(email, password)
+	    +checkcredentials(email, nic)
+	    +signup(...)
+	    +getUsers()
+	    +getDonations()
+	    +verifyDonation(donationID, isVerified, setVisible, adminID)
+	    +updateUserStatus(userID, active_state)
+	    +updateDonationVisibleStatus(donationID, setVisible)
+	    +updateAdminStatus(adminID, state)
+	    +updateAdminDetails(...)
+    }
+    class User {
+	    -userID : int
+	    -fullName : string
+	    -email : string
+	    -nic : string
+	    -contactNumber : string
+	    -credits : int
+	    +login(email, password)
+	    +checkEmail(email)
+	    +signup(...)
+	    +getUser(id)
+	    +getDonor(id)
+	    +getCredits(userID)
+    }
+    class Donation {
+	    -donationID : int
+	    -title : string
+	    -category : string
+	    -condition : string
+	    -quantity : int
+	    -status : string
+	    +getAllDonations()
+	    +getDonationById(donationID)
+    }
+    class Complaint {
+	    -complaintID : int
+	    -donationID : int
+	    -userID : int
+	    -reason : string
+	    -description : text
+	    -status : string
+	    +submitComplaint(donationID, userID, reason, description, files)
+	    +getAllComplaint()
+	    +resolve(id, solution, files)
+	    +getComplaints(userID, donationID)
+    }
+    class ChatSystem {
+	    -messageID : int
+	    -senderID : int
+	    -receiverID : int
+	    -donationID : int
+	    -message : text
+	    -timestamp : datetime
+	    +sendMessage(senderID, receiverID, message, donationID)
+	    +getConversation(user1, user2, donationID)
+	    +markAsRead(receiverID, senderID, donationID)
+	    +getUnreadCount(userID)
+	    +getLatestChats(userID)
+	    +deleteMessage(messageID, userID)
+	    +editMessage(messageID, userID, newMessage)
+    }
+    class Profile {
+	    +getUserDetails(email)
+	    +getUserDonations(userID)
+	    +getReceivedHistory(userID)
+	    +confirmReceived(donationID, receiverID)
+	    +updateUserInfo(...)
+	    +changePassword(...)
+    }
+    class HandleDonation {
+	    +checkrequest(donationID, userId)
+	    +requestItem(donationID, userId)
+	    +getcredits(userId)
+	    +receiveItem(donationID, donorID, userID, quantity, status)
+	    +updateQuantity(donationID, newQuantity, status)
+    }
+    class CreatePost {
+	    +createNewPost(...)
+	    +editPost(...)
+    }
+    class NotificationManager {
+	    -notificationID : int
+	    -userID : int
+	    -type : string
+	    -isRead : boolean
+	    +send(userId, fromUserId, type, donationId, complaintId)
+	    +getUserNotifications(userId)
+	    +markAsRead(notificationId)
+    }
+    class Mailer {
+	    -recipientEmail : string
+	    -subject : string
+	    -message : text
+	    +setInfo(recipientEmail, subject, message)
+	    +send()
+    }
+    class PHPMailer {
+    }
+
+	<<external>> PHPMailer
+
+    HandleDonation --|> Profile : inherits
+    Admin ..> DBconnector : uses
+    ChatSystem ..> DBconnector : uses
+    Complaint ..> DBconnector : uses
+    CreatePost ..> DBconnector : uses
+    Donation ..> DBconnector : uses
+    Profile ..> DBconnector : uses
+    HandleDonation ..> DBconnector : uses
+    NotificationManager ..> DBconnector : uses
+    User ..> DBconnector : uses
+    Mailer ..> PHPMailer : wraps/uses
+    Admin ..> User : manages
+    Admin ..> Donation : verifies
+    User ..> CreatePost : posts via
+    User ..> HandleDonation : requests
+    HandleDonation ..> Donation : allocates/updates
+    Profile ..> User : reads/updates
+    Profile ..> Donation : reads/updates
+    ChatSystem ..> User : messages
+    ChatSystem ..> Donation : context
+    Complaint ..> User : filed by
+    Complaint ..> Donation : concerns
+    NotificationManager ..> User : notifies
+    NotificationManager ..> Donation : about donation
+    NotificationManager ..> Complaint : about complaint
