@@ -77,11 +77,13 @@ class Complaint {
                        u.userID AS userId,
                        d.fullName AS donorName, 
                        d.userID AS donorId,
-                       don.title AS donationTitle
+                       don.title AS donationTitle,
+                       a.email AS resolvedByAdminEmail
                 FROM complaints c
                 JOIN donation don ON don.DonationID = c.DonationID
                 JOIN user u ON u.userID = c.complainantID
                 JOIN user d ON d.userID = don.userID
+                LEFT JOIN admin a ON a.AdminID = c.resolvedBy
                 ORDER BY c.created_at DESC";
 
         $result = $this->conn->query($sql);
@@ -92,6 +94,7 @@ class Complaint {
             foreach (['evidence_images', 'proof_images'] as $col) {
                 $row[$col] = !empty($row[$col]) ? json_decode($row[$col], true) : [];
             }
+             $row['resolvedByAdminEmail'] = $row['resolvedByAdminEmail'] ?? null;
             $complaints[] = $row;
         }
     }
@@ -100,14 +103,14 @@ class Complaint {
 
 
 // --- Respond ---
-    public function respond($id, $solution) {
-        $stmt = $this->conn->prepare("UPDATE complaints SET solution=?, status='responded' WHERE ComplaintID=?");
-        $stmt->bind_param("si", $solution, $id);
+    public function respond($id, $solution,$adminID) {
+        $stmt = $this->conn->prepare("UPDATE complaints SET solution=?, status='responded', resolvedBy=? WHERE ComplaintID=?");
+        $stmt->bind_param("sii", $solution, $adminID, $id);
         return $stmt->execute();
     }
 
     // --- Resolve (with proof images) ---
-    public function resolve($id, $solution, $files) {
+    public function resolve($id, $solution, $files, $adminID) {
         $uploadDir = "uploads/complaints/";
         $proofImages = [];
 
@@ -122,8 +125,8 @@ class Complaint {
         }
 
         $proofJson = json_encode($proofImages);
-        $stmt = $this->conn->prepare("UPDATE complaints SET solution=?, proof_images=?, status='resolved' WHERE ComplaintID=?");
-        $stmt->bind_param("ssi", $solution, $proofJson, $id);
+        $stmt = $this->conn->prepare("UPDATE complaints SET solution=?, proof_images=?, status='resolved', resolvedBy=?  WHERE ComplaintID=?");
+        $stmt->bind_param("ssii", $solution, $proofJson, $adminID, $id);
         return $stmt->execute();
     }
 

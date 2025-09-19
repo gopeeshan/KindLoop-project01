@@ -1,9 +1,14 @@
 <?php
+session_start();
+
 
 header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Origin: http://localhost:2025");
+header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: *");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -53,15 +58,20 @@ if ($type === 'donation' && $id) {
 if ($action && $id) {
     $solution = getInput("solution") ?? "";
     $files    = $_FILES['proof_images'] ?? [];
+    $adminID  = $_SESSION['AdminID'] ?? null;
+
+     if (!$adminID) {
+        sendJson(["success" => false, "message" => "Unauthorized: Admin not logged in"]);
+    }
 
     if ($action === 'respond') {
-        $success = $complaintObj->respond($id, $solution);
+        $success = $complaintObj->respond($id, $solution,$adminID);
         sendJson($success ? ["success" => true, "message" => "Response sent successfully"] 
                           : ["success" => false, "message" => "Failed to send response"]);
     }
 
     if ($action === 'resolve') {
-        $success = $complaintObj->resolve($id, $solution, $files);
+        $success = $complaintObj->resolve($id, $solution, $files, $adminID);
         sendJson($success ? ["success" => true, "message" => "Complaint resolved successfully"] 
                           : ["success" => false, "message" => "Failed to resolve complaint"]);
     }
