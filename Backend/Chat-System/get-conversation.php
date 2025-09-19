@@ -29,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $user1 = isset($_GET['user1']) ? (int)$_GET['user1'] : null;
     $user2 = isset($_GET['user2']) ? (int)$_GET['user2'] : null;
+    $donationID = isset($_GET['donationID']) && $_GET['donationID'] !== '' ? (int)$_GET['donationID'] : null;
 
     if (!$user1 || !$user2) {
         echo json_encode(["success" => false, "message" => "Missing user IDs"]);
@@ -36,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
 
     $chat = new ChatSystem();
-    $messages = $chat->getConversation($user1, $user2);
+    $messages = $chat->getConversation($user1, $user2, $donationID);
 
     echo json_encode([
         "success" => true,

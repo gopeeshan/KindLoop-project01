@@ -52,6 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $senderID   = isset($data['senderID']) ? (int)$data['senderID'] : null;
     $receiverID = isset($data['receiverID']) ? (int)$data['receiverID'] : null;
+    $donationID = isset($data['donationID']) && $data['donationID'] !== '' ? (int)$data['donationID'] : null;
     $message    = isset($data['message']) ? trim((string)$data['message']) : '';
 
     if (!$senderID || !$receiverID) {
@@ -73,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $chat = new ChatSystem();
-    $ok = $chat->sendMessage($senderID, $receiverID, $message);
+    $ok = $chat->sendMessage($senderID, $receiverID, $message, $donationID);
 
     if ($ok) {
         echo json_encode(["success" => true, "message" => "Message sent"]);

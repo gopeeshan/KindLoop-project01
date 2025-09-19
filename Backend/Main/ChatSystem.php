@@ -4,6 +4,7 @@ require_once 'dbc.php';
 class ChatSystem {
     private $conn;
     private $lastError = '';
+    private $columnCache = [];
 
     public function __construct() {
         $this->conn = DBconnector::getInstance()->getConnection();
@@ -15,6 +16,34 @@ class ChatSystem {
 
     private function setError(string $msg) {
         $this->lastError = $msg;
+    }
+
+    private function columnExists(string $table, string $column): bool {
+        $key = $table . '.' . $column;
+        if (array_key_exists($key, $this->columnCache)) {
+            return $this->columnCache[$key];
+        }
+        $sql = "SELECT 1
+                FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE()
+                  AND TABLE_NAME = ?
+                  AND COLUMN_NAME = ?
+                LIMIT 1";
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            // Assume non-existence on error
+            $this->columnCache[$key] = false;
+            return false;
+        }
+        $stmt->bind_param("ss", $table, $column);
+        if (!$stmt->execute()) {
+            $this->columnCache[$key] = false;
+            return false;
+        }
+        $res = $stmt->get_result();
+        $exists = $res && $res->num_rows > 0;
+        $this->columnCache[$key] = $exists;
+        return $exists;
     }
 
     // Send a new message
@@ -43,8 +72,10 @@ class ChatSystem {
         return $stmt->affected_rows > 0;
     }
 
-    // Get all messages between two users (chat history)
+    // Get all messages between two users (chat history), optionally scoped to a donation
     public function getConversation($user1, $user2, $donationID = null) {
+        $hasIsDeleted = $this->columnExists('messages', 'is_deleted');
+
         $sql = "SELECT * FROM `messages`
                 WHERE (
                     (`senderID` = ? AND `receiverID` = ?)
@@ -53,6 +84,10 @@ class ChatSystem {
 
         if ($donationID !== null) {
             $sql .= " AND `donationID` = ?";
+        }
+
+        if ($hasIsDeleted) {
+            $sql .= " AND `is_deleted` = 0";
         }
 
         $sql .= " ORDER BY `timestamp` ASC";
@@ -87,54 +122,60 @@ class ChatSystem {
         return $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
     }
 
-    // Mark messages as read
-// Mark messages as read (for a specific donation or all donations between users)
-public function markAsRead($receiverID, $senderID, $donationID = null) {
-    $sql = "UPDATE `messages`
-            SET `is_read` = 1
-            WHERE `receiverID` = ? AND `senderID` = ? AND `is_read` = 0";
+    // Mark messages as read (for a specific donation or all donations between users)
+    public function markAsRead($receiverID, $senderID, $donationID = null) {
+        $sql = "UPDATE `messages`
+                SET `is_read` = 1
+                WHERE `receiverID` = ? AND `senderID` = ? AND `is_read` = 0";
 
-    if ($donationID !== null) {
-        $sql .= " AND `donationID` = ?";
-    }
+        if ($donationID !== null) {
+            $sql .= " AND `donationID` = ?";
+        }
 
-    $stmt = $this->conn->prepare($sql);
-    if (!$stmt) {
-        $this->setError("Prepare failed: " . $this->conn->error);
-        return false;
-    }
-
-    $r = (int)$receiverID;
-    $s = (int)$senderID;
-
-    if ($donationID !== null) {
-        $d = (int)$donationID;
-        if (!$stmt->bind_param("iii", $r, $s, $d)) {
-            $this->setError("Bind failed: " . $stmt->error);
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) {
+            $this->setError("Prepare failed: " . $this->conn->error);
             return false;
         }
-    } else {
-        if (!$stmt->bind_param("ii", $r, $s)) {
-            $this->setError("Bind failed: " . $stmt->error);
+
+        $r = (int)$receiverID;
+        $s = (int)$senderID;
+
+        if ($donationID !== null) {
+            $d = (int)$donationID;
+            if (!$stmt->bind_param("iii", $r, $s, $d)) {
+                $this->setError("Bind failed: " . $stmt->error);
+                return false;
+            }
+        } else {
+            if (!$stmt->bind_param("ii", $r, $s)) {
+                $this->setError("Bind failed: " . $stmt->error);
+                return false;
+            }
+        }
+
+        if (!$stmt->execute()) {
+            $this->setError("Execute failed: " . $stmt->error);
             return false;
         }
+
+        return true;
     }
 
-    if (!$stmt->execute()) {
-        $this->setError("Execute failed: " . $stmt->error);
-        return false;
-    }
-
-    return true;
-    }
-
-
-    // Get unread messages count for a user
+    // Get unread messages count for a user (grouped by sender)
     public function getUnreadCount($userID) {
+        $hasIsDeleted = $this->columnExists('messages', 'is_deleted');
+
         $sql = "SELECT `senderID`, COUNT(*) as `unreadCount`
                 FROM `messages`
-                WHERE `receiverID` = ? AND `is_read` = 0 
-                GROUP BY `senderID`";
+                WHERE `receiverID` = ? AND `is_read` = 0";
+
+        if ($hasIsDeleted) {
+            $sql .= " AND `is_deleted` = 0";
+        }
+
+        $sql .= " GROUP BY `senderID`";
+
         $stmt = $this->conn->prepare($sql);
         if (!$stmt) {
             $this->setError("Prepare failed: " . $this->conn->error);
@@ -153,8 +194,13 @@ public function markAsRead($receiverID, $senderID, $donationID = null) {
         return $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
     }
 
-// Get latest chats (one chat per user pair, ignoring multiple donations)
+    // Get latest chats (one chat per user pair, ignoring multiple donations)
     public function getLatestChats($userID) {
+        $hasIsDeleted = $this->columnExists('messages', 'is_deleted');
+
+        // We want "last non-deleted" message per peer
+        $whereVisible = $hasIsDeleted ? " AND is_deleted = 0 " : " ";
+
         $sql = "SELECT
                     m.*,
                     CASE WHEN m.senderID = ? THEN m.receiverID ELSE m.senderID END AS otherUserID,
@@ -166,8 +212,9 @@ public function markAsRead($receiverID, $senderID, $donationID = null) {
                         CASE WHEN senderID = ? THEN receiverID ELSE senderID END AS chatUser,
                         MAX(timestamp) AS lastMsgTime
                     FROM messages
-                    WHERE senderID = ? OR receiverID = ?
-                    GROUP BY chatUser
+                    WHERE (senderID = ? OR receiverID = ?)"
+                    . $whereVisible .
+                    "GROUP BY chatUser
                 ) t ON (
                         (m.senderID = ? AND m.receiverID = t.chatUser)
                         OR
@@ -179,8 +226,9 @@ public function markAsRead($receiverID, $senderID, $donationID = null) {
                         CASE WHEN senderID = ? THEN receiverID ELSE senderID END AS chatUser,
                         COUNT(*) AS unread
                     FROM messages
-                    WHERE receiverID = ? AND is_read = 0
-                    GROUP BY chatUser
+                    WHERE receiverID = ? AND is_read = 0"
+                    . $whereVisible .
+                    "GROUP BY chatUser
                 ) uc ON uc.chatUser = CASE WHEN m.senderID = ? THEN m.receiverID ELSE m.senderID END
                 LEFT JOIN user u ON u.userID = CASE WHEN m.senderID = ? THEN m.receiverID ELSE m.senderID END
                 ORDER BY m.timestamp DESC";
@@ -192,7 +240,6 @@ public function markAsRead($receiverID, $senderID, $donationID = null) {
         }
 
         $u = (int)$userID;
-        // 10 ints, all $u
         if (!$stmt->bind_param("iiiiiiiiii", $u, $u, $u, $u, $u, $u, $u, $u, $u, $u)) {
             $this->setError("Bind failed: " . $stmt->error);
             return [];
@@ -207,12 +254,20 @@ public function markAsRead($receiverID, $senderID, $donationID = null) {
         return $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
     }
 
-    // Search messages
+    // Search messages (own inbox/outbox)
     public function searchMessages($userID, $keyword) {
+        $hasIsDeleted = $this->columnExists('messages', 'is_deleted');
+
         $sql = "SELECT * FROM `messages`
-                WHERE (`senderID` = ? OR `receiverID` = ?)
-                  AND `message` LIKE ?
+                WHERE (`senderID` = ? OR `receiverID` = ?)";
+
+        if ($hasIsDeleted) {
+            $sql .= " AND `is_deleted` = 0";
+        }
+
+        $sql .= " AND `message` LIKE ?
                 ORDER BY `timestamp` DESC";
+
         $stmt = $this->conn->prepare($sql);
         if (!$stmt) {
             $this->setError("Prepare failed: " . $this->conn->error);
@@ -232,41 +287,81 @@ public function markAsRead($receiverID, $senderID, $donationID = null) {
         return $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
     }
 
-    // Delete a message
-    public function deleteMessage($messageID, $userID) {
-        $sql = "DELETE FROM `messages` WHERE `messageID` = ? AND `senderID` = ?";
-        $stmt = $this->conn->prepare($sql);
-        if (!$stmt) {
-            $this->setError("Prepare failed: " . $this->conn->error);
-            return false;
-        }
+    // Soft-delete a message (hide it), do not remove from DB
+    public function softDeleteMessage($messageID, $userID) {
         $mid = (int)$messageID;
         $uid = (int)$userID;
-        if (!$stmt->bind_param("ii", $mid, $uid)) {
-            $this->setError("Bind failed: " . $stmt->error);
-            return false;
+
+        if ($this->columnExists('messages', 'is_deleted')) {
+            $sql = "UPDATE `messages`
+                    SET `is_deleted` = 1,
+                        `deleted_at` = NOW(),
+                        `message` = CASE WHEN `message` IS NULL OR `message` = '' THEN `message` ELSE '[deleted]' END
+                    WHERE `messageID` = ? AND `senderID` = ? AND `is_deleted` = 0";
+            $stmt = $this->conn->prepare($sql);
+            if (!$stmt) {
+                $this->setError("Prepare failed: " . $this->conn->error);
+                return false;
+            }
+            if (!$stmt->bind_param("ii", $mid, $uid)) {
+                $this->setError("Bind failed: " . $stmt->error);
+                return false;
+            }
+            if (!$stmt->execute()) {
+                $this->setError("Execute failed: " . $stmt->error);
+                return false;
+            }
+            return $stmt->affected_rows > 0;
+        } else {
+            // Fallback: overwrite message with a placeholder
+            $placeholder = "[deleted]";
+            $sql = "UPDATE `messages` SET `message` = ? WHERE `messageID` = ? AND `senderID` = ?";
+            $stmt = $this->conn->prepare($sql);
+            if (!$stmt) {
+                $this->setError("Prepare failed: " . $this->conn->error);
+                return false;
+            }
+            if (!$stmt->bind_param("sii", $placeholder, $mid, $uid)) {
+                $this->setError("Bind failed: " . $stmt->error);
+                return false;
+            }
+            if (!$stmt->execute()) {
+                $this->setError("Execute failed: " . $stmt->error);
+                return false;
+            }
+            return $stmt->affected_rows > 0;
         }
-        if (!$stmt->execute()) {
-            $this->setError("Execute failed: " . $stmt->error);
-            return false;
-        }
-        return true;
+    }
+
+    // Backward-compat: redirect hard delete to soft delete
+    public function deleteMessage($messageID, $userID) {
+        return $this->softDeleteMessage($messageID, $userID);
     }
 
     // Edit a message (within 15 min)
     public function editMessage($messageID, $userID, $newMessage) {
-        $sql = "UPDATE `messages`
-                SET `message` = ?
-                WHERE `messageID` = ? AND `senderID` = ?
-                  AND `timestamp` >= (NOW() - INTERVAL 15 MINUTE)";
+        $mid = (int)$messageID;
+        $uid = (int)$userID;
+        $msg = (string)$newMessage;
+
+        $hasEdited = $this->columnExists('messages', 'is_edited');
+        if ($hasEdited) {
+            $sql = "UPDATE `messages`
+                    SET `message` = ?, `is_edited` = 1, `edited_at` = NOW()
+                    WHERE `messageID` = ? AND `senderID` = ?
+                      AND `timestamp` >= (NOW() - INTERVAL 15 MINUTE)";
+        } else {
+            $sql = "UPDATE `messages`
+                    SET `message` = ?
+                    WHERE `messageID` = ? AND `senderID` = ?
+                      AND `timestamp` >= (NOW() - INTERVAL 15 MINUTE)";
+        }
+
         $stmt = $this->conn->prepare($sql);
         if (!$stmt) {
             $this->setError("Prepare failed: " . $this->conn->error);
             return false;
         }
-        $mid = (int)$messageID;
-        $uid = (int)$userID;
-        $msg = (string)$newMessage;
         if (!$stmt->bind_param("sii", $msg, $mid, $uid)) {
             $this->setError("Bind failed: " . $stmt->error);
             return false;
@@ -275,6 +370,6 @@ public function markAsRead($receiverID, $senderID, $donationID = null) {
             $this->setError("Execute failed: " . $stmt->error);
             return false;
         }
-        return true;
+        return $stmt->affected_rows > 0;
     }
 }

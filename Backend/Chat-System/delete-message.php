@@ -21,32 +21,38 @@ if (in_array($origin, $allowedOrigins, true)) {
 header("Vary: Origin");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
     exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
     echo json_encode(["success" => false, "message" => "Method not allowed"]);
     exit;
 }
 
-$body = json_decode(file_get_contents("php://input"), true) ?? [];
+$body = json_decode(file_get_contents('php://input'), true) ?? [];
+$messageID = isset($body['messageID']) ? (int)$body['messageID'] : 0;
+$userID    = isset($body['userID']) ? (int)$body['userID'] : 0;
 
-// Accept either {receiverID, senderID} or {viewerID, peerID}
-$receiverID = isset($body['receiverID']) ? (int)$body['receiverID'] : (isset($body['viewerID']) ? (int)$body['viewerID'] : null);
-$senderID   = isset($body['senderID']) ? (int)$body['senderID']   : (isset($body['peerID']) ? (int)$body['peerID'] : null);
-$donationID = isset($body['donationID']) && $body['donationID'] !== '' ? (int)$body['donationID'] : null;
-
-if (!$receiverID || !$senderID) {
-    echo json_encode(["success" => false, "message" => "Missing receiverID or senderID"]);
+if (!$messageID || !$userID) {
+    http_response_code(400);
+    echo json_encode(["success" => false, "message" => "Missing messageID or userID"]);
     exit;
 }
 
 $chat = new ChatSystem();
-$updated = $chat->markAsRead($receiverID, $senderID, $donationID);
+$ok = $chat->softDeleteMessage($messageID, $userID);
 
-echo json_encode([
-    "success" => true,
-    "updated" => $updated
-]);
+if ($ok) {
+    echo json_encode(["success" => true, "message" => "Message deleted"]);
+} else {
+    http_response_code(400);
+    echo json_encode([
+        "success" => false,
+        "message" => "Failed to delete message",
+        "error" => $chat->getLastError()
+    ]);
+}

@@ -17,6 +17,11 @@ interface ChatMessage {
   message: string;
   timestamp: string;
   is_read: number;
+  // optional flags from backend
+  is_deleted?: number;
+  is_edited?: number;
+  deleted_at?: string | null;
+  edited_at?: string | null;
 }
 
 interface ChatBoxProps {
@@ -40,6 +45,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [donationTitle, setDonationTitle] = useState<string | null>(null);
+
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editText, setEditText] = useState<string>("");
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const { toast } = useToast();
@@ -113,7 +121,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
           params: {
             user1: currentUserID,
             user2: otherUserID,
-            donationID: donationID,
+            donationID: donationID ?? null,
           },
           withCredentials: true,
         }
@@ -133,7 +141,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         {
           receiverID: currentUserID,
           senderID: otherUserID,
-          donationID: donationID ?? null, // include donation thread context (backend supports optional donationID)
+          donationID: donationID ?? null,
         },
         { withCredentials: true }
       );
@@ -161,7 +169,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         {
           senderID: currentUserID,
           receiverID: otherUserID,
-          donationID: donationID,
+          donationID: donationID ?? null,
           message: newMessage.trim(),
         },
         { withCredentials: true }
@@ -178,6 +186,77 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     }
   };
 
+  const startEdit = (msg: ChatMessage) => {
+    setEditingId(msg.messageID);
+    setEditText(msg.message || "");
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditText("");
+  };
+
+  const saveEdit = async () => {
+    if (!editingId) return;
+    const text = editText.trim();
+    if (!text) {
+      toast({ title: "Message cannot be empty", variant: "destructive" });
+      return;
+    }
+    try {
+      const res = await axios.post(
+        `http://localhost/KindLoop-project01/Backend/Chat-System/edit-message.php`,
+        {
+          messageID: editingId,
+          userID: currentUserID,
+          message: text,
+        },
+        { withCredentials: true }
+      );
+      if (res.data?.success) {
+        cancelEdit();
+        fetchMessages();
+      } else {
+        toast({
+          title: "Failed to edit message",
+          description: res.data?.message || "Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (e) {
+      toast({
+        title: "Server error while editing",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteMessage = async (messageID: number) => {
+    try {
+      const res = await axios.post(
+        `http://localhost/KindLoop-project01/Backend/Chat-System/delete-message.php`,
+        { messageID, userID: currentUserID },
+        { withCredentials: true }
+      );
+      if (res.data?.success) {
+        fetchMessages();
+      } else {
+        toast({
+          title: "Failed to delete message",
+          description: res.data?.message || "Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (e) {
+      toast({
+        title: "Server error while deleting",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -189,6 +268,18 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
   const handleDialogOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) onClose();
+  };
+
+  const visibleMessages = messages.filter(
+    (m) => !(m.is_deleted === 1 || m.message === "[deleted]")
+  );
+
+  const canEditMessage = (msg: ChatMessage) => {
+    const isMine = msg.senderID === currentUserID;
+    const within15 =
+      new Date().getTime() - new Date(msg.timestamp).getTime() <= 15 * 60 * 1000;
+    const notDeleted = msg.is_deleted !== 1 && msg.message !== "[deleted]";
+    return isMine && within15 && notDeleted;
   };
 
   return (
@@ -212,9 +303,10 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
         {/* Messages list */}
         <div className="flex-1 overflow-y-auto border rounded-md p-2 space-y-2 bg-muted">
-          {messages.length > 0 ? (
-            messages.map((msg) => {
+          {visibleMessages.length > 0 ? (
+            visibleMessages.map((msg) => {
               const isMine = msg.senderID === currentUserID;
+              const isEditing = editingId === msg.messageID;
               return (
                 <div
                   key={msg.messageID}
@@ -227,16 +319,75 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                         : "bg-white text-gray-900 border"
                     }`}
                   >
-                    <div className="whitespace-pre-wrap break-words">
-                      {msg.message}
-                    </div>
-                    <div
-                      className={`mt-1 text-[10px] ${
-                        isMine ? "text-violet-100" : "text-gray-500"
-                      }`}
-                    >
-                      {new Date(msg.timestamp).toLocaleString()}
-                    </div>
+                    {!isEditing ? (
+                      <>
+                        <div className="whitespace-pre-wrap break-words">
+                          {msg.message}
+                        </div>
+                        <div
+                          className={`mt-1 text-[10px] flex items-center gap-2 ${
+                            isMine ? "text-violet-100" : "text-gray-500"
+                          }`}
+                        >
+                          <span>{new Date(msg.timestamp).toLocaleString()}</span>
+                          {msg.is_edited === 1 && <span>(edited)</span>}
+                        </div>
+
+                        {isMine && (
+                          <div className="mt-1 flex gap-2 text-[11px]">
+                            {canEditMessage(msg) && (
+                              <button
+                                className={`underline ${
+                                  isMine ? "text-violet-100" : "text-gray-600"
+                                }`}
+                                onClick={() => startEdit(msg)}
+                              >
+                                Edit
+                              </button>
+                            )}
+                            <button
+                              className={`underline ${
+                                isMine ? "text-violet-100" : "text-gray-600"
+                              }`}
+                              onClick={() => deleteMessage(msg.messageID)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <input
+                          className={`w-full rounded px-2 py-1 text-sm ${
+                            isMine ? "text-gray-900" : "text-gray-900"
+                          }`}
+                          value={editText}
+                          onChange={(e) => setEditText(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              saveEdit();
+                            }
+                          }}
+                          autoFocus
+                        />
+                        <div className="mt-2 flex gap-2">
+                          <button
+                            className="px-2 py-1 text-xs rounded bg-violet-700 text-white"
+                            onClick={saveEdit}
+                          >
+                            Save
+                          </button>
+                          <button
+                            className="px-2 py-1 text-xs rounded bg-gray-200"
+                            onClick={cancelEdit}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               );

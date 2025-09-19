@@ -11,6 +11,7 @@ type ConversationItem = {
   message: string;
   timestamp: string;
   unread: number;
+  is_deleted?: number; // optional flag from backend
 };
 
 interface MessagesBarProps {
@@ -156,7 +157,7 @@ const MessagesBar: React.FC<MessagesBarProps> = ({
           <div className="max-h-96 overflow-y-auto divide-y">
             {conversations.map((c, idx) => {
               const name = c.otherUserName || `User ${c.otherUserID}`;
-              const last = c.message || "";
+              const last = c.is_deleted === 1 ? "Message deleted" : (c.message || "");
               const ts = c.timestamp ? new Date(c.timestamp).toLocaleString() : "";
               const unread = Number(c.unread) || 0;
               return (
