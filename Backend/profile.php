@@ -1,6 +1,34 @@
 <?php
 session_start();
+
 $timeout = 1800;
+
+// ----- CORS: dynamic allowed origins + preflight -----
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$allowedOrigins = [
+    'http://localhost:2025',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:3000',
+];
+
+if ($origin && in_array($origin, $allowedOrigins, true)) {
+    header("Access-Control-Allow-Origin: $origin");
+    header("Access-Control-Allow-Credentials: true"); // required for cookies/sessions
+}
+header("Vary: Origin");
+header("Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept, Origin");
+header("Access-Control-Max-Age: 86400");
+header("Content-Type: application/json; charset=utf-8");
+
+// Handle preflight cleanly
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
+// ----- Session timeout guard -----
 if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > $timeout)) {
     session_unset();
     session_destroy();
@@ -9,14 +37,9 @@ if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > 
 }
 $_SESSION['LAST_ACTIVITY'] = time();
 
-header("Access-Control-Allow-Origin: http://localhost:2025");
-header("Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
-header("Content-Type: application/json");
-header("Access-Control-Allow-Credentials: true");
-
-require_once 'Main/profile.php';
-require_once 'Main/user.php';
+// Use absolute paths for reliability
+require_once __DIR__ . '/Main/profile.php';
+require_once __DIR__ . '/Main/user.php';
 
 $profile = new Profile();
 $userObj = new User();
@@ -81,7 +104,7 @@ if ($method === 'GET' && isset($_GET['donationId'])) {
 
 // -------------------- POST: Actions (confirm_received, changePassword, update_visibility) -------------------- //
 if ($method === 'POST') {
-    $input = json_decode(file_get_contents('php://input'), true);
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
 
     $action = $input['action'] ?? '';
     $DonationID = $input['DonationID'] ?? null;
@@ -135,7 +158,7 @@ if ($method === 'POST') {
 
 // -------------------- PUT: Update user info -------------------- //
 elseif ($method === "PUT") {
-    $input = json_decode(file_get_contents("php://input"), true);
+    $input = json_decode(file_get_contents("php://input"), true) ?? [];
 
     if (
         empty($input["userID"]) || empty($input["fullName"]) ||
@@ -171,4 +194,3 @@ elseif ($method === "PUT") {
 else {
     echo json_encode(["error" => "Method not allowed"]);
 }
-?>

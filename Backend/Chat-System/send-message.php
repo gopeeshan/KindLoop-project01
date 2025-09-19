@@ -53,7 +53,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $senderID   = isset($data['senderID']) ? (int)$data['senderID'] : null;
     $receiverID = isset($data['receiverID']) ? (int)$data['receiverID'] : null;
     $message    = isset($data['message']) ? trim((string)$data['message']) : '';
-    $donationID = isset($data['donationID']) && $data['donationID'] !== '' ? (int)$data['donationID'] : null;
 
     if (!$senderID || !$receiverID) {
         http_response_code(400);
@@ -74,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $chat = new ChatSystem();
-    $ok = $chat->sendMessage($senderID, $receiverID, $message, $donationID);
+    $ok = $chat->sendMessage($senderID, $receiverID, $message);
 
     if ($ok) {
         echo json_encode(["success" => true, "message" => "Message sent"]);
