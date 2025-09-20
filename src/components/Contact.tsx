@@ -24,7 +24,7 @@ const Contact = () => {
             <CardContent className="space-y-6">
               <div className="flex items-center space-x-3">
                 <Mail className="h-5 w-5 text-primary" />
-                <span className="text-muted-foreground">hello@kindloop.com</span>
+                <span className="text-muted-foreground">kindloop.org@gmail.com</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="h-5 w-5 text-primary" />
@@ -32,7 +32,7 @@ const Contact = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <MapPin className="h-5 w-5 text-primary" />
-                <span className="text-muted-foreground">UWUSL ,Badulla</span>
+                <span className="text-muted-foreground">UWUSL, Badulla</span>
               </div>
             </CardContent>
           </Card>
