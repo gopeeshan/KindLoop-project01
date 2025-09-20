@@ -72,21 +72,24 @@ CREATE TABLE `donation` (
 -- Complaints Table
 -- =========================
 CREATE TABLE `complaints` (
-  `ComplaintID` int(11) NOT NULL AUTO_INCREMENT,
-  `DonationID` int(11) NOT NULL,
-  `complainantID` int(11) NOT NULL,
-  `reason` varchar(255) NOT NULL,
-  `description` text NOT NULL,
-  `solution` text DEFAULT NULL,
-  `evidence_images` text DEFAULT NULL,
-  `proof_images` text DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `status` enum('pending','resolved') DEFAULT 'pending',
+  `ComplaintID` INT(11) NOT NULL AUTO_INCREMENT,
+  `DonationID` INT(11) NOT NULL,
+  `complainantID` INT(11) NOT NULL,
+  `reason` VARCHAR(255) NOT NULL,
+  `description` TEXT NOT NULL,
+  `solution` TEXT DEFAULT NULL,
+  `evidence_images` TEXT DEFAULT NULL,
+  `proof_images` TEXT DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT current_timestamp(),
+  `status` ENUM('pending','resolved') DEFAULT 'pending',
+  `resolvedBy` INT(11) DEFAULT NULL,
   PRIMARY KEY (`ComplaintID`),
   KEY `DonationID` (`DonationID`),
   KEY `fk_complaints_user` (`complainantID`),
+  KEY `fk_complaints_admin` (`resolvedBy`),
   CONSTRAINT `complaints_ibfk_1` FOREIGN KEY (`DonationID`) REFERENCES `donation` (`DonationID`) ON DELETE CASCADE,
-  CONSTRAINT `complaints_ibfk_2` FOREIGN KEY (`complainantID`) REFERENCES `user` (`userID`) ON DELETE CASCADE
+  CONSTRAINT `complaints_ibfk_2` FOREIGN KEY (`complainantID`) REFERENCES `user` (`userID`) ON DELETE CASCADE,
+  CONSTRAINT `fk_complaints_admin` FOREIGN KEY (`resolvedBy`) REFERENCES `admin` (`AdminID`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- =========================
