@@ -389,13 +389,13 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                         />
                         <div className="mt-3 flex gap-2 justify-end">
                           <button
-                            className="px-3 py-1.5 text-sm rounded bg-violet-700 text-white"
+                            className="px-3 py-1.5 text-sm rounded bg-green-400 text-white"
                             onClick={saveEdit}
                           >
                             Save
                           </button>
                           <button
-                            className="px-3 py-1.5 text-sm rounded bg-gray-200"
+                            className="px-3 py-1.5 text-sm rounded bg-red-400 text-white"
                             onClick={cancelEdit}
                           >
                             Cancel
