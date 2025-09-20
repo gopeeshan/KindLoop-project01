@@ -105,6 +105,7 @@ const AdminComplaints = () => {
   );
   const [isDonationDialogOpen, setIsDonationDialogOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const adminID = 2;
 
   useEffect(() => {
     fetch("http://localhost/KindLoop-project01/Backend/Admin.php", {
@@ -223,16 +224,16 @@ const AdminComplaints = () => {
               : c
           )
         );
+        // sendNotification(
+        //   selectedComplaint.donationID,
+        //   adminID,
+        //   selectedComplaint.userId,
+        //   selectedComplaint.id
+        // );
         sendNotification(
           selectedComplaint.donationID,
-          selectedComplaint.donorId,
           selectedComplaint.userId,
-          selectedComplaint.id
-        );
-        sendNotification(
-          selectedComplaint.donationID,
-          selectedComplaint.userId,
-          selectedComplaint.donorId,
+          adminID,
           selectedComplaint.id
         );
         
@@ -262,7 +263,7 @@ const AdminComplaints = () => {
           msg_sender_ID: RequesterID,
           complaintID,
           action: "complaint_resolved",
-        }
+        },{ withCredentials: true }
       )
       .then((res) => console.log("Notification sent", res.data))
       .catch((err) => console.error(err));
@@ -325,7 +326,7 @@ const AdminComplaints = () => {
               icon: <Clock className="h-8 w-8 text-orange-600" />,
             },
             {
-              title: "Resolved Today",
+              title: "Resolved Complaints",
               value: complaints.filter((c) => c.status === "resolved").length,
               icon: <CheckCircle className="h-8 w-8 text-green-600" />,
             },
