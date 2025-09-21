@@ -51,7 +51,7 @@ interface DonationDetails {
   images: string[];
 }
 interface Complaint {
-  id: number;
+  ComplaintID: number;
   donationID: number;
   userId: number;
   userName: string;
@@ -106,6 +106,7 @@ const AdminComplaints = () => {
   );
   const [isDonationDialogOpen, setIsDonationDialogOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const adminID = 2; // add the adminID from user table...
 
   useEffect(() => {
     fetch("http://localhost/KindLoop-project01/Backend/Admin.php", {
@@ -200,13 +201,13 @@ const AdminComplaints = () => {
 
     const formData = new FormData();
     formData.append("solution", solution);
-    formData.append("id", selectedComplaint.id.toString());
+    formData.append("id", selectedComplaint.ComplaintID.toString());
     formData.append("action", "resolve");
     proofFiles.forEach((file) => formData.append("proof_images[]", file));
 
     try {
       const { data } = await axios.post(
-        `http://localhost/KindLoop-project01/Backend/ComplaintController.php?action=resolve&id=${selectedComplaint.id}`,
+        `http://localhost/KindLoop-project01/Backend/ComplaintController.php?action=resolve&id=${selectedComplaint.ComplaintID}`,
         formData,
         {
           withCredentials: true,
@@ -219,7 +220,7 @@ const AdminComplaints = () => {
 
         setComplaints((prev) =>
           prev.map((c) =>
-            c.id === selectedComplaint.id
+            c.ComplaintID === selectedComplaint.ComplaintID
               ? {
                   ...c,
                   status: "resolved",
@@ -229,17 +230,17 @@ const AdminComplaints = () => {
               : c
           )
         );
+        // sendNotification(
+        //   selectedComplaint.donationID,
+        //   adminID,
+        //   selectedComplaint.userId,
+        //   selectedComplaint.id
+        // );
         sendNotification(
           selectedComplaint.donationID,
-          selectedComplaint.donorId,
           selectedComplaint.userId,
-          selectedComplaint.id
-        );
-        sendNotification(
-          selectedComplaint.donationID,
-          selectedComplaint.userId,
-          selectedComplaint.donorId,
-          selectedComplaint.id
+          adminID,
+          selectedComplaint.ComplaintID
         );
 
         setSelectedComplaint(null);
@@ -270,7 +271,7 @@ const AdminComplaints = () => {
           msg_sender_ID: RequesterID,
           complaintID,
           action: "complaint_resolved",
-        }
+        },{ withCredentials: true }
       )
       .then((res) => console.log("Notification sent", res.data))
       .catch((err) => console.error(err));
@@ -333,7 +334,7 @@ const AdminComplaints = () => {
               icon: <Clock className="h-8 w-8 text-orange-600" />,
             },
             {
-              title: "Resolved Today",
+              title: "Resolved Complaints",
               value: complaints.filter((c) => c.status === "resolved").length,
               icon: <CheckCircle className="h-8 w-8 text-green-600" />,
             },
@@ -410,7 +411,7 @@ const AdminComplaints = () => {
               </TableHeader>
               <TableBody>
                 {filteredComplaints.map((complaint) => (
-                  <TableRow key={complaint.id}>
+                  <TableRow key={complaint.ComplaintID}>
                     <TableCell>
                       <div>
                         <p className="font-medium">{complaint.userName}</p>
@@ -434,7 +435,7 @@ const AdminComplaints = () => {
                     <TableCell>{getStatusBadge(complaint.status)}</TableCell>
                     <TableCell>
                       <Dialog
-                        open={selectedComplaint?.id === complaint.id}
+                        open={selectedComplaint?.ComplaintID === complaint.ComplaintID}
                         onOpenChange={(isOpen) => {
                           if (!isOpen) setSelectedComplaint(null);
                         }}
