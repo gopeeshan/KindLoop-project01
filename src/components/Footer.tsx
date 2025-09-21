@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const Footer = () => {
@@ -181,7 +182,7 @@ const Footer = () => {
                           htmlFor="complaint-images"
                           className="text-sm font-medium text-foreground"
                         >
-                          Proof Images (Optional)
+                          Proof Images (Compulsory)
                         </Label>
                         <div className="mt-1 flex items-center space-x-2">
                           <Input

@@ -65,49 +65,28 @@ class Complaint
 
     public function getAllComplaint()
     {
-        // $sql = "SELECT c.ComplaintID AS id,
-        //        c.DonationID AS donationID,
-        //        c.description, 
-        //        c.reason, 
-        //        IFNULL(c.status,'pending') AS status, 
-        //        c.created_at AS submittedDate,
-        //        c.solution, 
-        //        c.evidence_images,
-        //        c.proof_images,
-        //        u.fullName AS userName, 
-        //        u.email AS userEmail, 
-        //        u.userID AS userId,
-        //        IFNULL(d.fullName, 'N/A') AS donorName, 
-        //        IFNULL(d.userID, 0) AS donorId,
-        //        IFNULL(don.title, 'N/A') AS donationTitle
-        // FROM complaints c
-        // LEFT JOIN donation don ON don.DonationID = c.DonationID
-        // LEFT JOIN user u ON u.userID = c.complainantID
-        // LEFT JOIN user d ON d.userID = don.userID
-        // ORDER BY c.created_at DESC";
-
-$sql = "SELECT c.ComplaintID AS id,
-               c.DonationID AS donationID,                       
+        $sql = "SELECT c.ComplaintID,
+               c.DonationID AS donationID,
                c.description, 
                c.reason, 
                IFNULL(c.status,'pending') AS status, 
                c.created_at AS submittedDate,
-                       c.solution, 
-                       c.evidence_images, 
-                       c.proof_images,
-                       u.fullName AS userName, 
-                       u.email AS userEmail, 
-                       IFNULL(d.fullName, 'N/A') AS donorName, 
+               c.solution, 
+               c.evidence_images,
+               c.proof_images,
+               u.fullName AS userName, 
+               u.email AS userEmail, 
+               u.userID AS userId,
+               IFNULL(d.fullName, 'N/A') AS donorName, 
                IFNULL(d.userID, 0) AS donorId,
                IFNULL(don.title, 'N/A') AS donationTitle,
-                       don.title AS donationTitle,
-                       a.email AS resolvedByAdminEmail
-                FROM complaints c
-                LEFT JOIN donation don ON don.DonationID = c.DonationID
+               a.email AS resolvedByAdminEmail
+        FROM complaints c
+        LEFT JOIN donation don ON don.DonationID = c.DonationID
         LEFT JOIN user u ON u.userID = c.complainantID
         LEFT JOIN user d ON d.userID = don.userID
-                LEFT JOIN admin a ON a.AdminID = c.resolvedBy
-                ORDER BY c.created_at DESC";
+        LEFT JOIN admin a ON a.AdminID = c.resolvedBy
+        ORDER BY c.created_at DESC";
 
         $result = $this->conn->query($sql);
         $complaints = [];
@@ -119,22 +98,22 @@ $sql = "SELECT c.ComplaintID AS id,
                 }
                 $complaints[] = $row;
             }
-             $row['resolvedByAdminEmail'] = $row['resolvedByAdminEmail'] ?? null;
-            $complaints[] = $row;
         }
         return $complaints;
     }
 
 
-// --- Respond ---
-    public function respond($id, $solution,$adminID) {
+    // --- Respond ---
+    public function respond($id, $solution, $adminID)
+    {
         $stmt = $this->conn->prepare("UPDATE complaints SET solution=?, status='responded', resolvedBy=? WHERE ComplaintID=?");
         $stmt->bind_param("sii", $solution, $adminID, $id);
         return $stmt->execute();
     }
 
     // --- Resolve (with proof images) ---
-    public function resolve($id, $solution, $files, $adminID) {
+    public function resolve($id, $solution, $files, $adminID)
+    {
         $uploadDir = "uploads/complaints/";
         $proofImages = [];
 

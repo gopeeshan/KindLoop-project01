@@ -57,11 +57,3 @@ if ($method === 'GET' && isset($_GET['all'])) {
     echo json_encode($complaintObj->getAllComplaints());
     exit;
 }
-
-// echo json_encode(["status" => "error", "message" => "Invalid request."]);
-
-// $result = $conn->query("SELECT * FROM user WHERE userID = $userID");
-// if ($result->num_rows === 0) {
-//     echo json_encode(["status" => "error", "message" => "Invalid userID"]);
-//     exit;
-// }

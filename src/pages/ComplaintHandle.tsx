@@ -51,7 +51,7 @@ interface DonationDetails {
   images: string[];
 }
 interface Complaint {
-  id: number;
+  ComplaintID: number;
   donationID: number;
   userId: number;
   userName: string;
@@ -106,7 +106,7 @@ const AdminComplaints = () => {
   );
   const [isDonationDialogOpen, setIsDonationDialogOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const adminID = 2;
+  const adminID = 2; // add the adminID from user table...
 
   useEffect(() => {
     fetch("http://localhost/KindLoop-project01/Backend/Admin.php", {
@@ -201,13 +201,13 @@ const AdminComplaints = () => {
 
     const formData = new FormData();
     formData.append("solution", solution);
-    formData.append("id", selectedComplaint.id.toString());
+    formData.append("id", selectedComplaint.ComplaintID.toString());
     formData.append("action", "resolve");
     proofFiles.forEach((file) => formData.append("proof_images[]", file));
 
     try {
       const { data } = await axios.post(
-        `http://localhost/KindLoop-project01/Backend/ComplaintController.php?action=resolve&id=${selectedComplaint.id}`,
+        `http://localhost/KindLoop-project01/Backend/ComplaintController.php?action=resolve&id=${selectedComplaint.ComplaintID}`,
         formData,
         {
           withCredentials: true,
@@ -220,7 +220,7 @@ const AdminComplaints = () => {
 
         setComplaints((prev) =>
           prev.map((c) =>
-            c.id === selectedComplaint.id
+            c.ComplaintID === selectedComplaint.ComplaintID
               ? {
                   ...c,
                   status: "resolved",
@@ -240,7 +240,7 @@ const AdminComplaints = () => {
           selectedComplaint.donationID,
           selectedComplaint.userId,
           adminID,
-          selectedComplaint.id
+          selectedComplaint.ComplaintID
         );
 
         setSelectedComplaint(null);
@@ -411,7 +411,7 @@ const AdminComplaints = () => {
               </TableHeader>
               <TableBody>
                 {filteredComplaints.map((complaint) => (
-                  <TableRow key={complaint.id}>
+                  <TableRow key={complaint.ComplaintID}>
                     <TableCell>
                       <div>
                         <p className="font-medium">{complaint.userName}</p>
@@ -435,7 +435,7 @@ const AdminComplaints = () => {
                     <TableCell>{getStatusBadge(complaint.status)}</TableCell>
                     <TableCell>
                       <Dialog
-                        open={selectedComplaint?.id === complaint.id}
+                        open={selectedComplaint?.ComplaintID === complaint.ComplaintID}
                         onOpenChange={(isOpen) => {
                           if (!isOpen) setSelectedComplaint(null);
                         }}
