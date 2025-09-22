@@ -50,7 +50,18 @@ $_SESSION['otps'][$email] = [
 ];
 
 $mailer = new Mailer();
-$msg = 'Dear User,<br>Your verification code is: ' . $otp . '<br>Use this 6 digit code to verify and proceed with registration.';
+$msg = '    Dear User,<br>
+        Your verification code for signing up to <b>KindLoop</b> is:<br>
+        <div style="font-size:20px; font-weight:bold; color:#2c3e50;
+         background:#f4f4f4; padding:10px 15px; 
+         display:inline-block; border-radius:6px; 
+         border:1px solid #ddd; margin:10px 0;">
+        ' . $otp . '
+        </div><br>
+        This OTP is valid for 5 minutes.<br>
+        If you did not request this code, please ignore this email.<br><br>
+        Best regards,<br>
+        The KindLoop Team<br><br>';
 $mailer->setInfo($email, 'OTP Verification', $msg);
 
 if ($mailer->send()) {
