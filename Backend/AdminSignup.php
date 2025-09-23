@@ -45,7 +45,7 @@ if ($checkResult && isset($checkResult['status']) && $checkResult['status'] === 
     exit;
 }
 
-$signupResult = $admin->signup($fullName, $email, $nic, $contactNumber, $address, $password);
+$signupResult = $admin->admin_signup($fullName, $email, $nic, $contactNumber, $address, $password);
 
 if (is_array($signupResult) && isset($signupResult['status']) && $signupResult['status'] === 'success') {
     $_SESSION['AdminID'] = $signupResult['admin']['AdminID'] ?? null;

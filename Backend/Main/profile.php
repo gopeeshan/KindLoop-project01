@@ -16,7 +16,7 @@ class Profile
     public function getUserDetails($email)
     {
         $this->email = $email;
-        $stmt = $this->conn->prepare("SELECT u.userID, u.fullName, u.email, u.contactNumber, u.occupation, u.address, i.credit_points 
+        $stmt = $this->conn->prepare("SELECT u.userID, u.fullName, u.email, u.contactNumber, u.occupation, u.address, u.role, i.credit_points 
         FROM user u
         JOIN user_info i ON u.userID = i.userID
          WHERE u.email = ?");

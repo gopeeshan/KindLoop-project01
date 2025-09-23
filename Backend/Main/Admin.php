@@ -1,5 +1,6 @@
 <?php
 require_once 'dbc.php';
+require_once 'user.php';
 
 class Admin
 {
@@ -15,6 +16,8 @@ class Admin
     protected $setVisible;
     protected $nic;
     protected $contactNumber;
+    protected $address;
+    protected $district='';
 
 
     public function __construct()
@@ -85,28 +88,37 @@ class Admin
         return ["status" => "success"];
     }
 
-    public function signup($fullName, $email, $nic, $contactNumber, $address, $password)
+    public function admin_signup($fullName, $email, $nic, $contactNumber, $address, $password)
     {
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+        $occupation = 'admin';
+        $role = 'admin';
 
         $sql = "INSERT INTO admin (fullName, email, nic, contactNumber, address, password)
             VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("ssssss", $fullName, $email, $nic, $contactNumber, $address, $passwordHash);
 
-        if ($stmt->execute()) {
-            return ["status" => "success", "message" => "Admin registered successfully!"];
+        $user = new User();
+        if($user->signup($fullName, $email, $nic, $contactNumber, $occupation, $address, $this->district, $passwordHash, $role)) {
+            if ($stmt->execute()) {
+                return ["status" => "success", "message" => "Admin registered successfully in both!"];
+            } else {
+                return ["status" => "error", "message" => "Admin registered successfully in user table! " . $stmt->error];
+            }
         } else {
             return ["status" => "error", "message" => "Registration failed: " . $stmt->error];
         }
     }
 
 
-    public function getUsers() {
+    public function getUsers()
+    {
         $sql = "SELECT u.userID, u.fullName, u.email, u.occupation, u.district, i.credit_points,i.registered_date, i.year_points, i.current_year_requests,i.current_year_request_limit,i.last_year_reset, u.active_state, COUNT(d.DonationID) AS donation_count
                  FROM user u
         JOIN user_info i ON u.userID = i.userID
         LEFT JOIN donation d ON u.userID = d.userID
+        where u.role = 'user'
                 GROUP BY u.userID, u.fullName, u.email ORDER BY donation_count DESC";
         $userResult = $this->conn->query($sql);
 

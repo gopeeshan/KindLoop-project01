@@ -36,7 +36,8 @@ class User {
                     "message" => "Login successful",
                     "user" => [
                         "id" => $user["userID"],
-                        "email" => $user["email"]
+                        "email" => $user["email"],
+                        "role" => $user["role"]
                     ]
                 ];
             } else {
@@ -87,12 +88,12 @@ class User {
         // return ["status" => "success", "message" => "Credentials are available."];
     }
 
-    public function signup($fullName, $email, $nic, $contactNumber, $occupation, $address, $district, $password) {
+    public function signup($fullName, $email, $nic, $contactNumber, $occupation, $address, $district, $password,$role) {
 
-        $sql = "INSERT INTO user (fullName, email, nic, contactNumber, occupation, address, district, password)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO user (fullName, email, nic, contactNumber, occupation, address, district, password, role)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("ssssssss", $fullName, $email, $nic, $contactNumber, $occupation, $address, $district, $password);
+        $stmt->bind_param("sssssssss", $fullName, $email, $nic, $contactNumber, $occupation, $address, $district, $password, $role);
 
         if ($stmt->execute()) {
         $userID = $this->conn->insert_id;

@@ -2,40 +2,43 @@ import { useState, useEffect } from "react";
 import { Menu, X, Recycle, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import axios from "axios";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  // Session-based authentication check
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState<string>("");
+  const [userRole, setUserRole] = useState<string>("");
 
   // Extract first name from full name
   const firstName = userName?.trim()?.split(" ")?.[0] || "";
 
-  // Check session on mount and fetch user name
   useEffect(() => {
     let isMounted = true;
 
-    fetch("http://localhost/KindLoop-project01/Backend/profile.php", {
-      credentials: "include",
-    })
-      .then((res) => res.json())
-      .then((data) => {
+    axios
+      .get("http://localhost/KindLoop-project01/Backend/profile.php", {
+        withCredentials: true,
+      })
+      .then((res) => {
         if (!isMounted) return;
+        const data = res.data;
         const loggedIn = !!data && !!data.userID;
         setIsLoggedIn(loggedIn);
+
         if (loggedIn) {
-          // Prefer fullName; fallback to name or empty string
           setUserName(data?.fullName || data?.name || "");
+          setUserRole(data?.role || "user");
         } else {
           setUserName("");
+          setUserRole("");
         }
       })
       .catch(() => {
         if (!isMounted) return;
         setIsLoggedIn(false);
         setUserName("");
+        setUserRole("");
       });
 
     return () => {
@@ -51,7 +54,9 @@ const Navigation = () => {
           <Link to="/" className="flex items-center space-x-2">
             <Recycle className="h-8 w-8 text-primary" />
             <div className="flex flex-col">
-              <span className="text-xl font-bold text-foreground">KindLoop</span>
+              <span className="text-xl font-bold text-foreground">
+                KindLoop
+              </span>
               <span className="text-xs text-muted-foreground hidden sm:block">
                 A Reuse and Donation Space Platform
               </span>
@@ -87,6 +92,12 @@ const Navigation = () => {
                     {firstName || "Profile"}
                   </Link>
                 </Button>
+
+                {userRole === "admin" && (
+                  <Button asChild>
+                    <Link to="/Admin_login">Admin Panel</Link>
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="flex items-center space-x-2">
@@ -108,12 +119,16 @@ const Navigation = () => {
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               aria-label="Toggle navigation menu"
             >
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {isMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
             </Button>
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* ✅ Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden border-t border-border bg-background">
             <div className="px-2 pt-2 pb-3 space-y-1">
@@ -137,13 +152,19 @@ const Navigation = () => {
               </Link>
 
               {isLoggedIn ? (
-                <div className="px-3 py-2">
+                <div className="px-3 py-2 space-y-2">
                   <Button variant="outline" className="w-full" asChild>
                     <Link to="/profile" aria-label="Profile">
                       <User className="mr-2 h-4 w-4" />
                       {firstName || "Profile"}
                     </Link>
                   </Button>
+
+                  {userRole === "admin" && (
+                    <Button className="w-full" asChild>
+                      <Link to="/Admin_login">Admin Panel</Link>
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="px-3 py-2 space-y-2">
