@@ -38,7 +38,7 @@ if ($checkResult) {
 // Insert into database
 $signupResult = $user->signup($fullName, $email, $nic, $contactNumber, $occupation, $address, $district, $password);
 if ($signupResult['status'] === 'success') {
-    $userId = $user->getUserIDByEmail($email); 
+    $userId = $user->checkEmail($email); 
     if ($userId) {
         $_SESSION['userID'] = $userId;
         $_SESSION['email'] = $email;
