@@ -23,9 +23,10 @@ import {
   AlertTriangle,
   LogOut,
   MessageSquare,
+  ArrowLeft,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   Dialog,
@@ -511,8 +512,18 @@ const Admin = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-8">
+          <Link
+            to="/"
+            className="flex items-center space-x-2 text-primary hover:text-primary/80"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            <span>Back to Home</span>
+          </Link>
+        </div>
         <div className="mb-8 flex items-center justify-between">
           <div>
+            
             <h1 className="text-3xl font-bold text-foreground mb-2">
               Admin Dashboard
             </h1>
