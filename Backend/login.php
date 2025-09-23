@@ -25,7 +25,6 @@ else{
         $_SESSION['userID'] = $response['user']['id'];
         $_SESSION['email'] = $response['user']['email'];
         $_SESSION['donorID'] = $response['user']['id'];
-        $_SESSION['sub_role'] = $response['user']['role'];
     }
     echo json_encode($response);
 }

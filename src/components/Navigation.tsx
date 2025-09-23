@@ -95,7 +95,7 @@ const Navigation = () => {
 
                 {userRole === "admin" && (
                   <Button asChild>
-                    <Link to="/Admin_login">Admin Panel</Link>
+                    <Link to="/admin">Admin Panel</Link>
                   </Button>
                 )}
               </div>
