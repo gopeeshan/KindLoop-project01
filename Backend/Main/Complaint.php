@@ -141,7 +141,8 @@ class Complaint
                 complainantID,
                 reason AS Title,
                 description AS Description,
-                created_at
+                created_at,
+                solution
             FROM complaints
             WHERE complainantID = ? AND DonationID = ?
             ORDER BY created_at DESC";

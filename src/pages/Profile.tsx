@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,12 +25,9 @@ import {
   AlertTriangle,
   LogOut,
   Bell,
-  X,
   TrendingUp,
   Eye,
-  EyeOff,
   Coins,
-  Info,
   Pencil,
   Trash2,
 } from "lucide-react";
@@ -57,7 +53,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import MessagesBar from "@/components/MessagesBar";
-import { CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
   Tooltip,
@@ -65,7 +60,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ToastAction } from "@/components/ui/toast";
 
 interface Notification {
   notificationID: number;

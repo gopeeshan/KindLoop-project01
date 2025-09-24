@@ -18,6 +18,7 @@ import AdminSignUp from "./pages/AdminSignUp";
 import ScrollToHash from "@/components/ScrollToHash";
 import MessagesPage from "@/pages/Messages";
 import EditPost from "@/pages/EditPost";
+// import Admin_message_access from "./pages/ConversationPage";
 
 const App = () => {
   return (
@@ -41,6 +42,7 @@ const App = () => {
             <Route path="/admin/Admin_SignUp" element={<AdminSignUp />} />
             <Route path="/messages" element={<MessagesPage />} />
             <Route path="/edit-post/:donationID" element={<EditPost />} />
+            {/* <Route path="/admin/messages" element={<Admin_message_access />} /> */}
           </Routes>
 
           <ScrollToHash />

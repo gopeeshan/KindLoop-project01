@@ -35,6 +35,7 @@ interface Complaint {
   Description: string;
   Title: string;
   created_at: string;
+  solution: string;
 }
 
 interface RequestingUsersProps {
@@ -428,6 +429,9 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
                   <div className="text-xs text-gray-500 mt-2">
                     Reported on {new Date(c.created_at).toLocaleString()}
                   </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Solution: {c.solution}
+                  </p>
                 </li>
               ))}
             </ul>
