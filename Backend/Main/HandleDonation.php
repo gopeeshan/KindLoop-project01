@@ -95,9 +95,13 @@ class HandleDonation extends Profile
     {
         $this->donationID = $donationID;
 
-        $sql = "SELECT dr.requestID AS request_id, u.userID, u.fullName, u.email, dr.status, dr.request_date
+        $sql = "SELECT dr.requestID AS request_id, u.userID, u.fullName, u.email, dr.status, dr.request_date , ri.status AS receive_status, ri.quantity
         FROM donation_requests dr
-        JOIN user u ON dr.userID = u.userID
+            JOIN user u 
+                ON dr.userID = u.userID
+            LEFT JOIN receive_items ri 
+                ON dr.donationID = ri.donationID 
+               AND dr.userID = ri.receiverID
         WHERE dr.donationID = ?";
 
         $stmt = $this->conn->prepare($sql);

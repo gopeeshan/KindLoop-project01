@@ -26,6 +26,7 @@ $occupation = $data['occupation'];
 $address = $data['address'];
 $district = $data['district'];
 $password = password_hash($data['password'], PASSWORD_DEFAULT);
+$role = 'user';
 
 // Check if email or NIC already exists
 $user = new User();
@@ -36,7 +37,7 @@ if ($checkResult) {
 }
 
 // Insert into database
-$signupResult = $user->signup($fullName, $email, $nic, $contactNumber, $occupation, $address, $district, $password);
+$signupResult = $user->signup($fullName, $email, $nic, $contactNumber, $occupation, $address, $district, $password, $role);
 if ($signupResult['status'] === 'success') {
     $userId = $user->checkEmail($email); 
     if ($userId) {

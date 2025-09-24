@@ -230,12 +230,12 @@ const AdminComplaints = () => {
               : c
           )
         );
-        // sendNotification(
-        //   selectedComplaint.donationID,
-        //   adminID,
-        //   selectedComplaint.userId,
-        //   selectedComplaint.id
-        // );
+        sendNotification(
+          selectedComplaint.donationID,
+          selectedComplaint.donorId,
+          adminID,
+          selectedComplaint.ComplaintID
+        );
         sendNotification(
           selectedComplaint.donationID,
           selectedComplaint.userId,
