@@ -236,7 +236,8 @@ class Profile
         $sql = "UPDATE user_info i
             JOIN receive_items ri ON i.userID = ri.donorID
             JOIN donation d ON d.DonationID = ri.donationID
-            SET i.credit_points = i.credit_points + (ri.quantity * d.credits)
+            SET i.credit_points = i.credit_points + (ri.quantity * d.credits),
+            i.year_points   = i.year_points + (ri.quantity * d.credits)
             WHERE d.DonationID = ? AND ri.receiverID = ? ";
 
         $stmt = $this->conn->prepare($sql);
