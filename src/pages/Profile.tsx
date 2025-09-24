@@ -307,56 +307,42 @@ const Profile = () => {
   };
 
   const handleViewDetails = (DonationID: number) => {
-    // console.log("Viewing details for donation ID:", DonationID);
     navigate(`/profiledonation/${DonationID}`);
   };
 
-  const handleToggleVisibility = async (
-    donationID: number,
-    currentVisible: number
-  ) => {
-    if (!user.userID) return;
-
-    const nextVisible = currentVisible === 1 ? 0 : 1;
-
+  // Soft delete: hide from list AND update DB by setting setVisible = 0
+  const handleSoftDeleteDonation = async (donationID: number) => {
     try {
-      const res = await axios.post(
-        "http://localhost/KindLoop-project01/Backend/profile.php",
-        {
+      // Call backend to update visibility
+      await fetch("http://localhost/KindLoop-project01/Backend/profile.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           action: "update_visibility",
           DonationID: donationID,
-          userID: user.userID, // backend will verify ownership
-          setVisible: nextVisible,
-        }
+          userID: user.userID,
+          setVisible: 0,
+        }),
+        credentials: "include",
+      });
+
+      // Remove from frontend list
+      setDonationHistory((prev) =>
+        prev.filter((d) => d.DonationID !== donationID)
       );
 
-      if (res.data?.success) {
-        // Update local state
-        setDonationHistory((prev) =>
-          prev.map((d) =>
-            d.DonationID === donationID ? { ...d, setVisible: nextVisible } : d
-          )
-        );
-        toast({
-          title:
-            nextVisible === 1 ? "Post is now Public" : "Post is now Private",
-          description:
-            nextVisible === 1
-              ? "This donation will appear on the public Donations page."
-              : "This donation is hidden from the public Donations page.",
-        });
-      } else {
-        toast({
-          title: "Update failed",
-          description: res.data?.message || "Could not update visibility.",
-          variant: "destructive",
-        });
-      }
-    } catch (err) {
-      console.error(err);
       toast({
-        title: "Server error",
-        description: "Please try again.",
+        title: "Post Deleted",
+        description:
+          "Your post has been deleted successfully (soft delete, still stored in system).",
+      });
+
+      setDeleteTarget(null);
+    } catch (error) {
+      console.error("Error updating visibility:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete the post. Please try again.",
         variant: "destructive",
       });
     }
@@ -512,10 +498,7 @@ const Profile = () => {
       }
       const response = await axios.post(
         "http://localhost/KindLoop-project01/Backend/complaint.php",
-        formDataObj,
-        {
-          withCredentials: true,
-        }
+        formDataObj
       );
 
       if (response.data.status === "success") {
@@ -617,7 +600,7 @@ const Profile = () => {
       } else {
         setPasswordError(result.message || "Failed to change password.");
       }
-    } catch (error) {
+    } catch (error: any) {
       setPasswordError(error.message || "An unexpected error occurred.");
     }
   };
@@ -680,9 +663,12 @@ const Profile = () => {
             <CardContent className="p-6">
               <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage src={user.avatar} alt={user.fullName} />
+                  <AvatarImage
+                    src={user.avatar ?? undefined}
+                    alt={user.fullName}
+                  />
                   <AvatarFallback className="text-2xl">
-                    {user.fullName.charAt(0)}
+                    {user.fullName?.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
 
@@ -706,7 +692,7 @@ const Profile = () => {
     text-white font-semibold px-5 py-2 rounded-2xl shadow-md 
     hover:shadow-lg hover:scale-105 transition-all duration-200"
                         >
-                          <Star className="h-5 w-5 text-yellow-300 drop-shadow-sm" />
+                          <Star className="h-5 w-5 text-yellow-200 drop-shadow-sm" />
                           <span>{user.credit_points} Credits</span>
                         </button>
                       </DialogTrigger>
@@ -735,9 +721,6 @@ const Profile = () => {
                               <div className="text-2xl font-bold text-purple-600">
                                 {user.credit_points}
                               </div>
-                              {/* <p className="text-xs text-gray-500">
-                                Lifetime accumulation
-                              </p> */}
                             </CardContent>
                           </Card>
 
@@ -752,9 +735,6 @@ const Profile = () => {
                               <div className="text-2xl font-bold text-purple-600">
                                 {user.year_points}
                               </div>
-                              {/* <p className="text-xs text-gray-500">
-                                Resets each year
-                              </p> */}
                             </CardContent>
                           </Card>
                         </div>
@@ -768,7 +748,7 @@ const Profile = () => {
                                 <Badge
                                   variant={
                                     user.current_year_request_limit === 0
-                                      ? "secondary" // neutral style
+                                      ? "secondary"
                                       : canMakeRequest
                                       ? "default"
                                       : "destructive"
@@ -1045,84 +1025,170 @@ const Profile = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {donationHistory.map((donation) => (
-                      <div
-                        key={donation.DonationID}
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-                      >
+                    {donationHistory.map((donation) => {
+                      const isPublic = Number(donation.setVisible) === 1;
+                      return (
                         <div
-                          className="flex-1 cursor-pointer"
-                          onClick={() => handleViewDetails(donation.DonationID)}
+                          key={donation.DonationID}
+                          className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
                         >
-                          <h3 className="font-semibold hover:text-primary">
-                            {donation.title}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            {donation.category} • {donation.date_time}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center space-x-4 ">
-                          <Badge
-                            variant={
-                              donation.isVerified === 1
-                                ? "default"
-                                : "secondary"
+                          <div
+                            className="flex-1 cursor-pointer"
+                            onClick={() =>
+                              handleViewDetails(donation.DonationID)
                             }
                           >
-                            {donation.isVerified == 1
-                              ? "Verified"
-                              : "Unverified"}
-                          </Badge>
-                          <Badge
-                            variant={
-                              donation.isDonationCompleted === 1
-                                ? "default"
-                                : "secondary"
-                            }
-                          >
-                            {donation.isDonationCompleted === 1
-                              ? "Completed"
-                              : "Pending"}
-                          </Badge>
-                          <div className="w-28 text-center bg-teal-100 text-teal-800 text-sm font-semibold px-3 py-1 rounded-xl shadow-sm select-none">
-                            {donation.credits} credits
+                            <h3 className="font-semibold hover:text-primary">
+                              {donation.title}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              {donation.category} • {donation.date_time}
+                            </p>
                           </div>
 
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              if (donation.DonationID) {
-                                handleViewDetails(donation.DonationID);
-                              } else {
-                                console.error("Donation ID is missing!");
+                          <div className="flex items-center space-x-4 ">
+                            <Badge
+                              variant={
+                                donation.isVerified === 1
+                                  ? "default"
+                                  : "secondary"
                               }
-                            }}
-                          >
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Details
-                          </Button>
+                            >
+                              {donation.isVerified == 1
+                                ? "Verified"
+                                : "Unverified"}
+                            </Badge>
+                            <Badge
+                              variant={
+                                donation.isDonationCompleted === 1
+                                  ? "default"
+                                  : "secondary"
+                              }
+                            >
+                              {donation.isDonationCompleted === 1
+                                ? "Completed"
+                                : "Pending"}
+                            </Badge>
 
-                          <label className="flex items-center space-x-2 text-sm">
-                            <input
-                              type="checkbox"
-                              checked={donation.setVisible === 1}
-                              onChange={() =>
-                                handleToggleVisibility(
-                                  donation.DonationID,
-                                  donation.setVisible
-                                )
-                              }
-                            />
-                            <span>
-                              <b>Visible</b>
-                            </span>
-                          </label>
+                            <div className="h-9 w-28 text-center bg-purple-100  text-sm font-semibold px-3 py-2 rounded-xl select-none">
+                              {donation.credits} Credits
+                            </div>
+
+                            {/* View Details button */}
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      if (donation.DonationID) {
+                                        handleViewDetails(donation.DonationID);
+                                      } else {
+                                        console.error(
+                                          "Donation ID is missing!"
+                                        );
+                                      }
+                                    }}
+                                    className="flex items-center"
+                                  >
+                                    <Eye className="h-4 w-4 mr-0" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  Click to see full details of this donation
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+
+                            {/* Edit button */}
+                            <TooltipProvider>
+                              <Tooltip delayDuration={200}>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    className="flex items-center"
+                                    onClick={() =>
+                                      navigate(
+                                        `/edit-post/${donation.DonationID}`
+                                      )
+                                    }
+                                    aria-label="Edit post"
+                                  >
+                                    <Pencil className="h-4 w-4 mr-0" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent
+                                  side="top"
+                                  align="end"
+                                  className="max-w-xs"
+                                >
+                                  <p>
+                                    Please note that the <b>Category</b>,{" "}
+                                    <b>Condition</b>, <b>Usage Duration</b>, and{" "}
+                                    <b>Quantity</b> cannot be modified once the
+                                    post has been created.
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+
+                            <TooltipProvider>
+                              <Tooltip delayDuration={200}>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    className="flex items-center gap-2"
+                                    onClick={() => setDeleteTarget(donation)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  Click to delete this donation
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
+
+                  {/* Soft-delete confirmation dialog */}
+                  <AlertDialog
+                    open={!!deleteTarget}
+                    onOpenChange={(open) => {
+                      if (!open) setDeleteTarget(null);
+                    }}
+                  >
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Do you want to delete this post?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action will Delete{" "}
+                          <strong>“{deleteTarget?.title}”</strong> from your My
+                          Donations list and from public view.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() =>
+                            deleteTarget &&
+                            handleSoftDeleteDonation(deleteTarget.DonationID)
+                          }
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -1149,13 +1215,13 @@ const Profile = () => {
                             From {item.donor} • {item.received_date}
                           </p>
                         </div>
-                        {/* <Badge variant="default">{item.isDonationCompleted === 1 ? "Completed" : "Pending"}</Badge> */}
                       </div>
                     ))}
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
+
             {/* To Be Received */}
             <TabsContent value="to-be-received">
               <Card>
