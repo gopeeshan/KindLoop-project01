@@ -207,7 +207,7 @@ class Admin
         $logStmt = $this->conn->prepare("INSERT INTO rejecteditems (DonationID, rejectedBy) VALUES (?, ?)");
         $logStmt->bind_param("ii", $DonationID, $AdminID);
         if ($logStmt->execute()) {
-            $stmt = $this->conn->prepare("UPDATE `donation` SET `isVerified` = 0, `setVisible` = 0, `approvedBy` = ? WHERE `DonationID` = ?");
+            $stmt = $this->conn->prepare("UPDATE `donation` SET `isVerified` = 1,`isDonationCompleted` = 2 , `setVisible` = 0, `approvedBy` = ? WHERE `DonationID` = ?");
             $stmt->bind_param("ii", $AdminID, $DonationID);
 
             $success = $stmt->execute();

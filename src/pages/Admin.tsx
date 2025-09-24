@@ -248,7 +248,8 @@ const Admin = () => {
   const handleVerifyDonation = async (
     DonationID: number,
     isVerified: number,
-    setVisible: number
+    setVisible: number,
+    isDonationCompleted: number
   ) => {
     const action = isVerified === 1 ? "approved" : "rejected";
 
@@ -260,6 +261,7 @@ const Admin = () => {
           DonationID,
           isVerified,
           AdminID: adminID,
+          isDonationCompleted,
           setVisible,
         },
         { withCredentials: true }
@@ -717,7 +719,7 @@ const Admin = () => {
                             size="sm"
                             className="bg-green-600 hover:bg-green-700"
                             onClick={() =>
-                              handleVerifyDonation(v.DonationID, 1, 1)
+                              handleVerifyDonation(v.DonationID, 1, 1, 0)
                             }
                           >
                             <CheckCircle className="h-4 w-4 mr-1" />
@@ -727,7 +729,7 @@ const Admin = () => {
                             size="sm"
                             variant="destructive"
                             onClick={() =>
-                              handleVerifyDonation(v.DonationID, 0, 0)
+                              handleVerifyDonation(v.DonationID, 0, 0, 2)
                             }
                           >
                             <XCircle className="h-4 w-4 mr-1" />
@@ -940,10 +942,13 @@ const Admin = () => {
                         <TableCell>{donation.category}</TableCell>
                         <TableCell>{donation.date_time}</TableCell>
                         <TableCell>
-                          {donation.isDonationCompleted == 1
+                          {Number(donation.isDonationCompleted) === 1
                             ? "Completed"
+                            : Number(donation.isDonationCompleted) === 2
+                            ? "Rejected"
                             : "Pending"}
                         </TableCell>
+
                         <TableCell>
                           {donation.isVerified == 1 ? "Verified" : "Unverified"}
                         </TableCell>
@@ -1121,10 +1126,13 @@ const Admin = () => {
                   </p>
                   <p>
                     <strong>Status:</strong>{" "}
-                    {selectedDonation.isDonationCompleted == 1
+                    {selectedDonation.isDonationCompleted === 1
                       ? "Completed"
+                      : selectedDonation.isDonationCompleted === 2
+                      ? "Rejected"
                       : "Pending"}
                   </p>
+
                   <p>
                     <strong>Usage Duration:</strong>{" "}
                     {selectedDonation.usageDuration ?? "N/A"}
