@@ -35,7 +35,7 @@ if ($method === 'POST') {
     if ($action === 'submit_complaint') {
         $donationID  = $_POST['DonationID'] ?? null;
         $reason      = $_POST['reason'] ?? '';
-        $userID      = $_POST['userID'] ?? null;
+        $userID      = $_SESSION['userID'] ?? null;
         $description = $_POST['description'] ?? '';
         
         if (!$donationID || !$reason || !$description || !$userID) {
@@ -44,6 +44,18 @@ if ($method === 'POST') {
         }
 
         $result = $complaintObj->submitComplaint($donationID, $userID, $reason, $description, $files);
+        echo json_encode($result);
+        exit;
+    }
+    if( $action ==="common_complaint") {
+        $userID      = $_SESSION['userID'] ?? null;
+        $reason      = "Common Complaint";
+        $description = $_POST['description'] ?? '';
+        if (empty($description)) {
+            echo json_encode(["status" => "error", "message" => "Missing required fields."]);
+            exit;
+        }
+        $result = $complaintObj->submitComplaint(null, $userID, $reason, $description, $files);
         echo json_encode($result);
         exit;
     }

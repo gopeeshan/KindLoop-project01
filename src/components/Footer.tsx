@@ -20,6 +20,8 @@ const Footer = () => {
   const [complaintDescription, setComplaintDescription] = useState("");
   const [selectedImages, setSelectedImages] = useState<FileList | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedImages(e.target.files);
@@ -41,6 +43,7 @@ const Footer = () => {
 
     try {
       const formData = new FormData();
+      formData.append("action", "common_complaint");
       formData.append("reason", "General Complaint");
       formData.append("description", complaintDescription);
 
@@ -74,6 +77,7 @@ const Footer = () => {
           "complaint-images"
         ) as HTMLInputElement;
         if (fileInput) fileInput.value = "";
+        setIsDialogOpen(false);
       } else {
         toast({
           title: "Error",
@@ -140,9 +144,12 @@ const Footer = () => {
                 </a>
               </li>
               <li>
-                <Dialog>
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                   <DialogTrigger asChild>
-                    <button className="text-muted-foreground hover:text-primary transition-colors text-left">
+                    <button
+                      className="text-muted-foreground hover:text-primary transition-colors text-left"
+                      onClick={() => setIsDialogOpen(true)}
+                    >
                       File Complaint
                     </button>
                   </DialogTrigger>
