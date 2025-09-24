@@ -49,6 +49,8 @@ const DonationDetails = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [userID, setUserID] = useState<number | null>(null);
+  const [requesting, setRequesting] = useState(false);
+
   const [user, setUser] = useState<{
     userID: number;
     fullName: string;
@@ -124,6 +126,8 @@ const DonationDetails = () => {
   const handleRequestItem = async (DonationID: number) => {
     if (!donation) return;
 
+    setRequesting(true);
+
     if (userID !== donation.userID) {
       try {
         const response = await axios.post(
@@ -159,6 +163,7 @@ const DonationDetails = () => {
           description: "Server error. Please try again later.",
           variant: "destructive",
         });
+        setRequesting(false);
       }
     } else {
       toast({
@@ -166,6 +171,7 @@ const DonationDetails = () => {
         description: "You cannot request your own donation.",
         variant: "destructive",
       });
+      setRequesting(true);
     }
   };
 
@@ -254,7 +260,7 @@ const DonationDetails = () => {
               {donation.images && (
                 <div className="pt-4">
                   <h3 className="text-lg font-medium mb-1">Images:</h3>
-                  <div className="flex flex-wrap gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     {JSON.parse(donation.images).map(
                       (img: string, idx: number) => (
                         <img
@@ -277,7 +283,7 @@ const DonationDetails = () => {
               <div className="flex gap-2">
                 <Button
                   className="flex-1"
-                  disabled={!userID}
+                  disabled={!userID || requesting}
                   onClick={() => handleRequestItem(donation.DonationID)}
                 >
                   Request Item
