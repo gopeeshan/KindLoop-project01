@@ -28,13 +28,10 @@ if ($method === 'POST') {
     $description = $_POST['description'] ?? "";
     $files       = $_FILES;
 
-    if (empty($description) || empty($files)) {
+    if (empty($description) || empty($reason)) {
         echo json_encode(["success" => false, "message" => "Missing required fields"]);
         exit;
     }
-    $result = $complaintObj->submitComplaint($donationID, $complainantID, $reason, $description, $files);
-    echo json_encode($result);
-
     if ($action === 'submit_complaint') {
         $donationID  = $_POST['DonationID'] ?? null;
         $reason      = $_POST['reason'] ?? '';

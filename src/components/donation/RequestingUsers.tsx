@@ -26,6 +26,8 @@ interface RequestingUser {
   status: string;
   allocatedQuantity?: number;
   complaintCount: number;
+  receive_status?: string;
+  quantity?: number;
 }
 
 interface Complaint {
@@ -304,14 +306,15 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
                         handleStatusChange(
                           user.userID,
                           donationID,
-                          'selected',
+                          "selected",
                           user.allocatedQuantity
                         )
                       }
                       disabled={
-                        user.status === 'selected' ||
+                        user.status === "selected" ||
                         availableQuantity <= 0 ||
-                        !user.allocatedQuantity
+                        !user.allocatedQuantity ||
+                        user.receive_status === "completed"
                       }
                       // onClick={() => {
                       //   console.log(donationID + " " + user.userID);
@@ -329,11 +332,14 @@ const RequestingUsers: React.FC<RequestingUsersProps> = ({ donationID }) => {
                         handleStatusChange(
                           user.userID,
                           donationID,
-                          'rejected',
+                          "rejected",
                           user.allocatedQuantity
                         )
                       }
-                      disabled={user.status === 'rejected'}
+                      disabled={
+                        user.status === "rejected" ||
+                        user.receive_status === "completed"
+                      }
                     >
                       Reject
                     </Button>
