@@ -86,12 +86,14 @@ const Navigation = () => {
 
             {isLoggedIn ? (
               <div className="flex items-center space-x-2">
-                <Button variant="outline" asChild>
-                  <Link to="/profile" aria-label="Profile">
-                    <User className="mr-2 h-4 w-4" />
-                    {firstName || "Profile"}
-                  </Link>
-                </Button>
+                {userRole !== "admin" && (
+                  <Button variant="outline" asChild>
+                    <Link to="/profile" aria-label="Profile">
+                      <User className="mr-2 h-4 w-4" />
+                      {firstName || "Profile"}
+                    </Link>
+                  </Button>
+                )}
 
                 {userRole === "admin" && (
                   <Button asChild>
