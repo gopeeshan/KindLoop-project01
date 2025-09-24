@@ -224,7 +224,11 @@ const Admin = () => {
 
   const handleLogout = () => {
     axios
-      .post("http://localhost/KindLoop-project01/Backend/logout.php", {}, { withCredentials: true })
+      .post(
+        "http://localhost/KindLoop-project01/Backend/logout.php",
+        {},
+        { withCredentials: true }
+      )
       .then(() => {
         toast({
           title: "Logged Out",
@@ -278,11 +282,15 @@ const Admin = () => {
 
   const handleUserAction = (userID: number, active_state: string) => {
     axios
-      .post("http://localhost/KindLoop-project01/Backend/Admin.php", {
-        action: "user_action",
-        userID,
-        active_state,
-      },{ withCredentials: true })
+      .post(
+        "http://localhost/KindLoop-project01/Backend/Admin.php",
+        {
+          action: "user_action",
+          userID,
+          active_state,
+        },
+        { withCredentials: true }
+      )
       .then(() => {
         toast({
           title: `User ${active_state}`,
@@ -302,11 +310,15 @@ const Admin = () => {
 
   const handleAdminAction = async (AdminID: number, newStatus: string) => {
     axios
-      .post("http://localhost/KindLoop-project01/Backend/Admin.php", {
-        action: "admin_action",
-        AdminID,
-        AdminActive_state: newStatus,
-      },{ withCredentials: true })
+      .post(
+        "http://localhost/KindLoop-project01/Backend/Admin.php",
+        {
+          action: "admin_action",
+          AdminID,
+          AdminActive_state: newStatus,
+        },
+        { withCredentials: true }
+      )
       .then(() => {
         toast({
           title: `Admin ${newStatus}`,
@@ -325,11 +337,15 @@ const Admin = () => {
 
   const handleDonationVisibility = (DonationID: number, setVisible: number) => {
     axios
-      .post("http://localhost/KindLoop-project01/Backend/Admin.php", {
-        action: "update_visibility",
-        DonationID,
-        setVisible,
-      },{withCredentials: true })
+      .post(
+        "http://localhost/KindLoop-project01/Backend/Admin.php",
+        {
+          action: "update_visibility",
+          DonationID,
+          setVisible,
+        },
+        { withCredentials: true }
+      )
       .then(() => {
         toast({
           title: setVisible === 1 ? "Donation Visible" : "Donation Hidden",
@@ -385,19 +401,14 @@ const Admin = () => {
   const handleSaveAdmin = () => {
     if (!editAdminData) return;
 
-    // if (
-    //   !editAdminData.fullName.trim() ||
-    //   !editAdminData.email.trim() ||
-    //   !editAdminData.contactNumber.trim() ||
-    //   !editAdminData.address.trim()
-    // ) {
-    //   toast({
-    //     title: "Validation Error",
-    //     description: "All fields are required. Please fill in all details.",
-    //     variant: "destructive",
-    //   });
-    //   return;
-    // }
+    if (!editAdminData.AdminID) {
+      toast({
+        title: "Error",
+        description: "Admin ID missing. Please reopen the edit dialog.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     if (!editAdminData.fullName.trim()) {
       toast({
@@ -436,10 +447,18 @@ const Admin = () => {
     }
 
     axios
-      .post("http://localhost/KindLoop-project01/Backend/Admin.php", {
-        action: "update_admin",
-        ...editAdminData,
-      })
+      .post(
+        "http://localhost/KindLoop-project01/Backend/Admin.php",
+        {
+          action: "update_admin",
+          AdminID: editAdminData.AdminID,
+          fullName: editAdminData.fullName,
+          email: editAdminData.email,
+          contactNumber: editAdminData.contactNumber,
+          address: editAdminData.address,
+        },
+        { withCredentials: true }
+      )
       .then(() => {
         toast({
           title: "Updated",
@@ -523,7 +542,6 @@ const Admin = () => {
         </div>
         <div className="mb-8 flex items-center justify-between">
           <div>
-            
             <h1 className="text-3xl font-bold text-foreground mb-2">
               Admin Dashboard
             </h1>
