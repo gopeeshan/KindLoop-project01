@@ -498,7 +498,10 @@ const Profile = () => {
       }
       const response = await axios.post(
         "http://localhost/KindLoop-project01/Backend/complaint.php",
-        formDataObj
+        formDataObj,
+        {
+          withCredentials: true,
+        }
       );
 
       if (response.data.status === "success") {
