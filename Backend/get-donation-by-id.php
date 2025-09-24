@@ -12,10 +12,10 @@ require_once './Main/get_donations.php';
 
 $donation = new Donation();
 
-if (!isset($_SESSION['userID'])) {
-        echo json_encode(["success" => false, "message" => "Unauthorized"]);
-        exit;
-    }
+// if (!isset($_SESSION['userID'])) {
+//         echo json_encode(["success" => false, "message" => "Unauthorized"]);
+//         exit;
+//     }
 
 if (!isset($_GET['DonationID'])) {
     echo json_encode([

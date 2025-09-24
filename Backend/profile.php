@@ -22,13 +22,13 @@ header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-W
 header("Access-Control-Max-Age: 86400");
 header("Content-Type: application/json; charset=utf-8");
 
-if( !isset($_SESSION['UserID']) ) {
-    echo json_encode([
-        'success' => false,
-        'message' => 'You need to login to perform this action.'
-    ]);
-    exit;
-}
+// if( !isset($_SESSION['UserID']) ) {
+//     echo json_encode([
+//         'success' => false,
+//         'message' => 'You need to login to perform this action.'
+//     ]);
+//     exit;
+// }
 
 // Handle preflight cleanly
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {

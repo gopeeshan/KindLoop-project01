@@ -28,13 +28,13 @@ $status = $data['status'] ?? null;
 $donorID = isset($data['DonorID']) ? (int) $data['DonorID'] : null;
 $quantity = isset($data['quantity']) ? (int) $data['quantity'] : 0;
 
-if( !isset($_SESSION['UserID']) ) {
-    echo json_encode([
-        'success' => false,
-        'message' => 'You need to login to perform this action.'
-    ]);
-    exit;
-}
+// if( !isset($_SESSION['UserID']) ) {
+//     echo json_encode([
+//         'success' => false,
+//         'message' => 'You need to login to perform this action.'
+//     ]);
+//     exit;
+// }
 
 if ($method === 'POST' && $action === 'request-item') {
 

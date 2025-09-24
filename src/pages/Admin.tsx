@@ -562,7 +562,7 @@ const Admin = () => {
                 Add Admin
               </Button>
             )}
-            {role === "superadmin" && (
+            {/* {role === "superadmin" && (
               <Button
                 onClick={() => navigate("/admin/messages")}
                 className="flex items-center gap-2"
@@ -570,7 +570,7 @@ const Admin = () => {
               >
                 View Messages
               </Button>
-            )}
+            )} */}
 
             <Button
               onClick={() => navigate("/admin/complaints")}
