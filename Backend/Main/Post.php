@@ -1,7 +1,7 @@
 <?php
 require_once 'dbc.php';
 
-class CreatePost
+class Post
 {
     private $conn;
     protected $userID;
@@ -89,6 +89,16 @@ class CreatePost
         }
         $stmt->close();
         $this->conn->close();
+        return $result;
+    }
+
+    public function findPostByIdAndUserId($donationID,$userId)
+    {
+        $stmt = $this->conn->prepare("SELECT category, `condition`, usageDuration, quantity, images FROM donation WHERE DonationID = ? AND userID = ?");
+    $stmt->bind_param("ii", $donationID, $userId);
+    $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
         return $result;
     }
 }

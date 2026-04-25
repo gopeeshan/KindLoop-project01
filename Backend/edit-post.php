@@ -9,8 +9,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-require_once 'Main/create_post.php';
+require_once 'Main/Post.php';
 require_once 'Main/dbc.php';
+
+$Post = new Post();
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     echo json_encode(["status" => "error", "message" => "Invalid request method"]);
@@ -31,17 +33,13 @@ if (!$donationID || !$userID || !$title || !$description || !$location) {
 }
 
 try {
-    $conn = DBconnector::getInstance()->getConnection();
-
     // Load existing row to:
     // 1) authorize ownership
     // 2) preserve restricted fields (category, condition, usageDuration, quantity)
     // 3) fetch current images if frontend didn't send them
-    $stmt = $conn->prepare("SELECT category, `condition`, usageDuration, quantity, images FROM donation WHERE DonationID = ? AND userID = ?");
-    $stmt->bind_param("ii", $donationID, $userID);
-    $stmt->execute();
-    $current = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
+    
+    $current = $Post->findPostByIdAndUserId($donationID, $userID);
+    //echo json_encode($current);
 
     if (!$current) {
         echo json_encode(["status" => "error", "message" => "Donation not found or unauthorized."]);
@@ -103,8 +101,8 @@ try {
     $imagesJson = json_encode($finalImages);
 
     // Perform the update (restricted fields are preserved from DB and passed unchanged)
-    $createPost = new CreatePost();
-    $response = $createPost->editPost(
+    
+    $response = $Post->editPost(
         $donationID,
         $userID,
         $title,
