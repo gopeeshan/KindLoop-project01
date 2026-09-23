@@ -162,11 +162,11 @@ const Navigation = () => {
                     </Link>
                   </Button>
 
-                  {userRole === "admin" && (
+                  {/* {userRole === "admin" && (
                     <Button className="w-full" asChild>
                       <Link to="/Admin_login">Admin Panel</Link>
                     </Button>
-                  )}
+                  )} */}
                 </div>
               ) : (
                 <div className="px-3 py-2 space-y-2">

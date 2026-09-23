@@ -19,7 +19,7 @@ class Mailer {
         $this->mail->Host       = 'smtp.gmail.com';
         $this->mail->SMTPAuth   = true;
         $this->mail->Username   = 'kindloop.org@gmail.com'; // SMTP email
-        $this->mail->Password   = 'kpqz mkzp alcg roln'; // SMTP password
+        $this->mail->Password   = 'sdfi ygmq mcey jnuy'; // SMTP password
         $this->mail->SMTPSecure = 'ssl';
         $this->mail->Port       = 465;
 
