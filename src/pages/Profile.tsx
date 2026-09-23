@@ -171,7 +171,7 @@ const Profile = () => {
 
   const [isComplaintDialogOpen, setIsComplaintDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ToBeReceivedItem | null>(
-    null
+    null,
   );
   const [confirmCheck, setConfirmCheck] = useState(false);
   const [isCreditsDialogOpen, setCreditsDialogOpen] = useState(false);
@@ -182,7 +182,7 @@ const Profile = () => {
   const fetchUserCredits = async (userID: number) => {
     try {
       const res = await axios.get(
-        `http://localhost/KindLoop-project01/Backend/get_credits.php?userID=${userID}`
+        `http://localhost/KindLoop-project01/Backend/get_credits.php?userID=${userID}`,
       );
 
       if (res.data.status === "success") {
@@ -251,7 +251,7 @@ const Profile = () => {
     const fetchNotifications = () => {
       axios
         .get(
-          `http://localhost/KindLoop-project01/Backend/NotificationHandler.php?msg_receiver_ID=${userID}`
+          `http://localhost/KindLoop-project01/Backend/NotificationHandler.php?msg_receiver_ID=${userID}`,
         )
         .then((res) => {
           if (res.data.success) {
@@ -290,11 +290,11 @@ const Profile = () => {
         {
           action: "mark_as_read",
           notificationID,
-        }
+        },
       )
       .then(() => {
         setNotifications((prev) =>
-          prev.filter((n) => n.notificationID !== notificationID)
+          prev.filter((n) => n.notificationID !== notificationID),
         );
       })
       .catch((err) => console.log("Error marking as read", err));
@@ -322,7 +322,7 @@ const Profile = () => {
 
       // Remove from frontend list
       setDonationHistory((prev) =>
-        prev.filter((d) => d.DonationID !== donationID)
+        prev.filter((d) => d.DonationID !== donationID),
       );
 
       toast({
@@ -359,7 +359,7 @@ const Profile = () => {
           contactNumber: formData.contactNumber,
           occupation: formData.occupation,
           address: formData.address,
-        }
+        },
       );
 
       const result = response.data;
@@ -388,7 +388,7 @@ const Profile = () => {
       .post(
         "http://localhost/KindLoop-project01/Backend/logout.php",
         {},
-        { withCredentials: true }
+        { withCredentials: true },
       )
       .then(() => {
         toast({
@@ -408,10 +408,10 @@ const Profile = () => {
 
   const handleConfirmReceived = (DonationID: number, credits: number) => {
     setToBeReceivedItems((items) =>
-      items.filter((item) => item.DonationID !== DonationID)
+      items.filter((item) => item.DonationID !== DonationID),
     );
     axios
-      .post("http://localhost/KindLoop-project01/Backend/profile.php", {
+      .post("http://localhost/KindLoop-project01/Backend/create-post.php", {
         action: "confirm_received",
         DonationID: DonationID,
         credits: credits,
@@ -424,7 +424,7 @@ const Profile = () => {
         });
       });
     const item = toBeReceivedItems.find(
-      (item) => item.DonationID === DonationID
+      (item) => item.DonationID === DonationID,
     );
     if (item) {
       sendNotification(DonationID, item.donorID, user.userID, "Item Received");
@@ -435,7 +435,7 @@ const Profile = () => {
     donationID: number,
     DonorID: number,
     RequesterID: number,
-    Reason: string
+    Reason: string,
   ) => {
     if (Reason === "Item Received") {
       axios
@@ -446,7 +446,7 @@ const Profile = () => {
             msg_receiver_ID: DonorID,
             msg_sender_ID: RequesterID,
             action: "Donation_received_Confirmation",
-          }
+          },
         )
         .then((res) => console.log("Notification sent", res.data))
         .catch((err) => console.error(err));
@@ -459,7 +459,7 @@ const Profile = () => {
             msg_receiver_ID: DonorID,
             msg_sender_ID: RequesterID,
             action: "Complaint_registered",
-          }
+          },
         )
         .then((res) => console.log("Notification sent", res.data))
         .catch((err) => console.error(err));
@@ -495,7 +495,7 @@ const Profile = () => {
         formDataObj,
         {
           withCredentials: true,
-        }
+        },
       );
 
       if (response.data.status === "success") {
@@ -507,7 +507,7 @@ const Profile = () => {
           selectedItem.DonationID,
           selectedItem.donorID,
           user.userID,
-          "Complaint Submitted"
+          "Complaint Submitted",
         );
         setIsComplaintDialogOpen(false);
         setComplaintData({ reason: "", description: "" });
@@ -530,7 +530,7 @@ const Profile = () => {
   };
 
   const handlePasswordChangeInput = (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const { name, value } = e.target;
     setPasswordData((prev) => ({ ...prev, [name]: value }));
@@ -538,7 +538,7 @@ const Profile = () => {
     if (name === "newPassword") {
       if (!isPasswordStrong(value)) {
         setPasswordStrengthError(
-          "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character."
+          "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character.",
         );
       } else {
         setPasswordStrengthError("");
@@ -578,7 +578,7 @@ const Profile = () => {
           currentPassword: passwordData.currentPassword,
           newPassword: passwordData.newPassword,
           confirmPassword: passwordData.confirmPassword,
-        }
+        },
       );
 
       const result = response.data;
@@ -747,15 +747,15 @@ const Profile = () => {
                                     user.current_year_request_limit === 0
                                       ? "secondary"
                                       : canMakeRequest
-                                      ? "default"
-                                      : "destructive"
+                                        ? "default"
+                                        : "destructive"
                                   }
                                 >
                                   {user.current_year_request_limit === 0
                                     ? "Inactive"
                                     : canMakeRequest
-                                    ? "Active"
-                                    : "Limit Reached"}
+                                      ? "Active"
+                                      : "Limit Reached"}
                                 </Badge>
                               </CardTitle>
                             </CardHeader>
@@ -1083,7 +1083,7 @@ const Profile = () => {
                                         handleViewDetails(donation.DonationID);
                                       } else {
                                         console.error(
-                                          "Donation ID is missing!"
+                                          "Donation ID is missing!",
                                         );
                                       }
                                     }}
@@ -1108,7 +1108,7 @@ const Profile = () => {
                                     className="flex items-center"
                                     onClick={() =>
                                       navigate(
-                                        `/edit-post/${donation.DonationID}`
+                                        `/edit-post/${donation.DonationID}`,
                                       )
                                     }
                                     aria-label="Edit post"
@@ -1299,7 +1299,7 @@ const Profile = () => {
                                     onClick={() =>
                                       handleConfirmReceived(
                                         item.DonationID,
-                                        item.credits
+                                        item.credits,
                                       )
                                     }
                                   >

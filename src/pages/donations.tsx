@@ -239,7 +239,10 @@ const Donations = () => {
                           className="max-w-xs"
                         >
                           <p>
-                            Please note that the <b>Category</b>, <b>Condition</b>, <b>Usage Duration</b>, and <b>Quantity</b> cannot be modified once the post has been created.
+                            Please note that the <b>Category</b>,{" "}
+                            <b>Condition</b>, <b>Usage Duration</b>, and{" "}
+                            <b>Quantity</b> cannot be modified once the post has
+                            been created.
                           </p>
                         </TooltipContent>
                       </Tooltip>
